@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:flask": "bash scripts/run-flask.sh",
+    "dev:with-flask": "concurrently \"pnpm dev\" \"pnpm dev:flask\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -30,6 +32,7 @@
     "autoprefixer": "^10.4.17",
     "@momentovino/typescript-config": "workspace:*",
     "@momentovino/eslint-config": "workspace:*",
+    "concurrently": "^8.2.2",
     "eslint": "^8.57.0"
   }
 }

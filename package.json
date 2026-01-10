@@ -9,6 +9,7 @@
     "type-check": "turbo run type-check",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "dev:web": "turbo run dev --filter=web",
+    "dev:web:with-flask": "cd apps/web && pnpm dev:with-flask",
     "dev:mobile": "turbo run dev --filter=mobile"
   },
   "devDependencies": {
