@@ -1,0 +1,9 @@
+{
+  "name": "@momentovino/eslint-config",
+  "version": "0.1.0",
+  "private": true,
+  "files": ["base.js", "next.js", "react-native.js"],
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  }
+}

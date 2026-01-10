@@ -1,0 +1,4 @@
+# No Flask needed! Vercel Functions use BaseHTTPRequestHandler
+# Add only the Python packages you actually need, for example:
+# requests==2.31.0
+# python-dotenv==1.0.1
