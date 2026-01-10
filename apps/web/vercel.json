@@ -1,10 +1,5 @@
 {
   "buildCommand": "cd ../.. && pnpm turbo run build --filter=web",
   "installCommand": "cd ../.. && pnpm install",
-  "framework": "nextjs",
-  "functions": {
-    "api/**/*.py": {
-      "runtime": "python3.12"
-    }
-  }
+  "framework": "nextjs"
 }
