@@ -124,8 +124,16 @@ All design tokens are defined once in `/packages/design-tokens/tokens.json` and 
   },
   "typography": {
     "fontFamily": {
-      "sans": ["Inter", "system-ui", "sans-serif"],
+      "sans": ["DM Sans", "system-ui", "sans-serif"],
+      "serif": ["DM Serif Display", "Georgia", "serif"],
       "mono": ["JetBrains Mono", "Courier New", "monospace"]
+    },
+    "fontUsage": {
+      "titles": { "family": "serif", "weight": "400" },
+      "logo": { "family": "serif", "weight": "400" },
+      "subtitles": { "family": "sans", "weight": "500" },
+      "body": { "family": "sans", "weight": "400" },
+      "buttons": { "family": "sans", "weight": "600" }
     },
     "fontSize": {
       "xs": "0.75rem",   // 12px
@@ -393,8 +401,17 @@ Used for text, borders, backgrounds, disabled states
 ### Typography
 
 #### Font Families
-- **Sans**: Primary UI font (Inter, Geist, etc.)
-- **Mono**: Code and monospace content
+- **Serif**: DM Serif Display - Used for titles, logos, and headings
+- **Sans**: DM Sans - Primary UI font for body text, buttons, and subtitles
+- **Mono**: JetBrains Mono - Code and monospace content
+
+#### Font Usage Guide
+| Element | Font | Weight |
+|---------|------|--------|
+| Titles/Logo | DM Serif Display | Regular (400) |
+| Subtitles | DM Sans | Medium (500) |
+| Body Text | DM Sans | Regular (400) |
+| Buttons/CTAs | DM Sans | Semi-Bold (600) |
 
 #### Font Sizes
 xs, sm, base, lg, xl, 2xl, 3xl, 4xl (12px to 36px)

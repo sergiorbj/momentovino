@@ -1,0 +1,19 @@
+{
+  "name": "@momentovino/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./web.css": "./web.css",
+    "./mobile": "./mobile.ts",
+    "./tokens": "./tokens.json"
+  },
+  "files": [
+    "index.ts",
+    "web.css",
+    "mobile.ts",
+    "tokens.json"
+  ]
+}

@@ -1,0 +1,148 @@
+/* MomentoVino Design Tokens - Web CSS Variables */
+/* Generated from tokens.json - Single source of truth */
+
+:root {
+  /* === PRIMARY (Wine Red) === */
+  --color-primary-50: #fdf2f4;
+  --color-primary-100: #fce7ea;
+  --color-primary-200: #f9d0d9;
+  --color-primary-300: #f4aabb;
+  --color-primary-400: #ec7a96;
+  --color-primary-500: #722F37;
+  --color-primary-600: #5c262c;
+  --color-primary-700: #4a1f24;
+  --color-primary-800: #3d1a1e;
+  --color-primary-900: #35181b;
+  --color-primary-950: #1d0a0c;
+
+  /* === NEUTRAL (Gray Scale) === */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #a3a3a3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+  --color-neutral-950: #0a0a0a;
+
+  /* === ACCENT (Gold) === */
+  --color-accent-50: #fefce8;
+  --color-accent-100: #fef9c3;
+  --color-accent-200: #fef08a;
+  --color-accent-300: #fde047;
+  --color-accent-400: #facc15;
+  --color-accent-500: #D4AF37;
+  --color-accent-600: #b8972e;
+  --color-accent-700: #927726;
+  --color-accent-800: #785e21;
+  --color-accent-900: #664e20;
+  --color-accent-950: #3d2c0f;
+
+  /* === SEMANTIC COLORS === */
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+
+  /* === SHADCN/UI SEMANTIC VARIABLES === */
+  /* Background */
+  --background: var(--color-neutral-50);
+  --foreground: var(--color-neutral-900);
+
+  /* Card */
+  --card: #ffffff;
+  --card-foreground: var(--color-neutral-900);
+
+  /* Popover */
+  --popover: #ffffff;
+  --popover-foreground: var(--color-neutral-900);
+
+  /* Primary */
+  --primary: var(--color-primary-500);
+  --primary-foreground: #ffffff;
+
+  /* Secondary */
+  --secondary: var(--color-neutral-100);
+  --secondary-foreground: var(--color-neutral-900);
+
+  /* Muted */
+  --muted: var(--color-neutral-100);
+  --muted-foreground: var(--color-neutral-500);
+
+  /* Accent */
+  --accent: var(--color-accent-500);
+  --accent-foreground: var(--color-neutral-900);
+
+  /* Destructive */
+  --destructive: var(--color-error);
+  --destructive-foreground: #ffffff;
+
+  /* Border */
+  --border: var(--color-neutral-200);
+  --input: var(--color-neutral-200);
+  --ring: var(--color-primary-500);
+
+  /* Border Radius */
+  --radius: 0.5rem;
+
+  /* Chart Colors */
+  --chart-1: var(--color-primary-500);
+  --chart-2: var(--color-accent-500);
+  --chart-3: var(--color-success);
+  --chart-4: var(--color-info);
+  --chart-5: var(--color-warning);
+
+  /* Sidebar */
+  --sidebar: var(--color-neutral-50);
+  --sidebar-foreground: var(--color-neutral-900);
+  --sidebar-primary: var(--color-primary-500);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--color-accent-500);
+  --sidebar-accent-foreground: var(--color-neutral-900);
+  --sidebar-border: var(--color-neutral-200);
+  --sidebar-ring: var(--color-primary-500);
+}
+
+.dark {
+  /* === DARK MODE === */
+  --background: var(--color-neutral-950);
+  --foreground: var(--color-neutral-50);
+
+  --card: var(--color-neutral-900);
+  --card-foreground: var(--color-neutral-50);
+
+  --popover: var(--color-neutral-900);
+  --popover-foreground: var(--color-neutral-50);
+
+  --primary: var(--color-primary-400);
+  --primary-foreground: var(--color-neutral-950);
+
+  --secondary: var(--color-neutral-800);
+  --secondary-foreground: var(--color-neutral-50);
+
+  --muted: var(--color-neutral-800);
+  --muted-foreground: var(--color-neutral-400);
+
+  --accent: var(--color-accent-400);
+  --accent-foreground: var(--color-neutral-950);
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: var(--color-neutral-800);
+  --input: var(--color-neutral-800);
+  --ring: var(--color-primary-400);
+
+  /* Sidebar Dark */
+  --sidebar: var(--color-neutral-900);
+  --sidebar-foreground: var(--color-neutral-50);
+  --sidebar-primary: var(--color-primary-400);
+  --sidebar-primary-foreground: var(--color-neutral-950);
+  --sidebar-accent: var(--color-accent-400);
+  --sidebar-accent-foreground: var(--color-neutral-950);
+  --sidebar-border: var(--color-neutral-800);
+  --sidebar-ring: var(--color-primary-400);
+}

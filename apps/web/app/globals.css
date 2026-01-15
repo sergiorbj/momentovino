@@ -1,3 +1,149 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* === MomentoVino Design Tokens === */
+    /* Primary: Wine Red (#722F37) */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+
+    /* Wine Red Primary */
+    --primary: 355 43% 32%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    /* Gold Accent (#D4AF37) */
+    --accent: 43 64% 52%;
+    --accent-foreground: 0 0% 9%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 355 43% 32%;
+
+    /* Chart Colors */
+    --chart-1: 355 43% 32%;
+    --chart-2: 43 64% 52%;
+    --chart-3: 160 84% 39%;
+    --chart-4: 217 91% 60%;
+    --chart-5: 38 92% 50%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar */
+    --sidebar: 0 0% 98%;
+    --sidebar-foreground: 0 0% 9%;
+    --sidebar-primary: 355 43% 32%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 43 64% 52%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 355 43% 32%;
+
+    /* Extended Color Palette (for styleguide) */
+    --wine-50: 352 60% 97%;
+    --wine-100: 352 50% 94%;
+    --wine-200: 352 45% 87%;
+    --wine-300: 352 40% 76%;
+    --wine-400: 352 35% 60%;
+    --wine-500: 355 43% 32%;
+    --wine-600: 355 43% 27%;
+    --wine-700: 355 42% 21%;
+    --wine-800: 355 41% 17%;
+    --wine-900: 355 40% 15%;
+    --wine-950: 355 45% 8%;
+
+    --gold-50: 48 100% 96%;
+    --gold-100: 48 96% 89%;
+    --gold-200: 48 98% 77%;
+    --gold-300: 46 97% 65%;
+    --gold-400: 43 96% 56%;
+    --gold-500: 43 64% 52%;
+    --gold-600: 40 68% 45%;
+    --gold-700: 37 66% 36%;
+    --gold-800: 33 59% 29%;
+    --gold-900: 32 53% 26%;
+    --gold-950: 31 63% 14%;
+
+    /* Semantic Colors */
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 9%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Wine Red Primary (lighter for dark mode) */
+    --primary: 352 35% 60%;
+    --primary-foreground: 0 0% 4%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 64%;
+
+    /* Gold Accent (lighter for dark mode) */
+    --accent: 43 96% 56%;
+    --accent-foreground: 0 0% 4%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 352 35% 60%;
+
+    /* Chart Colors (Dark Mode) */
+    --chart-1: 352 35% 60%;
+    --chart-2: 43 96% 56%;
+    --chart-3: 160 60% 45%;
+    --chart-4: 217 70% 50%;
+    --chart-5: 38 80% 55%;
+
+    /* Sidebar Dark */
+    --sidebar: 0 0% 7%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 352 35% 60%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 43 96% 56%;
+    --sidebar-accent-foreground: 0 0% 4%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 352 35% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

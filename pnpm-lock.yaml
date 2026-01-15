@@ -17,18 +17,36 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@expo-google-fonts/dm-sans':
+        specifier: ^0.4.2
+        version: 0.4.2
+      '@expo-google-fonts/dm-serif-display':
+        specifier: ^0.4.2
+        version: 0.4.2
       '@momentovino/types':
         specifier: workspace:*
         version: link:../../packages/types
       '@momentovino/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       expo:
         specifier: ~54.0.0
         version: 54.0.31(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.21)(react-native@0.81.5)(react@19.1.0)
+      expo-font:
+        specifier: ^14.0.10
+        version: 14.0.10(expo@54.0.31)(react-native@0.81.5)(react@19.1.0)
       expo-router:
         specifier: ~6.0.21
         version: 6.0.21(@expo/metro-runtime@6.1.2)(@types/react@19.1.17)(expo-constants@18.0.13)(expo-linking@8.0.11)(expo@54.0.31)(react-dom@19.2.3)(react-native-reanimated@4.2.1)(react-native-safe-area-context@5.6.2)(react-native-screens@4.19.0)(react-native@0.81.5)(react@19.1.0)
+      expo-splash-screen:
+        specifier: ^31.0.13
+        version: 31.0.13(expo@54.0.31)
       expo-status-bar:
         specifier: ~3.0.9
         version: 3.0.9(react-native@0.81.5)(react@19.1.0)
@@ -41,6 +59,9 @@ importers:
       react-native:
         specifier: 0.81.5
         version: 0.81.5(@babel/core@7.28.5)(@types/react@19.1.17)(react@19.1.0)
+      tailwind-merge:
+        specifier: ^2.6.0
+        version: 2.6.0
     devDependencies:
       '@babel/core':
         specifier: ^7.24.0
@@ -72,11 +93,14 @@ importers:
       '@momentovino/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@radix-ui/react-slot':
+        specifier: ^1.2.4
+        version: 1.2.4(@types/react@19.2.7)(react@19.2.3)
       class-variance-authority:
-        specifier: ^0.7.0
+        specifier: ^0.7.1
         version: 0.7.1
       clsx:
-        specifier: ^2.1.0
+        specifier: ^2.1.1
         version: 2.1.1
       lucide-react:
         specifier: ^0.344.0
@@ -91,8 +115,11 @@ importers:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
       tailwind-merge:
-        specifier: ^2.2.1
+        specifier: ^2.6.0
         version: 2.6.0
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.19)
     devDependencies:
       '@momentovino/eslint-config':
         specifier: workspace:*
@@ -127,6 +154,8 @@ importers:
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
+
+  packages/design-tokens: {}
 
   packages/eslint-config:
     devDependencies:
@@ -1231,6 +1260,14 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
+  /@expo-google-fonts/dm-sans@0.4.2:
+    resolution: {integrity: sha512-e/fLH5aCJzkEenz7axvEn8N7IJAKhUwNjIxS75h9j+Ip1M9S7d22M19gJN3A7QW4egVkBJRyQh1hQFhngQn9yA==}
+    dev: false
+
+  /@expo-google-fonts/dm-serif-display@0.4.2:
+    resolution: {integrity: sha512-onlO8xAzsgMbKcwUE+fAgJ5AFHhk06VtaDN7eQOJwjV65QIciDKTiSNu1ymHc4m6g/x6D9OqPIYPXdTNIfaEaA==}
+    dev: false
+
   /@expo/cli@54.0.21(expo-router@6.0.21)(expo@54.0.31)(react-native@0.81.5):
     resolution: {integrity: sha512-L/FdpyZDsg/Nq6xW6kfiyF9DUzKfLZCKFXEVZcDqCNar6bXxQVotQyvgexRvtUF5nLinuT/UafLOdC3FUALUmA==}
     hasBin: true
@@ -2150,6 +2187,19 @@ packages:
       react: 19.1.0
     dev: false
 
+  /@radix-ui/react-compose-refs@1.1.2(@types/react@19.2.7)(react@19.2.3):
+    resolution: {integrity: sha512-z4eqJvfiNnFMHIIvXP3CY57y2WJs5g2v3X0zm9mEJkrkNv4rDxu+sg9Jh8EkXyeqBkB7SOcboo9dMVqhyrACIg==}
+    peerDependencies:
+      '@types/react': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+    dependencies:
+      '@types/react': 19.2.7
+      react: 19.2.3
+    dev: false
+
   /@radix-ui/react-context@1.1.2(@types/react@19.1.17)(react@19.1.0):
     resolution: {integrity: sha512-jCi/QKUM2r1Ju5a3J64TH2A5SpKAgh0LpknyqdQ4m6DCV0xJ2HG1xARRwNGPQfi1SLdLWZ1OJz6F4OMBBNiGJA==}
     peerDependencies:
@@ -2391,6 +2441,20 @@ packages:
       '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.1.17)(react@19.1.0)
       '@types/react': 19.1.17
       react: 19.1.0
+    dev: false
+
+  /@radix-ui/react-slot@1.2.4(@types/react@19.2.7)(react@19.2.3):
+    resolution: {integrity: sha512-Jl+bCv8HxKnlTLVrcDE8zTMJ09R9/ukw4qBs/oZClOfoQk/cOTbDn+NceXfV7j09YPVQUryJPHurafcSg6EVKA==}
+    peerDependencies:
+      '@types/react': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+    dependencies:
+      '@radix-ui/react-compose-refs': 1.1.2(@types/react@19.2.7)(react@19.2.3)
+      '@types/react': 19.2.7
+      react: 19.2.3
     dev: false
 
   /@radix-ui/react-tabs@1.1.13(@types/react@19.1.17)(react-dom@19.2.3)(react@19.1.0):
@@ -2853,7 +2917,6 @@ packages:
     resolution: {integrity: sha512-MWtvHrGZLFttgeEj28VXHxpmwYbor/ATPYbBfSFZEIRK0ecCFLl2Qo55z52Hss+UV9CRN7trSeq1zbgx7YDWWg==}
     dependencies:
       csstype: 3.2.3
-    dev: true
 
   /@types/stack-utils@2.0.3:
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
@@ -4050,6 +4113,17 @@ packages:
   /expo-server@1.0.5:
     resolution: {integrity: sha512-IGR++flYH70rhLyeXF0Phle56/k4cee87WeQ4mamS+MkVAVP+dDlOHf2nN06Z9Y2KhU0Gp1k+y61KkghF7HdhA==}
     engines: {node: '>=20.16.0'}
+    dev: false
+
+  /expo-splash-screen@31.0.13(expo@54.0.31):
+    resolution: {integrity: sha512-1epJLC1cDlwwj089R2h8cxaU5uk4ONVAC+vzGiTZH4YARQhL4Stlz1MbR6yAS173GMosvkE6CAeihR7oIbCkDA==}
+    peerDependencies:
+      expo: '*'
+    dependencies:
+      '@expo/prebuild-config': 54.0.8(expo@54.0.31)
+      expo: 54.0.31(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.21)(react-native@0.81.5)(react@19.1.0)
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /expo-status-bar@3.0.9(react-native@0.81.5)(react@19.1.0):
@@ -6578,6 +6652,14 @@ packages:
 
   /tailwind-merge@2.6.0:
     resolution: {integrity: sha512-P+Vu1qXfzediirmHOC3xKGAYeZtPcV9g76X+xg2FD4tYgR71ewMA35Y3sCz3zhiN/dwefRpJX0yBcgwi1fXNQA==}
+    dev: false
+
+  /tailwindcss-animate@1.0.7(tailwindcss@3.4.19):
+    resolution: {integrity: sha512-bl6mpH3T7I3UFxuvDEXLxy/VuFxBk5bbzplh7tXI68mwMokNYd1t9qPBHlnyTwfa4JGC4zP516I1hYYtQ/vspA==}
+    peerDependencies:
+      tailwindcss: '>=3.0.0 || insiders'
+    dependencies:
+      tailwindcss: 3.4.19
     dev: false
 
   /tailwindcss@3.4.19:
