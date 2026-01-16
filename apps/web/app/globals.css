@@ -87,6 +87,13 @@
     --warning-foreground: 0 0% 9%;
     --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
+
+    /* Color Palette from Design System */
+    --wine-plum: #722F37;
+    --chocolate: #C2703E;
+    --linen: #F5EBE0;
+    --mauve-bark: #5C4033;
+    --sandy-clay: #D4A574;
   }
 
   .dark {
@@ -146,4 +153,27 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer utilities {
+  /* Color Palette - Text Colors */
+  .text-wine-plum { color: var(--wine-plum); }
+  .text-chocolate { color: var(--chocolate); }
+  .text-linen { color: var(--linen); }
+  .text-mauve-bark { color: var(--mauve-bark); }
+  .text-sandy-clay { color: var(--sandy-clay); }
+
+  /* Color Palette - Background Colors */
+  .bg-wine-plum { background-color: var(--wine-plum); }
+  .bg-chocolate { background-color: var(--chocolate); }
+  .bg-linen { background-color: var(--linen); }
+  .bg-mauve-bark { background-color: var(--mauve-bark); }
+  .bg-sandy-clay { background-color: var(--sandy-clay); }
+
+  /* Color Palette - Border Colors */
+  .border-wine-plum { border-color: var(--wine-plum); }
+  .border-chocolate { border-color: var(--chocolate); }
+  .border-linen { border-color: var(--linen); }
+  .border-mauve-bark { border-color: var(--mauve-bark); }
+  .border-sandy-clay { border-color: var(--sandy-clay); }
 }

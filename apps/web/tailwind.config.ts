@@ -101,6 +101,26 @@ const config: Config = {
           900: 'hsl(var(--gold-900))',
           950: 'hsl(var(--gold-950))',
         },
+        // Extended Cork palette (#5C4033)
+        cork: {
+          50: 'hsl(var(--cork-50))',
+          100: 'hsl(var(--cork-100))',
+          200: 'hsl(var(--cork-200))',
+          300: 'hsl(var(--cork-300))',
+          400: 'hsl(var(--cork-400))',
+          500: 'hsl(var(--cork-500))',
+          600: 'hsl(var(--cork-600))',
+          700: 'hsl(var(--cork-700))',
+          800: 'hsl(var(--cork-800))',
+          900: 'hsl(var(--cork-900))',
+          950: 'hsl(var(--cork-950))',
+        },
+        // Design System Colors
+        'wine-plum': 'var(--wine-plum)',
+        chocolate: 'var(--chocolate)',
+        linen: 'var(--linen)',
+        'mauve-bark': 'var(--mauve-bark)',
+        'sandy-clay': 'var(--sandy-clay)',
         // Semantic colors
         success: {
           DEFAULT: 'hsl(var(--success))',

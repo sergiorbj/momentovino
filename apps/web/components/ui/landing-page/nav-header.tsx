@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import { ArrowDown } from 'lucide-react'
+import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -18,8 +20,8 @@ function Logo() {
       />
       {/* Brand name with two colors - serif font */}
       <span className="font-serif text-[22px] tracking-tight">
-        <span className="text-wine-700">Momento</span>
-        <span className="text-gold-600">Vino</span>
+        <span className="text-wine-plum">Momento</span>
+        <span className="text-chocolate">Vino</span>
       </span>
     </div>
   )
@@ -48,9 +50,9 @@ export function NavHeader() {
   return (
     <header
       className={cn(
-        'fixed left-0 right-0 top-0 z-50 bg-[#F8F4EF]/90 backdrop-blur-xl transition-all duration-300',
+        'fixed left-0 right-0 top-0 z-50 bg-linen backdrop-blur-xl transition-all duration-300',
         isScrolled
-          ? 'border-b border-wine-100/50 shadow-[0_4px_20px_-4px_rgba(114,47,55,0.08)]'
+          ? 'border-b border-linen/50 shadow-[0_4px_20px_-4px_rgba(114,47,55,0.08)]'
           : 'border-b border-transparent shadow-none'
       )}
     >
@@ -62,16 +64,29 @@ export function NavHeader() {
             <a
               key={link.href}
               href={link.href}
-              className="text-[15px] font-medium text-wine-700/70 transition-all duration-300 hover:text-wine-800"
+              className="text-[15px] font-medium text-mauve-bark transition-all duration-300 hover:text-mauve-bark"
             >
               {link.label}
             </a>
           ))}
         </nav>
 
-        <Button className="rounded-full bg-wine-700 px-7 py-2.5 text-[15px] font-medium shadow-lg shadow-wine-700/20 transition-all duration-300 hover:bg-wine-800 hover:shadow-xl hover:shadow-wine-700/30">
-          Baixar Grátis
-        </Button>
+        <motion.div
+          whileHover={{ scale: 1.03, y: -2 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        >
+          <Button className="rounded-full bg-wine-plum px-7 py-2.5 text-[15px] font-medium shadow-lg shadow-wine-plum/25 transition-shadow duration-300 hover:shadow-2xl hover:shadow-wine-plum/35">
+            Baixar Grátis
+            <motion.span
+              className="ml-2 inline-flex"
+              animate={{ y: [0, 3, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+            >
+              <ArrowDown className="h-5 w-5" />
+            </motion.span>
+          </Button>
+        </motion.div>
       </div>
     </header>
   )
