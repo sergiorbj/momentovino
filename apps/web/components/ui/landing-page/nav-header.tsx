@@ -6,6 +6,7 @@ import { ArrowDown } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useTranslations } from '@/hooks/use-translations'
 
 function Logo() {
   return (
@@ -28,6 +29,7 @@ function Logo() {
 }
 
 export function NavHeader() {
+  const translations = useTranslations()
   const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
@@ -42,9 +44,9 @@ export function NavHeader() {
   }, [])
 
   const navLinks = [
-    { label: 'Recursos', href: '#recursos' },
-    { label: 'Como Funciona', href: '#como-funciona' },
-    { label: 'Famílias', href: '#familias' },
+    { label: translations.nav.resources, href: '#recursos' },
+    { label: translations.nav.howItWorks, href: '#como-funciona' },
+    { label: translations.nav.families, href: '#familias' },
   ]
 
   return (
@@ -77,7 +79,7 @@ export function NavHeader() {
           transition={{ type: 'spring', stiffness: 400, damping: 17 }}
         >
           <Button className="rounded-full bg-wine-plum px-7 py-2.5 text-[15px] font-medium shadow-lg shadow-wine-plum/25 transition-shadow duration-300 hover:shadow-2xl hover:shadow-wine-plum/35">
-            Baixar Grátis
+            {translations.nav.downloadFree}
             <motion.span
               className="ml-2 inline-flex"
               animate={{ y: [0, 3, 0] }}
