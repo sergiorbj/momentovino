@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 30,
     fontFamily: 'DMSerifDisplay_400Regular',
-    color: '#1C1C1E',
+    color: '#5C4033',
   },
   statLabel: {
     fontSize: 13,
