@@ -10,7 +10,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "dev:web": "turbo run dev --filter=web",
     "dev:web:with-flask": "cd apps/web && pnpm dev:with-flask",
-    "dev:mobile": "turbo run dev --filter=mobile"
+    "dev:mobile": "turbo run dev --filter=mobile",
+    "ios": "pnpm --filter mobile ios",
+    "android": "pnpm --filter mobile android"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
