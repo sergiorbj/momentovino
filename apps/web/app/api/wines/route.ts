@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     .from('wines')
     .select('*')
     .eq('created_by', auth.userId)
-    .order('name', { ascending: true })
+    .order('created_at', { ascending: false })
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

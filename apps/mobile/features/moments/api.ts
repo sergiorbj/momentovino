@@ -40,7 +40,7 @@ export async function searchWines(query: string): Promise<WineRow[]> {
     .from('wines')
     .select('*')
     .eq('created_by', userId)
-    .order('name', { ascending: true })
+    .order('created_at', { ascending: false })
     .limit(50)
 
   const { data, error } =
