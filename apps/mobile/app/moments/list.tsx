@@ -83,7 +83,6 @@ export default function MomentsListScreen() {
             <Ionicons name="chevron-back" size={22} color={WINE} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>My Moments</Text>
-          <View style={styles.iconBtn} />
         </View>
 
         {loading && moments.length === 0 ? (
@@ -133,9 +132,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 8,
+    gap: 16,
   },
   headerTitle: {
     fontFamily: 'DMSerifDisplay_400Regular',

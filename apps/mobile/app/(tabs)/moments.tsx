@@ -15,7 +15,7 @@ import WireframeGlobe from '../../components/globe/WireframeGlobe'
 import type { MomentPin } from '../../components/globe/types'
 
 const { width } = Dimensions.get('window')
-const GLOBE_SIZE = Math.min(width * 0.78, 320)
+const GLOBE_SIZE = Math.min(width * 1.30, 340)
 
 const MOCK_PINS: MomentPin[] = [
   { id: '1', latitude: 48.86, longitude: 2.35, label: 'Paris' },
@@ -66,9 +66,6 @@ export default function MomentsScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
           <Text style={styles.title}>Moments</Text>
-          <TouchableOpacity style={styles.searchBtn}>
-            <Ionicons name="search" size={20} color="#722F37" />
-          </TouchableOpacity>
         </View>
 
         <Animated.View style={[styles.globeWrapper, globeAnimatedStyle]}>
@@ -148,12 +145,12 @@ const styles = StyleSheet.create({
   },
   statItem: { flex: 1, alignItems: 'center' },
   statNumber: {
-    fontSize: 30,
+    fontSize: 34,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: '#5C4033',
   },
   statLabel: {
-    fontSize: 13,
+    fontSize: 16,
     color: '#C2703E',
     fontFamily: 'DMSans_400Regular',
     marginTop: 2,
