@@ -27,7 +27,6 @@ export default function ScanResultScreen() {
   const params = useLocalSearchParams<{
     name: string
     producer: string
-    vintage: string
     region: string
     country: string
     type: string
@@ -51,7 +50,6 @@ export default function ScanResultScreen() {
       const wine = await createWineViaApi({
         name: params.name ?? '',
         producer: params.producer || null,
-        vintage: params.vintage ? Number(params.vintage) : null,
         region: params.region || null,
         country: params.country || null,
         type: params.type || null,
@@ -117,9 +115,8 @@ export default function ScanResultScreen() {
 
           <View style={styles.card}>
             {params.producer ? <InfoRow label="Producer" value={params.producer} /> : null}
-            {params.vintage ? <InfoRow label="Vintage" value={params.vintage} /> : null}
-            {params.region ? <InfoRow label="Region" value={params.region} /> : null}
-            {params.country ? <InfoRow label="Country" value={params.country} /> : null}
+            <InfoRow label="Region" value={params.region || '—'} />
+            <InfoRow label="Country" value={params.country || '—'} />
             {params.type ? <InfoRow label="Type" value={params.type} /> : null}
           </View>
         </ScrollView>

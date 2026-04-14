@@ -127,12 +127,11 @@ export default function ScannerScreen() {
         pathname: '/scanner/result',
         params: {
           name: result.name,
-          producer: result.producer ?? '',
-          vintage: result.vintage != null ? String(result.vintage) : '',
-          region: result.region ?? '',
-          country: result.country ?? '',
-          type: result.type ?? '',
-          description: result.description ?? '',
+          producer: result.producer,
+          region: result.region,
+          country: result.country,
+          type: result.type,
+          description: result.description,
         },
       })
     } catch (err) {

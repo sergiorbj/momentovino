@@ -2,7 +2,5 @@
 # Flask is only needed for local development
 flask==3.0.0
 flask-cors==4.0.0
-
-# Add other Python packages you need, for example:
-# requests==2.31.0
-# python-dotenv==1.0.1
+requests==2.31.0
+python-dotenv==1.0.1

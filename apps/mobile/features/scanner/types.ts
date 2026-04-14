@@ -1,10 +1,9 @@
 export interface ScanResult {
   name: string
-  producer: string | null
-  vintage: number | null
-  region: string | null
-  country: string | null
-  type: string | null
+  producer: string
+  region: string
+  country: string
+  type: string
   description: string
 }
 

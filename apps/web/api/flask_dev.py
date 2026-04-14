@@ -29,7 +29,11 @@ def handle_exception(e):
 def load_function(function_name):
     """Load Vercel function and return handler class."""
     function_path = API_DIR / f"{function_name}.py"
-    if not function_path.exists() or function_path.name == 'flask_dev.py':
+    if (
+        not function_path.exists()
+        or function_path.name == 'flask_dev.py'
+        or function_name.startswith('_')
+    ):
         return None
     
     spec = importlib.util.spec_from_file_location(function_name, function_path)
