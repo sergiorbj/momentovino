@@ -75,9 +75,14 @@ export default function ScanResultScreen() {
           params: { wineId: wine.id, wineName: wine.name },
         })
       } else {
-        Alert.alert('Wine added', `${wine.name} has been saved to your collection.`, [
-          { text: 'OK', onPress: () => router.replace('/(tabs)/wines') },
-        ])
+        const reused = Boolean(wine.reusedExisting)
+        Alert.alert(
+          reused ? 'Wine recognized' : 'Wine added',
+          reused
+            ? `${wine.name} was already in your collection — we kept your original name.`
+            : `${wine.name} has been saved to your collection.`,
+          [{ text: 'OK', onPress: () => router.replace('/(tabs)/wines') }]
+        )
       }
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Could not save wine')

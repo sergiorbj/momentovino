@@ -15,8 +15,13 @@ import { useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 
 import { WineRowAvatar } from '../../components/WineRowAvatar'
-import { createWine, searchWines } from '../../features/moments/api'
+import { countUserWines, createWine, searchWines } from '../../features/moments/api'
 import { WINE_TYPES, type WineTypeCode } from '../../features/moments/schema'
+import {
+  bestLabelPhotoInCluster,
+  clusterWinesForDisplay,
+  type WineCluster,
+} from '../../features/wines/similarity'
 import type { Database } from '../../lib/database.types'
 
 type WineRow = Database['public']['Tables']['wines']['Row']
@@ -29,6 +34,7 @@ const BG = '#F5EBE0'
 export default function WinesScreen() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<WineRow[]>([])
+  const [totalWines, setTotalWines] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [creating, setCreating] = useState(false)
   const [createMode, setCreateMode] = useState(false)
@@ -39,10 +45,15 @@ export default function WinesScreen() {
   const [newRegion, setNewRegion] = useState('')
   const [newType, setNewType] = useState<WineTypeCode | null>(null)
 
+  const clusters = useMemo(() => clusterWinesForDisplay(results), [results])
+
   const loadWines = () => {
     setLoading(true)
-    searchWines(query)
-      .then(setResults)
+    Promise.all([searchWines(query), countUserWines()])
+      .then(([rows, total]) => {
+        setResults(rows)
+        setTotalWines(total)
+      })
       .catch(console.error)
       .finally(() => setLoading(false))
   }
@@ -52,8 +63,11 @@ export default function WinesScreen() {
     setLoading(true)
     const handle = setTimeout(async () => {
       try {
-        const rows = await searchWines(query)
-        if (!cancelled) setResults(rows)
+        const [rows, total] = await Promise.all([searchWines(query), countUserWines()])
+        if (!cancelled) {
+          setResults(rows)
+          setTotalWines(total)
+        }
       } catch (err) {
         console.error(err)
       } finally {
@@ -70,9 +84,12 @@ export default function WinesScreen() {
     useCallback(() => {
       let cancelled = false
       setLoading(true)
-      searchWines(query)
-        .then((rows) => {
-          if (!cancelled) setResults(rows)
+      Promise.all([searchWines(query), countUserWines()])
+        .then(([rows, total]) => {
+          if (!cancelled) {
+            setResults(rows)
+            setTotalWines(total)
+          }
         })
         .catch(console.error)
         .finally(() => {
@@ -132,7 +149,10 @@ export default function WinesScreen() {
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Wines</Text>
+          <View style={styles.headerTitleRow}>
+            <Text style={styles.headerTitle}>Wines</Text>
+            {totalWines !== null ? <Text style={styles.headerCount}>{totalWines}</Text> : null}
+          </View>
           <TouchableOpacity
             onPress={() => setCreateMode((v) => !v)}
             style={styles.iconBtn}
@@ -195,9 +215,9 @@ export default function WinesScreen() {
               {loading && <ActivityIndicator color={WINE_C} />}
             </View>
 
-            <FlatList
-              data={results}
-              keyExtractor={(item) => item.id}
+            <FlatList<WineCluster>
+              data={clusters}
+              keyExtractor={(c) => c.canonical.id}
               contentContainerStyle={{ paddingBottom: 24 }}
               ItemSeparatorComponent={() => <View style={styles.divider} />}
               ListEmptyComponent={
@@ -214,19 +234,33 @@ export default function WinesScreen() {
                   </View>
                 )
               }
-              renderItem={({ item }) => (
-                <View style={styles.row}>
-                  <View style={styles.rowLeft}>
-                    <WineRowAvatar labelPhotoUrl={item.label_photo_url} size={40} accent={WINE_C} />
+              renderItem={({ item }) => {
+                const w = item.canonical
+                const photo = bestLabelPhotoInCluster(item.members)
+                const dup = item.members.length > 1
+                return (
+                  <View style={styles.row}>
+                    <View style={styles.rowLeft}>
+                      <WineRowAvatar labelPhotoUrl={photo} size={40} accent={WINE_C} />
+                    </View>
+                    <View style={styles.rowBody}>
+                      <View style={styles.rowTitleRow}>
+                        <Text style={styles.rowTitle} numberOfLines={2}>
+                          {w.name}
+                        </Text>
+                        {dup ? (
+                          <View style={styles.countBadge}>
+                            <Text style={styles.countBadgeText}>×{item.members.length}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <Text style={styles.rowMeta}>
+                        {[w.producer, w.vintage, w.country, w.type].filter(Boolean).join(' · ')}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.rowBody}>
-                    <Text style={styles.rowTitle}>{item.name}</Text>
-                    <Text style={styles.rowMeta}>
-                      {[item.producer, item.vintage, item.region, item.type].filter(Boolean).join(' · ')}
-                    </Text>
-                  </View>
-                </View>
-              )}
+                )
+              }}
             />
           </View>
         )}
@@ -274,10 +308,22 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 8,
   },
+  headerTitleRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 10,
+    paddingRight: 12,
+  },
   headerTitle: {
     fontFamily: 'DMSerifDisplay_400Regular',
     fontSize: 30,
     color: WINE_C,
+  },
+  headerCount: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 28,
+    color: SUBTLE,
   },
   iconBtn: {
     width: 40,
@@ -329,7 +375,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rowBody: { flex: 1 },
-  rowTitle: { fontSize: 15, fontFamily: 'DMSans_600SemiBold', color: INK },
+  rowTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  rowTitle: { flex: 1, fontSize: 15, fontFamily: 'DMSans_600SemiBold', color: INK },
+  countBadge: {
+    backgroundColor: WINE_C,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  countBadgeText: { fontSize: 12, fontFamily: 'DMSans_700Bold', color: '#FFFFFF' },
   rowMeta: { fontSize: 13, fontFamily: 'DMSans_400Regular', color: SUBTLE, marginTop: 2 },
   empty: { alignItems: 'center', paddingVertical: 40, gap: 16 },
   emptyText: { fontFamily: 'DMSans_400Regular', color: SUBTLE, textAlign: 'center' },

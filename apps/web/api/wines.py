@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import json
 from http.server import BaseHTTPRequestHandler
-from typing import Optional
+from typing import Any, Optional
 
 import requests
 
 from _api_common import auth_bearer_user_id, send_json, supabase_config
+from _wine_match import find_matching_wine
 
 
 def _opt_str(value: object) -> Optional[str]:
@@ -12,6 +15,27 @@ def _opt_str(value: object) -> Optional[str]:
         return None
     s = str(value).strip()
     return s or None
+
+
+def _fetch_user_wines(
+    url: str, key: str, user_id: str
+) -> tuple[list[dict[str, Any]] | None, str | None]:
+    rest_url = f"{url}/rest/v1/wines?select=*&created_by=eq.{user_id}&order=created_at.desc"
+    try:
+        r = requests.get(
+            rest_url,
+            headers={"Authorization": f"Bearer {key}", "apikey": key},
+            timeout=30,
+        )
+    except requests.RequestException as e:
+        return None, str(e)
+    if r.status_code != 200:
+        return None, r.text or "Failed to list wines"
+    try:
+        rows = r.json()
+    except Exception:
+        return None, "Invalid response from database"
+    return (rows if isinstance(rows, list) else []), None
 
 
 class handler(BaseHTTPRequestHandler):
@@ -22,31 +46,11 @@ class handler(BaseHTTPRequestHandler):
             return
 
         url, key = supabase_config()
-        rest_url = f"{url}/rest/v1/wines?select=*&created_by=eq.{user_id}&order=created_at.desc"
-        try:
-            r = requests.get(
-                rest_url,
-                headers={
-                    "Authorization": f"Bearer {key}",
-                    "apikey": key,
-                },
-                timeout=30,
-            )
-        except requests.RequestException as e:
-            send_json(self, 500, {"error": str(e)})
+        rows, err = _fetch_user_wines(url, key, user_id)
+        if err is not None:
+            send_json(self, 500, {"error": err})
             return
-
-        if r.status_code != 200:
-            send_json(self, 500, {"error": r.text or "Failed to list wines"})
-            return
-
-        try:
-            rows = r.json()
-        except Exception:
-            send_json(self, 500, {"error": "Invalid response from database"})
-            return
-
-        send_json(self, 200, rows if isinstance(rows, list) else [])
+        send_json(self, 200, rows or [])
 
     def do_POST(self):
         user_id, err = auth_bearer_user_id(self)
@@ -84,6 +88,23 @@ class handler(BaseHTTPRequestHandler):
         }
 
         url, key = supabase_config()
+        existing_rows, list_err = _fetch_user_wines(url, key, user_id)
+        if list_err is not None:
+            send_json(self, 500, {"error": list_err})
+            return
+
+        match = find_matching_wine(
+            existing_rows or [],
+            row["name"],
+            row.get("producer"),
+            row.get("country"),
+        )
+        if match is not None:
+            out = dict(match)
+            out["reusedExisting"] = True
+            send_json(self, 200, out)
+            return
+
         rest_url = f"{url}/rest/v1/wines"
         try:
             r = requests.post(

@@ -52,6 +52,8 @@ export interface WineResponse {
   label_photo_url: string | null
   created_by: string
   created_at: string
+  /** Present when POST /wines matched an existing bottle (same wine, stored name kept). */
+  reusedExisting?: boolean
 }
 
 export async function createWineViaApi(input: CreateWineInput): Promise<WineResponse> {

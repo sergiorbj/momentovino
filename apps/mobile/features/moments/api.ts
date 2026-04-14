@@ -41,12 +41,26 @@ export async function searchWines(query: string): Promise<WineRow[]> {
     .select('*')
     .eq('created_by', userId)
     .order('created_at', { ascending: false })
-    .limit(50)
+    .limit(120)
 
   const { data, error } =
     trimmed.length > 0 ? await builder.ilike('name', `%${trimmed}%`) : await builder
   if (error) throw error
   return data ?? []
+}
+
+/** Total wine rows for the current user (for collection stats). */
+export async function countUserWines(): Promise<number> {
+  const { data: userData, error: userErr } = await supabase.auth.getUser()
+  if (userErr || !userData.user) return 0
+
+  const { count, error } = await supabase
+    .from('wines')
+    .select('id', { count: 'exact', head: true })
+    .eq('created_by', userData.user.id)
+
+  if (error) throw error
+  return count ?? 0
 }
 
 export async function createWine(input: WineInput): Promise<WineRow> {

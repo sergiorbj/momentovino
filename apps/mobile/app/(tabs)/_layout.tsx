@@ -1,23 +1,10 @@
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
-
-type TabBarProps = {
-  state: {
-    index: number
-    routes: { key: string; name: string; params?: object }[]
-  }
-  navigation: {
-    emit: (event: {
-      type: 'tabPress'
-      target: string
-      canPreventDefault: true
-    }) => { defaultPrevented: boolean }
-    navigate: (name: string, params?: object) => void
-  }
-}
+type TabRoute = BottomTabBarProps['state']['routes'][number]
 
 const WINE = '#722F37'
 const BAR_BG = '#F5EBE0'
@@ -30,11 +17,11 @@ const TABS: Record<string, { icon: IconName; label: string }> = {
   profile: { icon: 'person', label: 'Profile' },
 }
 
-function CustomTabBar({ state, navigation }: TabBarProps) {
+function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View style={styles.bar}>
       <View style={styles.inner}>
-        {state.routes.map((route, index) => {
+        {state.routes.map((route: TabRoute, index: number) => {
           const focused = state.index === index
           const meta = TABS[route.name]
           if (!meta) return null
@@ -72,7 +59,7 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{ headerShown: false }}
-      tabBar={(props) => <CustomTabBar {...props} />}
+      tabBar={(props: BottomTabBarProps) => <CustomTabBar {...props} />}
     >
       <Tabs.Screen name="moments" options={{ title: 'Moments' }} />
       <Tabs.Screen name="family" options={{ title: 'Family' }} />
