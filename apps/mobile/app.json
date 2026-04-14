@@ -23,14 +23,22 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.momentovino.app"
+      "package": "com.momentovino.app",
+      "usesCleartextTraffic": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow MomentoVino to use the camera to scan wine labels.",
+          "recordAudioAndroid": false
+        }
+      ]
     ],
     "scheme": "momentovino"
   }

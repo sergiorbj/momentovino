@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
+import { WineRowAvatar } from '../../components/WineRowAvatar'
 import { createWine, searchWines } from '../../features/moments/api'
 import { WINE_TYPES, type WineTypeCode } from '../../features/moments/schema'
 import type { Database } from '../../lib/database.types'
@@ -188,10 +189,15 @@ export default function WinePickerScreen() {
               }
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.row} onPress={() => select(item)}>
-                  <Text style={styles.rowTitle}>{item.name}</Text>
-                  <Text style={styles.rowMeta}>
-                    {[item.producer, item.vintage, item.region].filter(Boolean).join(' · ')}
-                  </Text>
+                  <View style={styles.rowAvatar}>
+                    <WineRowAvatar labelPhotoUrl={item.label_photo_url} size={40} accent={WINE} />
+                  </View>
+                  <View style={styles.rowText}>
+                    <Text style={styles.rowTitle}>{item.name}</Text>
+                    <Text style={styles.rowMeta}>
+                      {[item.producer, item.vintage, item.region].filter(Boolean).join(' · ')}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               )}
             />
@@ -272,12 +278,23 @@ const styles = StyleSheet.create({
   },
   divider: { height: 1, backgroundColor: '#E5D5C5' },
   row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     backgroundColor: '#FFFFFF',
     paddingVertical: 14,
     paddingHorizontal: 14,
     borderRadius: 12,
     marginBottom: 4,
   },
+  rowAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#FDF2F4',
+  },
+  rowText: { flex: 1 },
   rowTitle: { fontSize: 15, fontFamily: 'DMSans_600SemiBold', color: INK },
   rowMeta: { fontSize: 13, fontFamily: 'DMSans_400Regular', color: SUBTLE, marginTop: 2 },
   empty: { alignItems: 'center', paddingVertical: 40, gap: 16 },

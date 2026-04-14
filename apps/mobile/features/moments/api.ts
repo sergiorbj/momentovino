@@ -31,9 +31,20 @@ function contentTypeFor(ext: string): string {
 }
 
 export async function searchWines(query: string): Promise<WineRow[]> {
+  const { data: userData, error: userErr } = await supabase.auth.getUser()
+  if (userErr || !userData.user) return []
+
+  const userId = userData.user.id
   const trimmed = query.trim()
-  const builder = supabase.from('wines').select('*').order('name', { ascending: true }).limit(20)
-  const { data, error } = trimmed.length > 0 ? await builder.ilike('name', `%${trimmed}%`) : await builder
+  const builder = supabase
+    .from('wines')
+    .select('*')
+    .eq('created_by', userId)
+    .order('name', { ascending: true })
+    .limit(50)
+
+  const { data, error } =
+    trimmed.length > 0 ? await builder.ilike('name', `%${trimmed}%`) : await builder
   if (error) throw error
   return data ?? []
 }

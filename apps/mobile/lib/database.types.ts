@@ -109,6 +109,7 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          label_photo_url: string | null
           name: string
           producer: string | null
           region: string | null
@@ -120,6 +121,7 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          label_photo_url?: string | null
           name: string
           producer?: string | null
           region?: string | null
@@ -131,6 +133,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          label_photo_url?: string | null
           name?: string
           producer?: string | null
           region?: string | null

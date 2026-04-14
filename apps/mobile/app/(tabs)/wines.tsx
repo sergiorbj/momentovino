@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -11,8 +11,10 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 
+import { WineRowAvatar } from '../../components/WineRowAvatar'
 import { createWine, searchWines } from '../../features/moments/api'
 import { WINE_TYPES, type WineTypeCode } from '../../features/moments/schema'
 import type { Database } from '../../lib/database.types'
@@ -63,6 +65,24 @@ export default function WinesScreen() {
       clearTimeout(handle)
     }
   }, [query])
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false
+      setLoading(true)
+      searchWines(query)
+        .then((rows) => {
+          if (!cancelled) setResults(rows)
+        })
+        .catch(console.error)
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+      return () => {
+        cancelled = true
+      }
+    }, [query]),
+  )
 
   const resetForm = () => {
     setNewName('')
@@ -197,7 +217,7 @@ export default function WinesScreen() {
               renderItem={({ item }) => (
                 <View style={styles.row}>
                   <View style={styles.rowLeft}>
-                    <Ionicons name="wine" size={18} color={WINE_C} />
+                    <WineRowAvatar labelPhotoUrl={item.label_photo_url} size={40} accent={WINE_C} />
                   </View>
                   <View style={styles.rowBody}>
                     <Text style={styles.rowTitle}>{item.name}</Text>
@@ -300,9 +320,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   rowLeft: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
     backgroundColor: '#FDF2F4',
     alignItems: 'center',
     justifyContent: 'center',
