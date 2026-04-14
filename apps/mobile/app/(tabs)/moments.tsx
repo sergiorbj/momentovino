@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react'
-import { View, Text, TouchableOpacity, SafeAreaView, StyleSheet, Dimensions } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { StatusBar } from 'expo-status-bar'
 import { router, useFocusEffect } from 'expo-router'
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   title: {
-    fontSize: 30,
+    fontSize: 26,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: '#722F37',
   },

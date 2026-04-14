@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, SafeAreaView, Dimensions, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, Dimensions, StyleSheet } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useState } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 import { StatusBar } from 'expo-status-bar'

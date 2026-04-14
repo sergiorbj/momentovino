@@ -1,4 +1,4 @@
-import { Slot } from 'expo-router'
+import { Stack } from 'expo-router'
 import { useFonts } from 'expo-font'
 import {
   DMSans_400Regular,
@@ -44,5 +44,10 @@ export default function RootLayout() {
     return null
   }
 
-  return <Slot />
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="moments" />
+    </Stack>
+  )
 }
