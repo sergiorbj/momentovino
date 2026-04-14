@@ -8,8 +8,9 @@ import {
 } from '@expo-google-fonts/dm-sans'
 import { DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display'
 import * as SplashScreen from 'expo-splash-screen'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import '../global.css'
+import { ensureAnonymousSession } from '../lib/session'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -22,13 +23,24 @@ export default function RootLayout() {
     DMSerifDisplay_400Regular,
   })
 
+  const [sessionReady, setSessionReady] = useState(false)
+
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    ensureAnonymousSession()
+      .then(() => setSessionReady(true))
+      .catch((err) => {
+        console.error('Failed to establish Supabase session', err)
+        setSessionReady(true)
+      })
+  }, [])
+
+  useEffect(() => {
+    if ((fontsLoaded || fontError) && sessionReady) {
       SplashScreen.hideAsync()
     }
-  }, [fontsLoaded, fontError])
+  }, [fontsLoaded, fontError, sessionReady])
 
-  if (!fontsLoaded && !fontError) {
+  if ((!fontsLoaded && !fontError) || !sessionReady) {
     return null
   }
 

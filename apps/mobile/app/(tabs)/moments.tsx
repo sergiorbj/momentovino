@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, SafeAreaView, StyleSheet, Dimensions } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { StatusBar } from 'expo-status-bar'
+import { router } from 'expo-router'
 
 import WireframeGlobe from '../../components/globe/WireframeGlobe'
 import type { MomentPin } from '../../components/globe/types'
@@ -58,7 +59,11 @@ export default function MomentsScreen() {
         </View>
 
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.ctaBtn} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={styles.ctaBtn}
+            activeOpacity={0.85}
+            onPress={() => router.push('/moments/new')}
+          >
             <Text style={styles.ctaBtnText}>+ Register New Moment</Text>
           </TouchableOpacity>
         </View>
