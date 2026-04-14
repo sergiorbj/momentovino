@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'DMSerifDisplay_400Regular',
-    fontSize: 22,
+    fontSize: 26,
     color: WINE,
   },
   iconBtn: {
@@ -209,12 +209,12 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontFamily: 'DMSerifDisplay_400Regular',
-    fontSize: 20,
+    fontSize: 24,
     color: BROWN,
   },
   emptyText: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 18,
     color: SUBTLE,
     textAlign: 'center',
   },
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   },
   emptyCtaText: {
     fontFamily: 'DMSans_600SemiBold',
-    fontSize: 14,
+    fontSize: 18,
     color: '#FFFFFF',
   },
 })

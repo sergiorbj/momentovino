@@ -29,15 +29,9 @@ export const momentFormSchema = z.object({
   title: z.string().min(2, 'Title is required').max(80),
   description: z.string().max(500).optional(),
   happenedAt: z.string().min(1, 'Date is required'),
-  locationName: z.string().min(2, 'Location is required'),
-  latitude: z
-    .number({ message: 'Latitude is required' })
-    .min(-90)
-    .max(90),
-  longitude: z
-    .number({ message: 'Longitude is required' })
-    .min(-180)
-    .max(180),
+  locationName: z.string().min(2, 'Pick a location'),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
   wineId: z.string().uuid('Pick a wine'),
   rating: z.number().int().min(1).max(5).optional(),
   photos: z.array(photoInputSchema).min(1, 'Add at least one photo').max(3),

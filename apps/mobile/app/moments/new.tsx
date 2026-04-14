@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -19,9 +19,11 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as ImagePicker from 'expo-image-picker'
+import DateTimePickerModal from 'react-native-modal-datetime-picker'
 
 import { createMoment } from '../../features/moments/api'
 import { momentFormSchema, type MomentFormValues, type PhotoInput } from '../../features/moments/schema'
+import { searchLocations, type LocationResult } from '../../features/moments/location-api'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -59,6 +61,78 @@ export default function NewMomentScreen() {
 
   const photos = watch('photos')
   const rating = watch('rating')
+
+  // --- Date picker state ---
+  const [datePickerVisible, setDatePickerVisible] = useState(false)
+
+  const handleDateConfirm = useCallback(
+    (date: Date) => {
+      const iso = date.toISOString().slice(0, 10)
+      setValue('happenedAt', iso, { shouldValidate: true })
+      setDatePickerVisible(false)
+    },
+    [setValue]
+  )
+
+  const happenedAt = watch('happenedAt')
+  const displayDate = happenedAt
+    ? new Date(happenedAt + 'T00:00:00').toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : null
+
+  // --- Location picker state ---
+  const [locationQuery, setLocationQuery] = useState('')
+  const [locationResults, setLocationResults] = useState<LocationResult[]>([])
+  const [locationLoading, setLocationLoading] = useState(false)
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
+  const locationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const openLocationPicker = useCallback(() => {
+    setLocationPickerOpen(true)
+    setLocationQuery('')
+    setLocationLoading(true)
+    searchLocations('').then((r) => {
+      setLocationResults(r)
+      setLocationLoading(false)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!locationPickerOpen) return
+
+    if (locationTimerRef.current) clearTimeout(locationTimerRef.current)
+    setLocationLoading(true)
+
+    locationTimerRef.current = setTimeout(async () => {
+      try {
+        const results = await searchLocations(locationQuery)
+        setLocationResults(results)
+      } catch {
+        // keep existing results
+      } finally {
+        setLocationLoading(false)
+      }
+    }, 300)
+
+    return () => {
+      if (locationTimerRef.current) clearTimeout(locationTimerRef.current)
+    }
+  }, [locationQuery, locationPickerOpen])
+
+  const selectLocation = useCallback(
+    (loc: LocationResult) => {
+      setSelectedLocation(loc.displayName)
+      setValue('locationName', loc.displayName, { shouldValidate: true })
+      setValue('latitude', loc.latitude, { shouldValidate: true })
+      setValue('longitude', loc.longitude, { shouldValidate: true })
+      setLocationPickerOpen(false)
+    },
+    [setValue]
+  )
 
   const pickPhoto = async () => {
     if (photos.length >= 3) return
@@ -115,7 +189,6 @@ export default function NewMomentScreen() {
             <Ionicons name="close" size={22} color={WINE} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>New Moment</Text>
-          <View style={styles.iconBtn} />
         </View>
 
         <KeyboardAvoidingView
@@ -156,77 +229,81 @@ export default function NewMomentScreen() {
               />
             </Field>
 
-            <Field label="Date (YYYY-MM-DD)" error={formState.errors.happenedAt?.message}>
-              <Controller
-                control={control}
-                name="happenedAt"
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    style={styles.input}
-                    value={value}
-                    onChangeText={onChange}
-                    placeholder="2026-04-13"
-                    placeholderTextColor="#A98B7E"
-                    autoCapitalize="none"
-                  />
-                )}
+            <Field label="Date" error={formState.errors.happenedAt?.message}>
+              <Pressable style={styles.dateBtn} onPress={() => setDatePickerVisible(true)}>
+                <Ionicons name="calendar-outline" size={18} color={displayDate ? WINE : '#A98B7E'} />
+                <Text style={{ color: displayDate ? INK : '#A98B7E', fontFamily: 'DMSans_400Regular', fontSize: 15 }}>
+                  {displayDate ?? 'Pick a date'}
+                </Text>
+              </Pressable>
+              <DateTimePickerModal
+                isVisible={datePickerVisible}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                date={happenedAt ? new Date(happenedAt + 'T00:00:00') : new Date()}
+                maximumDate={new Date()}
+                onConfirm={handleDateConfirm}
+                onCancel={() => setDatePickerVisible(false)}
+                confirmTextIOS="Confirm"
+                cancelTextIOS="Cancel"
+                themeVariant="light"
               />
             </Field>
 
-            <Field label="Location name" error={formState.errors.locationName?.message}>
-              <Controller
-                control={control}
-                name="locationName"
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    style={styles.input}
-                    value={value}
-                    onChangeText={onChange}
-                    placeholder="Mendoza, Argentina"
-                    placeholderTextColor="#A98B7E"
-                  />
-                )}
-              />
+            <Field label="Location" error={formState.errors.locationName?.message}>
+              {locationPickerOpen ? (
+                <View>
+                  <View style={styles.locSearchWrap}>
+                    <Ionicons name="search" size={16} color={SUBTLE} />
+                    <TextInput
+                      style={styles.locSearchInput}
+                      value={locationQuery}
+                      onChangeText={setLocationQuery}
+                      placeholder="Search city or country…"
+                      placeholderTextColor="#A98B7E"
+                      autoFocus
+                    />
+                    {locationLoading && <ActivityIndicator size="small" color={WINE} />}
+                    <TouchableOpacity onPress={() => setLocationPickerOpen(false)}>
+                      <Ionicons name="close-circle" size={20} color={SUBTLE} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.locResults}>
+                    <ScrollView nestedScrollEnabled style={styles.locList} keyboardShouldPersistTaps="handled">
+                      {locationResults.length === 0 && !locationLoading && (
+                        <Text style={styles.locEmpty}>No results found</Text>
+                      )}
+                      {locationResults.map((item, index) => (
+                        <View key={item.id}>
+                          {index > 0 && <View style={styles.locDivider} />}
+                          <TouchableOpacity
+                            style={styles.locRow}
+                            onPress={() => selectLocation(item)}
+                          >
+                            <Ionicons name="location-outline" size={16} color={WINE} />
+                            <View style={styles.locRowText}>
+                              <Text style={styles.locCity}>{item.city || item.displayName.split(',')[0]}</Text>
+                              <Text style={styles.locCountry}>{item.country}</Text>
+                            </View>
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </View>
+                </View>
+              ) : (
+                <Pressable style={styles.input} onPress={openLocationPicker}>
+                  <Text
+                    style={{
+                      color: selectedLocation ? INK : '#A98B7E',
+                      fontFamily: 'DMSans_400Regular',
+                    }}
+                  >
+                    {selectedLocation ?? 'Tap to search a city…'}
+                  </Text>
+                </Pressable>
+              )}
             </Field>
-
-            <View style={styles.row}>
-              <View style={styles.half}>
-                <Field label="Latitude" error={formState.errors.latitude?.message}>
-                  <Controller
-                    control={control}
-                    name="latitude"
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        value={typeof value === 'number' && !Number.isNaN(value) ? String(value) : ''}
-                        onChangeText={(t) => onChange(t ? Number(t) : Number.NaN)}
-                        placeholder="-32.89"
-                        placeholderTextColor="#A98B7E"
-                        keyboardType="numbers-and-punctuation"
-                      />
-                    )}
-                  />
-                </Field>
-              </View>
-              <View style={styles.half}>
-                <Field label="Longitude" error={formState.errors.longitude?.message}>
-                  <Controller
-                    control={control}
-                    name="longitude"
-                    render={({ field: { onChange, value } }) => (
-                      <TextInput
-                        style={styles.input}
-                        value={typeof value === 'number' && !Number.isNaN(value) ? String(value) : ''}
-                        onChangeText={(t) => onChange(t ? Number(t) : Number.NaN)}
-                        placeholder="-68.85"
-                        placeholderTextColor="#A98B7E"
-                        keyboardType="numbers-and-punctuation"
-                      />
-                    )}
-                  />
-                </Field>
-              </View>
-            </View>
 
             <Field label="Wine" error={formState.errors.wineId?.message}>
               <Pressable
@@ -352,7 +429,7 @@ const styles = StyleSheet.create({
   scroll: { padding: 20, paddingBottom: 120 },
   field: { marginBottom: 16 },
   label: {
-    fontSize: 13,
+    fontSize: 16,
     fontFamily: 'DMSans_600SemiBold',
     color: SUBTLE,
     marginBottom: 6,
@@ -367,8 +444,15 @@ const styles = StyleSheet.create({
     color: INK,
   },
   multiline: { minHeight: 100, textAlignVertical: 'top' },
-  row: { flexDirection: 'row', gap: 12 },
-  half: { flex: 1 },
+  dateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+  },
   stars: { flexDirection: 'row', gap: 8 },
   starBtn: { padding: 4 },
   photosRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
@@ -436,5 +520,56 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'DMSans_600SemiBold',
+  },
+  // Location picker styles
+  locSearchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  locSearchInput: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: 'DMSans_400Regular',
+    color: INK,
+    padding: 0,
+  },
+  locResults: {
+    marginTop: 6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  locList: { maxHeight: 240 },
+  locDivider: { height: 1, backgroundColor: '#F0E6DD' },
+  locRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  locRowText: { flex: 1 },
+  locCity: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: INK,
+  },
+  locCountry: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 12,
+    color: SUBTLE,
+    marginTop: 1,
+  },
+  locEmpty: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 13,
+    color: SUBTLE,
+    textAlign: 'center',
+    paddingVertical: 20,
   },
 })
