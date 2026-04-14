@@ -20,12 +20,13 @@ type TabBarProps = {
 }
 
 const WINE = '#722F37'
-const BAR_BG = '#FFFFFF'
+const BAR_BG = '#F5EBE0'
 
 const TABS: Record<string, { icon: IconName; label: string }> = {
   moments: { icon: 'globe', label: 'Moments' },
   family: { icon: 'people', label: 'Family' },
   scanner: { icon: 'camera', label: 'Scanner' },
+  wines: { icon: 'wine', label: 'Wines' },
   profile: { icon: 'person', label: 'Profile' },
 }
 
@@ -76,6 +77,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="moments" options={{ title: 'Moments' }} />
       <Tabs.Screen name="family" options={{ title: 'Family' }} />
       <Tabs.Screen name="scanner" options={{ title: 'Scanner' }} />
+      <Tabs.Screen name="wines" options={{ title: 'Wines' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
     </Tabs>
   )
@@ -89,17 +91,16 @@ const styles = StyleSheet.create({
   },
   inner: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-evenly',
     alignItems: 'center',
-    gap: 6,
+    paddingHorizontal: 8,
   },
   tab: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 14,
-    minWidth: 64,
   },
   tabActive: {
     backgroundColor: BAR_BG,
