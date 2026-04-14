@@ -4,6 +4,15 @@ import type { MomentFormValues, WineInput } from './schema'
 
 type WineRow = Database['public']['Tables']['wines']['Row']
 type MomentRow = Database['public']['Tables']['moments']['Row']
+type MomentPhotoRow = Database['public']['Tables']['moment_photos']['Row']
+
+export type MomentWithWine = MomentRow & { wine_name: string | null }
+
+export interface MomentDetail {
+  moment: MomentRow
+  wine: WineRow | null
+  photos: MomentPhotoRow[]
+}
 
 const BUCKET = 'moment-photos'
 
@@ -123,4 +132,47 @@ export async function createMoment(values: MomentFormValues): Promise<MomentRow>
   }
 
   return moment
+}
+
+export async function fetchMoments(): Promise<MomentWithWine[]> {
+  const { data, error } = await supabase
+    .from('moments')
+    .select('*, wines(name)')
+    .order('happened_at', { ascending: false })
+
+  if (error) throw error
+
+  return (data ?? []).map((row: any) => ({
+    ...row,
+    wine_name: row.wines?.name ?? null,
+    wines: undefined,
+  }))
+}
+
+export async function fetchMomentDetail(id: string): Promise<MomentDetail> {
+  const { data: moment, error: momentErr } = await supabase
+    .from('moments')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (momentErr || !moment) throw momentErr ?? new Error('Moment not found')
+
+  let wine: WineRow | null = null
+  if (moment.wine_id) {
+    const { data } = await supabase
+      .from('wines')
+      .select('*')
+      .eq('id', moment.wine_id)
+      .single()
+    wine = data ?? null
+  }
+
+  const { data: photos, error: photosErr } = await supabase
+    .from('moment_photos')
+    .select('*')
+    .eq('moment_id', id)
+    .order('position', { ascending: true })
+  if (photosErr) throw photosErr
+
+  return { moment, wine, photos: photos ?? [] }
 }

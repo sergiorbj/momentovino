@@ -3,7 +3,15 @@ import { Alert } from 'react-native'
 import { router } from 'expo-router'
 
 import type { Database } from '../../lib/database.types'
-import { createMoment, createWine, searchWines } from './api'
+import {
+  createMoment,
+  createWine,
+  fetchMomentDetail,
+  fetchMoments,
+  searchWines,
+  type MomentDetail,
+  type MomentWithWine,
+} from './api'
 import type { MomentFormValues, WineInput } from './schema'
 
 type WineRow = Database['public']['Tables']['wines']['Row']
@@ -97,4 +105,64 @@ export function useCreateWine() {
   }, [])
 
   return { submit, creating } as const
+}
+
+/**
+ * Fetches the current user's moments sorted by happened_at desc.
+ * Provides `refresh()` for pull-to-refresh.
+ */
+export function useMoments() {
+  const [moments, setMoments] = useState<MomentWithWine[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await fetchMoments()
+      setMoments(data)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to load moments'))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  return { moments, loading, error, refresh: load } as const
+}
+
+/**
+ * Fetches a single moment with its wine and photos.
+ */
+export function useMomentDetail(id: string) {
+  const [data, setData] = useState<MomentDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    fetchMomentDetail(id)
+      .then((result) => {
+        if (!cancelled) setData(result)
+      })
+      .catch((err) => console.error('Failed to load moment detail', err))
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  return {
+    moment: data?.moment ?? null,
+    wine: data?.wine ?? null,
+    photos: data?.photos ?? [],
+    loading,
+  } as const
 }

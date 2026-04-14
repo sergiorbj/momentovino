@@ -1,7 +1,15 @@
+import { useCallback, useRef } from 'react'
 import { View, Text, TouchableOpacity, SafeAreaView, StyleSheet, Dimensions } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { StatusBar } from 'expo-status-bar'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+  runOnJS,
+} from 'react-native-reanimated'
 
 import WireframeGlobe from '../../components/globe/WireframeGlobe'
 import type { MomentPin } from '../../components/globe/types'
@@ -17,10 +25,40 @@ const MOCK_PINS: MomentPin[] = [
   { id: '5', latitude: -34.6, longitude: -58.4, label: 'Buenos Aires' },
 ]
 
+const ANIM_DURATION = 350
+
 export default function MomentsScreen() {
-  const handleGlobePress = () => {
-    // TODO: navigate to moments list screen
-  }
+  const globeScale = useSharedValue(1)
+  const globeOpacity = useSharedValue(1)
+  const animating = useRef(false)
+
+  useFocusEffect(
+    useCallback(() => {
+      globeScale.value = 1
+      globeOpacity.value = 1
+      animating.current = false
+    }, [globeScale, globeOpacity])
+  )
+
+  const navigateToList = useCallback(() => {
+    router.push('/moments/list')
+  }, [])
+
+  const handleGlobePress = useCallback(() => {
+    if (animating.current) return
+    animating.current = true
+
+    const timingCfg = { duration: ANIM_DURATION, easing: Easing.out(Easing.cubic) }
+    globeScale.value = withTiming(2.5, timingCfg)
+    globeOpacity.value = withTiming(0, timingCfg, () => {
+      runOnJS(navigateToList)()
+    })
+  }, [globeScale, globeOpacity, navigateToList])
+
+  const globeAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: globeScale.value }],
+    opacity: globeOpacity.value,
+  }))
 
   return (
     <View style={styles.container}>
@@ -33,13 +71,13 @@ export default function MomentsScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.globeWrapper}>
+        <Animated.View style={[styles.globeWrapper, globeAnimatedStyle]}>
           <WireframeGlobe
             pins={MOCK_PINS}
             onPress={handleGlobePress}
             config={{ size: GLOBE_SIZE }}
           />
-        </View>
+        </Animated.View>
 
         <View style={styles.stats}>
           <View style={styles.statItem}>
