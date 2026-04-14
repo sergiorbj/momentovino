@@ -9,7 +9,7 @@ import requests
 from _api_common import auth_bearer_user_id, load_env, send_json
 
 _API_DIR = Path(__file__).resolve().parent
-_PROMPT_JSON = _API_DIR / "jsons" / "scan-wine-label.json"
+_PROMPT_JSON = _API_DIR / "prompts" / "scan-wine-label.json"
 _scan_wine_label_prompt_cache: Optional[str] = None
 
 
@@ -25,7 +25,7 @@ def _load_scan_wine_label_prompt() -> str:
     elif isinstance(lines, str):
         _scan_wine_label_prompt_cache = lines
     else:
-        raise ValueError("jsons/scan-wine-label.json must contain a string or array \"prompt\"")
+        raise ValueError("prompts/scan-wine-label.json must contain a string or array \"prompt\"")
     return _scan_wine_label_prompt_cache
 
 
