@@ -1,5 +1,7 @@
 -- Family groups: one owned family per user (owner_id unique), members, email invitations.
 
+create extension if not exists "uuid-ossp";
+
 create table public.families (
   id uuid primary key default uuid_generate_v4(),
   name text not null,

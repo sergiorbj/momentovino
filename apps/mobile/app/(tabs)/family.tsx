@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   RefreshControl,
@@ -77,37 +77,43 @@ export default function FamilyScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [selfId, setSelfId] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+  /** Bumps on blur so in-flight fetches from a previous visit cannot overwrite state after create/back. */
+  const fetchGenerationRef = useRef(0)
 
   const load = useCallback(async () => {
+    const gen = ++fetchGenerationRef.current
     setLoadError(null)
-    const { data } = await supabase.auth.getUser()
-    setSelfId(data.user?.id ?? null)
-    const d = await getFamilyDashboard()
-    setDash(d)
+    try {
+      const { data } = await supabase.auth.getUser()
+      if (gen !== fetchGenerationRef.current) return
+      setSelfId(data.user?.id ?? null)
+      const d = await getFamilyDashboard()
+      if (gen !== fetchGenerationRef.current) return
+      setDash(d)
+    } catch (e) {
+      console.error(e)
+      if (gen !== fetchGenerationRef.current) return
+      setLoadError(e instanceof Error ? e.message : 'Could not load family')
+      setDash({
+        family: null,
+        members: [],
+        pendingInvitations: [],
+        isOwner: false,
+      })
+    }
   }, [])
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false
       setLoading(true)
-      load()
-        .catch((e) => {
-          console.error(e)
-          if (!cancelled) {
-            setLoadError(e instanceof Error ? e.message : 'Could not load family')
-            setDash({
-              family: null,
-              members: [],
-              pendingInvitations: [],
-              isOwner: false,
-            })
-          }
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false)
-        })
+      load().finally(() => {
+        if (!cancelled) setLoading(false)
+      })
       return () => {
         cancelled = true
+        fetchGenerationRef.current += 1
+        setLoading(false)
       }
     }, [load]),
   )

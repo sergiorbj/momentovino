@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler
 from typing import Any, Optional
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 import requests
 
@@ -41,14 +41,15 @@ def _admin_user_email(url: str, key: str, user_id: str) -> Optional[str]:
     return (data.get("email") or "").strip().lower() or None
 
 
-def _find_user_id_by_email_rpc(url: str, key: str, email: str) -> Optional[str]:
+def _find_user_id_by_email_rpc(url: str, key: str, email_norm: str) -> Optional[str]:
     r = requests.post(
         f"{url}/rest/v1/rpc/find_user_id_by_email",
         headers=_sb_headers_json(url, key),
-        json={"lookup_email": email.strip()},
+        json={"lookup_email": email_norm},
         timeout=30,
     )
     if r.status_code != 200:
+        print(f"[family] find_user_id_by_email RPC status={r.status_code} body={r.text[:500]}")
         return None
     out = r.json()
     if out is None or out is False:
@@ -56,6 +57,152 @@ def _find_user_id_by_email_rpc(url: str, key: str, email: str) -> Optional[str]:
     if isinstance(out, str) and len(out) > 10:
         return out
     return None
+
+
+def _find_user_id_by_email_admin_list(url: str, key: str, email_norm: str) -> Optional[str]:
+    """Fallback when RPC is missing or errors: paginate GoTrue admin users and match email (case-insensitive)."""
+    page = 1
+    per_page = 200
+    max_pages = 10
+    while page <= max_pages:
+        r = requests.get(
+            f"{url}/auth/v1/admin/users",
+            headers={"Authorization": f"Bearer {key}", "apikey": key},
+            params={"page": str(page), "per_page": str(per_page)},
+            timeout=30,
+        )
+        if r.status_code != 200:
+            print(f"[family] admin list users status={r.status_code} page={page} body={r.text[:300]}")
+            return None
+        data = r.json()
+        users = data.get("users") if isinstance(data, dict) else None
+        if not isinstance(users, list):
+            return None
+        for u in users:
+            if not isinstance(u, dict):
+                continue
+            em = (u.get("email") or "").strip().lower()
+            if em == email_norm:
+                uid = u.get("id")
+                return str(uid) if uid else None
+        if len(users) < per_page:
+            break
+        page += 1
+    return None
+
+
+def _resolve_auth_user_id_by_email(url: str, key: str, email_norm: str) -> Optional[str]:
+    """1) RPC on DB (fast). 2) Admin API list (reliable if RPC absent). If still none, caller sends email invite."""
+    uid = _find_user_id_by_email_rpc(url, key, email_norm)
+    if uid:
+        return uid
+    return _find_user_id_by_email_admin_list(url, key, email_norm)
+
+
+def _iter_admin_users(url: str, key: str, max_pages: int = 10, per_page: int = 150):
+    page = 1
+    while page <= max_pages:
+        r = requests.get(
+            f"{url}/auth/v1/admin/users",
+            headers={"Authorization": f"Bearer {key}", "apikey": key},
+            params={"page": str(page), "per_page": str(per_page)},
+            timeout=30,
+        )
+        if r.status_code != 200:
+            print(f"[family] admin list users status={r.status_code} page={page} body={r.text[:300]}")
+            return
+        data = r.json()
+        users = data.get("users") if isinstance(data, dict) else None
+        if not isinstance(users, list):
+            return
+        for u in users:
+            if isinstance(u, dict):
+                yield u
+        if len(users) < per_page:
+            break
+        page += 1
+
+
+def _display_name_from_auth_user(u: dict[str, Any], email: str) -> str:
+    meta = u.get("user_metadata")
+    if isinstance(meta, dict):
+        for k in ("full_name", "name", "display_name"):
+            v = meta.get(k)
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+    if "@" in email:
+        local = email.split("@", 1)[0]
+        return local.replace(".", " ").replace("_", " ").strip().title() or email
+    return email
+
+
+def _canonical_username_from_user(u: dict[str, Any], email: str) -> str:
+    """Login-style handle: metadata username fields, else email local-part (lowercase, no @)."""
+    meta = u.get("user_metadata")
+    if isinstance(meta, dict):
+        for k in ("username", "preferred_username", "user_name"):
+            v = meta.get(k)
+            if isinstance(v, str) and v.strip():
+                return v.strip().lower().lstrip("@")
+    if "@" in email:
+        return email.split("@", 1)[0].lower()
+    return email.strip().lower()
+
+
+def _normalize_username_search_query(q_raw: str) -> tuple[Optional[str], Optional[str]]:
+    """Returns (needle_lower, error_message). Username only — no @, no email."""
+    q = q_raw.strip().lower()
+    if len(q) < 2:
+        return None, "Use at least 2 characters"
+    if " " in q or "\t" in q or "\n" in q:
+        return None, "Username cannot contain spaces"
+    if "@" in q:
+        return None, "Username only — no @ or email addresses"
+    if len(q) > 32:
+        return None, "Username too long"
+    if not re.match(r"^[a-z0-9._-]+$", q):
+        return None, "Username may only use letters, numbers, dot, underscore, hyphen"
+    return q, None
+
+
+def _username_needle_matches_canonical(canonical: str, needle: str) -> bool:
+    if not canonical or not needle:
+        return False
+    if canonical == needle:
+        return True
+    if len(needle) >= 2 and canonical.startswith(needle):
+        return True
+    return False
+
+
+def _search_platform_users_for_invite(
+    url: str, key: str, needle: str, exclude_user_ids: set[str], limit: int = 12
+) -> list[dict[str, Any]]:
+    matches: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for u in _iter_admin_users(url, key, max_pages=10, per_page=150):
+        uid = str(u.get("id") or "")
+        if not uid or uid in exclude_user_ids or uid in seen:
+            continue
+        email = (u.get("email") or "").strip().lower()
+        if not email:
+            continue
+        canonical = _canonical_username_from_user(u, email)
+        if not _username_needle_matches_canonical(canonical, needle):
+            continue
+        dn = _display_name_from_auth_user(u, email)
+        seen.add(uid)
+        matches.append(
+            {
+                "user_id": uid,
+                "email": email,
+                "display_name": dn,
+                "username": canonical,
+            }
+        )
+        if len(matches) >= limit:
+            break
+    return matches
 
 
 def _owned_family(url: str, key: str, user_id: str) -> Optional[dict[str, Any]]:
@@ -174,11 +321,11 @@ def _send_resend_invite(
     payload = {
         "from": from_email,
         "to": [to_email],
-        "subject": f"Convite: junta-te à família {family_name} no MomentoVino",
+        "subject": f"Invitation: join the {family_name} family on MomentoVino",
         "html": (
-            f"<p>Foste convidado/a para a família <strong>{family_name}</strong> no MomentoVino.</p>"
-            f'<p><a href="{invite_link}">Aceitar convite</a></p>'
-            "<p>Se o botão não funcionar, copia este link para o browser ou app:</p>"
+            f"<p>You have been invited to join the <strong>{family_name}</strong> family on MomentoVino.</p>"
+            f'<p><a href="{invite_link}">Accept invitation</a></p>'
+            "<p>If the button does not work, copy this link into your browser or app:</p>"
             f"<p>{invite_link}</p>"
         ),
     }
@@ -204,15 +351,40 @@ def _read_json(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        path = _norm_path(self)
-        if path != "/api/family":
-            send_json(self, 404, {"error": "Not found"})
-            return
+        parsed = urlparse(self.path)
+        path_only = parsed.path.rstrip("/") or "/"
         uid, err = auth_bearer_user_id(self)
         if err:
             send_json(self, err[0], err[1])
             return
         url, key = supabase_config()
+
+        if path_only == "/api/family/members/search":
+            q = (parse_qs(parsed.query).get("q") or [""])[0].strip()
+            needle, q_err = _normalize_username_search_query(q)
+            if q_err is not None or needle is None:
+                send_json(self, 400, {"error": q_err or "Invalid username search"})
+                return
+            fam, _ = _resolve_family(url, key, uid)
+            if not fam:
+                send_json(self, 403, {"error": "Create a family first"})
+                return
+            fid = fam["id"]
+            if not _is_admin(url, key, uid, fid):
+                send_json(self, 403, {"error": "Only family admins can search"})
+                return
+            members_raw = _list_members(url, key, fid)
+            exclude: set[str] = {str(uid)}
+            for m in members_raw:
+                if isinstance(m, dict) and m.get("user_id"):
+                    exclude.add(str(m["user_id"]))
+            matches = _search_platform_users_for_invite(url, key, needle, exclude, limit=12)
+            send_json(self, 200, {"matches": matches})
+            return
+
+        if path_only != "/api/family":
+            send_json(self, 404, {"error": "Not found"})
+            return
         fam, is_owner = _resolve_family(url, key, uid)
         if not fam:
             send_json(self, 200, {"family": None, "members": [], "pendingInvitations": [], "isOwner": False})
@@ -327,7 +499,7 @@ class handler(BaseHTTPRequestHandler):
                 send_json(self, 403, {"error": "Only family admins can invite members"})
                 return
 
-            target_uid = _find_user_id_by_email_rpc(url, key, email_norm)
+            target_uid = _resolve_auth_user_id_by_email(url, key, email_norm)
             if target_uid:
                 if target_uid == uid:
                     send_json(self, 400, {"error": "You are already in this family"})

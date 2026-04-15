@@ -39,6 +39,14 @@ export type FamilyDashboard = {
   isOwner: boolean
 }
 
+/** Match from GET /family/members/search (profile-style card on invite screen). */
+export type FamilyInviteUserMatch = {
+  user_id: string
+  email: string
+  display_name: string
+  username: string
+}
+
 export async function getFamilyDashboard(): Promise<FamilyDashboard> {
   const token = await getAccessToken()
   const res = await fetch(`${getApiBaseUrl()}/family`, {
@@ -83,6 +91,19 @@ export async function updateFamily(name: string): Promise<{ family: FamilyRow }>
     throw new Error((body as { error?: string }).error ?? `Could not update family (${res.status})`)
   }
   return res.json() as Promise<{ family: FamilyRow }>
+}
+
+export async function searchFamilyInviteTargets(query: string): Promise<{ matches: FamilyInviteUserMatch[] }> {
+  const token = await getAccessToken()
+  const q = encodeURIComponent(query.trim())
+  const res = await fetch(`${getApiBaseUrl()}/family/members/search?q=${q}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error((body as { error?: string }).error ?? `Search failed (${res.status})`)
+  }
+  return res.json() as Promise<{ matches: FamilyInviteUserMatch[] }>
 }
 
 export async function inviteMemberByEmail(email: string): Promise<
