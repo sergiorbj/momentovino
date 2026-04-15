@@ -49,6 +49,7 @@ export default function RootLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="moments" />
       <Stack.Screen name="scanner" />
+      <Stack.Screen name="family" />
     </Stack>
   )
 }

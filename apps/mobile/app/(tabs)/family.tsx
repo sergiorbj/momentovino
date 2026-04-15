@@ -1,17 +1,29 @@
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
+import { useCallback, useState } from 'react'
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { StatusBar } from 'expo-status-bar'
-import { useState } from 'react'
+import { router, useFocusEffect } from 'expo-router'
 
-const MEMBERS = [
-  { id: 1, name: 'Carlos Silva', role: 'Admin', moments: 23, emoji: '👨' },
-  { id: 2, name: 'Maria Silva', role: 'Member', moments: 18, emoji: '👩' },
-  { id: 3, name: 'Pedro Silva', role: 'Member', moments: 4, emoji: '👦' },
-  { id: 4, name: 'Ana Silva', role: 'Member', moments: 2, emoji: '👧' },
-]
+import type { FamilyDashboard, FamilyMemberRow } from '../../features/family/api'
+import { getFamilyDashboard } from '../../features/family/api'
+import { supabase } from '../../lib/supabase'
 
-function EmptyFamily({ onCreate }: { onCreate: () => void }) {
+const WINE = '#722F37'
+const INK = '#3F2A2E'
+const SUBTLE = '#C2703E'
+const BG = '#F5EBE0'
+const CTA_BG = '#5C4033'
+
+function EmptyNoFamily({ onCreate }: { onCreate: () => void }) {
   return (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconWrapper}>
@@ -28,75 +40,195 @@ function EmptyFamily({ onCreate }: { onCreate: () => void }) {
   )
 }
 
-function FamilyGroup() {
+function EmptyMembersCallout() {
   return (
-    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-      {/* Family card */}
-      <View style={styles.familyCard}>
-        <View style={styles.familyBanner}>
-          <Text style={styles.familyBannerEmoji}>👨‍👩‍👧‍👦</Text>
-        </View>
-        <View style={styles.familyCardBody}>
-          <Text style={styles.familyName}>Silva Family</Text>
-          <Text style={styles.familyMeta}>Created Jan 2024 · 47 moments shared</Text>
-        </View>
-      </View>
+    <View style={styles.callout}>
+      <Ionicons name="people-outline" size={22} color={WINE} />
+      <Text style={styles.calloutText}>
+        You are the only member so far. Invite someone to share this space.
+      </Text>
+    </View>
+  )
+}
 
-      {/* Members */}
-      <Text style={styles.sectionTitle}>Members (4)</Text>
-      <View style={styles.membersList}>
-        {MEMBERS.map((member, index) => (
-          <TouchableOpacity
-            key={member.id}
-            style={[styles.memberRow, index < MEMBERS.length - 1 && styles.memberRowBorder]}
-            activeOpacity={0.7}
-          >
-            <View style={styles.memberAvatar}>
-              <Text style={styles.memberAvatarEmoji}>{member.emoji}</Text>
-            </View>
-            <View style={styles.memberInfo}>
-              <Text style={styles.memberName}>{member.name}</Text>
-              <Text style={styles.memberMeta}>
-                {member.role} · {member.moments} moments
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#C2703E" />
-          </TouchableOpacity>
-        ))}
+function MemberRow({ member, isSelf }: { member: FamilyMemberRow; isSelf: boolean }) {
+  const label =
+    isSelf ? 'You' : member.email || member.user_id.slice(0, 8) + '…'
+  const roleLabel = member.role === 'admin' ? 'Admin' : 'Member'
+  return (
+    <View style={styles.memberRow}>
+      <View style={styles.memberAvatar}>
+        <Ionicons name="person" size={22} color={WINE} />
       </View>
-
-      {/* Invite */}
-      <TouchableOpacity style={styles.inviteBtn} activeOpacity={0.85}>
-        <Ionicons name="person-add-outline" size={18} color="#722F37" />
-        <Text style={styles.inviteBtnText}>Invite Member</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      <View style={styles.memberInfo}>
+        <Text style={styles.memberName}>{label}</Text>
+        <Text style={styles.memberMeta}>
+          {roleLabel}
+          {isSelf ? ' · this device' : ''}
+        </Text>
+      </View>
+    </View>
   )
 }
 
 export default function FamilyScreen() {
-  const [hasFamily, setHasFamily] = useState(true)
+  const [dash, setDash] = useState<FamilyDashboard | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [selfId, setSelfId] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setLoadError(null)
+    const { data } = await supabase.auth.getUser()
+    setSelfId(data.user?.id ?? null)
+    const d = await getFamilyDashboard()
+    setDash(d)
+  }, [])
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false
+      setLoading(true)
+      load()
+        .catch((e) => {
+          console.error(e)
+          if (!cancelled) {
+            setLoadError(e instanceof Error ? e.message : 'Could not load family')
+            setDash({
+              family: null,
+              members: [],
+              pendingInvitations: [],
+              isOwner: false,
+            })
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+      return () => {
+        cancelled = true
+      }
+    }, [load]),
+  )
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      await load()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setRefreshing(false)
+    }
+  }, [load])
+
+  const hasFamily = Boolean(dash?.family)
+  const soloAdmin = hasFamily && Boolean(dash?.isOwner) && (dash?.members.length ?? 0) === 1
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
       <SafeAreaView style={styles.safe}>
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Family</Text>
-          <TouchableOpacity style={styles.settingsBtn}>
-            <Ionicons name="settings-outline" size={20} color="#722F37" />
-          </TouchableOpacity>
+          {hasFamily && dash?.isOwner ? (
+            <TouchableOpacity
+              style={styles.settingsBtn}
+              onPress={() =>
+                router.push({
+                  pathname: '/family/edit',
+                  params: { name: dash!.family!.name },
+                })
+              }
+            >
+              <Ionicons name="settings-outline" size={20} color={WINE} />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 40 }} />
+          )}
         </View>
 
-        {hasFamily ? <FamilyGroup /> : <EmptyFamily onCreate={() => setHasFamily(true)} />}
+        {loadError ? (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorBannerText}>{loadError}</Text>
+          </View>
+        ) : null}
+
+        {loading ? (
+          <View style={styles.loader}>
+            <ActivityIndicator size="large" color={WINE} />
+          </View>
+        ) : !hasFamily ? (
+          <EmptyNoFamily onCreate={() => router.push('/family/create')} />
+        ) : (
+          <ScrollView
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={WINE} />}
+          >
+            <View style={styles.familyCard}>
+              <View style={styles.familyBanner}>
+                <Text style={styles.familyBannerEmoji}>👨‍👩‍👧‍👦</Text>
+              </View>
+              <View style={styles.familyCardBody}>
+                <Text style={styles.familyName}>{dash!.family!.name}</Text>
+                <Text style={styles.familyMeta}>
+                  {dash!.members.length} member{dash!.members.length === 1 ? '' : 's'}
+                  {dash!.pendingInvitations.length > 0
+                    ? ` · ${dash!.pendingInvitations.length} pending invite${dash!.pendingInvitations.length === 1 ? '' : 's'}`
+                    : ''}
+                </Text>
+              </View>
+            </View>
+
+            {soloAdmin ? <EmptyMembersCallout /> : null}
+
+            <Text style={styles.sectionTitle}>Members ({dash!.members.length})</Text>
+            <View style={styles.membersList}>
+              {dash!.members.map((m, index) => (
+                <View
+                  key={m.id}
+                  style={[styles.memberRowWrap, index < dash!.members.length - 1 && styles.memberRowBorder]}
+                >
+                  <MemberRow member={m} isSelf={m.user_id === selfId} />
+                </View>
+              ))}
+            </View>
+
+            {dash!.pendingInvitations.length > 0 && dash!.isOwner ? (
+              <>
+                <Text style={styles.sectionTitle}>Pending invitations</Text>
+                <View style={styles.membersList}>
+                  {dash!.pendingInvitations.map((inv) => (
+                    <View key={inv.id} style={styles.pendingRow}>
+                      <Text style={styles.memberName}>{inv.email}</Text>
+                      <Text style={styles.memberMeta}>Expires {new Date(inv.expires_at).toLocaleDateString()}</Text>
+                    </View>
+                  ))}
+                </View>
+              </>
+            ) : null}
+
+            {dash!.isOwner ? (
+              <TouchableOpacity
+                style={styles.inviteCta}
+                activeOpacity={0.85}
+                onPress={() => router.push('/family/invite-member')}
+              >
+                <Ionicons name="person-add-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.inviteCtaText}>Invite member</Text>
+              </TouchableOpacity>
+            ) : null}
+          </ScrollView>
+        )}
       </SafeAreaView>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5EBE0' },
+  container: { flex: 1, backgroundColor: BG },
   safe: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -109,18 +241,35 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 30,
     fontFamily: 'DMSerifDisplay_400Regular',
-    color: '#722F37',
+    color: WINE,
+  },
+  errorBanner: {
+    marginHorizontal: 24,
+    marginBottom: 8,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: '#FEE2E2',
+  },
+  errorBannerText: {
+    color: '#991B1B',
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
   },
   settingsBtn: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
-    justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#000', shadowOpacity: 0.08,
-    shadowRadius: 6, shadowOffset: { width: 0, height: 2 },
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
+  loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
-  // Empty state
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -128,18 +277,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyIconWrapper: {
-    width: 100, height: 100, borderRadius: 50,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: '#FFFFFF',
-    justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 20,
-    shadowColor: '#000', shadowOpacity: 0.06,
-    shadowRadius: 8, elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   emptyEmoji: { fontSize: 44 },
   emptyTitle: {
     fontSize: 22,
     fontFamily: 'DMSerifDisplay_400Regular',
-    color: '#722F37',
+    color: WINE,
     marginBottom: 10,
   },
   emptySubtitle: {
@@ -151,10 +305,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   createBtn: {
-    backgroundColor: '#722F37',
-    borderRadius: 50, height: 52,
+    backgroundColor: WINE,
+    borderRadius: 50,
+    height: 52,
     paddingHorizontal: 40,
-    justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   createBtnText: {
     color: '#FFFFFF',
@@ -162,16 +318,17 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_600SemiBold',
   },
 
-  // Family group
   scrollView: { flex: 1, paddingHorizontal: 24 },
   familyCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 24,
+    marginBottom: 16,
     marginTop: 8,
-    shadowColor: '#000', shadowOpacity: 0.06,
-    shadowRadius: 8, elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   familyBanner: {
     height: 120,
@@ -184,44 +341,65 @@ const styles = StyleSheet.create({
   familyName: {
     fontSize: 20,
     fontFamily: 'DMSerifDisplay_400Regular',
-    color: '#722F37',
+    color: WINE,
     marginBottom: 4,
   },
   familyMeta: {
     fontSize: 13,
     fontFamily: 'DMSans_400Regular',
-    color: '#C2703E',
+    color: SUBTLE,
     textAlign: 'center',
+  },
+  callout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+  },
+  calloutText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    color: INK,
+    lineHeight: 20,
   },
   sectionTitle: {
     fontSize: 17,
     fontFamily: 'DMSans_600SemiBold',
-    color: '#722F37',
+    color: WINE,
     marginBottom: 12,
   },
   membersList: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginBottom: 16,
-    shadowColor: '#000', shadowOpacity: 0.06,
-    shadowRadius: 8, elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  memberRowWrap: {},
+  memberRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0E8E0',
   },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
   },
-  memberRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0E8E0',
-  },
   memberAvatar: {
-    width: 44, height: 44, borderRadius: 22,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#F5EBE0',
-    justifyContent: 'center', alignItems: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
-  memberAvatarEmoji: { fontSize: 24 },
   memberInfo: { flex: 1 },
   memberName: {
     fontSize: 15,
@@ -234,20 +412,20 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     marginTop: 2,
   },
-  inviteBtn: {
+  pendingRow: { padding: 14 },
+  inviteCta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 50, height: 48,
-    borderWidth: 1.5,
-    borderColor: '#722F37',
-    marginBottom: 16,
+    backgroundColor: CTA_BG,
+    borderRadius: 50,
+    height: 56,
+    marginBottom: 24,
   },
-  inviteBtnText: {
-    color: '#722F37',
-    fontSize: 15,
+  inviteCtaText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     fontFamily: 'DMSans_600SemiBold',
   },
 })

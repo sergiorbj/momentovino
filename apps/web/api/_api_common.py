@@ -56,6 +56,34 @@ def auth_bearer_user_id(handler: Any) -> Tuple[Optional[str], Optional[Tuple[int
     return uid, None
 
 
+def auth_bearer_user(handler: Any) -> Tuple[Optional[str], Optional[str], Optional[Tuple[int, dict]]]:
+    """Returns (user_id, email_lower_or_empty, error_tuple)."""
+    header = handler.headers.get("Authorization") or ""
+    if not header.startswith("Bearer "):
+        return None, None, (401, {"error": "Missing authorization header"})
+    token = header[7:].strip()
+    if not token:
+        return None, None, (401, {"error": "Missing authorization header"})
+
+    url, key = supabase_config()
+    if not url or not key:
+        return None, None, (500, {"error": "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"})
+
+    r = requests.get(
+        f"{url}/auth/v1/user",
+        headers={"Authorization": f"Bearer {token}", "apikey": key},
+        timeout=30,
+    )
+    if r.status_code != 200:
+        return None, None, (401, {"error": "Invalid or expired token"})
+    data = r.json()
+    uid = data.get("id")
+    if not uid:
+        return None, None, (401, {"error": "Invalid or expired token"})
+    email = (data.get("email") or "").strip().lower()
+    return uid, email, None
+
+
 def send_json(handler: Any, status: int, payload: Union[dict, list]) -> None:
     body = json.dumps(payload).encode("utf-8")
     handler.send_response(status)
