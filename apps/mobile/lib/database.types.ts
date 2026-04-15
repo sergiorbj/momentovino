@@ -15,23 +15,29 @@ export type Database = {
       families: {
         Row: {
           created_at: string
+          description: string | null
           id: string
           name: string
           owner_id: string
+          photo_url: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          description?: string | null
           id?: string
           name: string
           owner_id: string
+          photo_url?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          description?: string | null
           id?: string
           name?: string
           owner_id?: string
+          photo_url?: string | null
           updated_at?: string
         }
         Relationships: []

@@ -21,7 +21,7 @@ The **Family** tab lets a user create a single household group, see members, sen
 - Card shows name, member count, and pending invite count (owner).
 - **Members** list shows email (from Auth admin lookup on the server) or a short `user_id` fallback; **You** labels the current session.
 - **Pending invitations** (owner): email + localised expiry date.
-- **Settings** (gear): only for **owner** → [`family/edit.tsx`](../../apps/mobile/app/family/edit.tsx) (`PATCH /api/family`).
+- **Owner**: **pencil next to the name** toggles inline edit for name + description (Save/Cancel, `PATCH /api/family`); **pencil on the banner** opens the photo library, uploads to storage, then `PATCH` with `photo_url`.
 
 ### Invite by email
 

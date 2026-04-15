@@ -14,6 +14,22 @@ import requests
 from _api_common import auth_bearer_user, auth_bearer_user_id, load_env, send_json, supabase_config
 
 INVITE_VALID_DAYS = 7
+FAMILY_DESCRIPTION_MAX_LEN = 80
+
+
+def _norm_description(body: dict[str, Any]) -> tuple[Optional[str], Optional[str]]:
+    """Returns (description_or_none, error_message)."""
+    if "description" not in body:
+        return None, None
+    raw = body.get("description")
+    if raw is None:
+        return None, None
+    s = str(raw).strip()
+    if not s:
+        return None, None
+    if len(s) > FAMILY_DESCRIPTION_MAX_LEN:
+        return None, f"Description must be at most {FAMILY_DESCRIPTION_MAX_LEN} characters"
+    return s, None
 
 
 def _norm_path(handler: BaseHTTPRequestHandler) -> str:
@@ -582,13 +598,27 @@ class handler(BaseHTTPRequestHandler):
             if len(name) < 2:
                 send_json(self, 400, {"error": "Family name is required (min 2 characters)"})
                 return
+            desc, derr = _norm_description(body)
+            if derr:
+                send_json(self, 400, {"error": derr})
+                return
+            photo_url = body.get("photo_url")
+            photo_out: Optional[str] = None
+            if photo_url is not None:
+                ps = str(photo_url).strip()
+                photo_out = ps if ps else None
             if _owned_family(url, key, uid):
                 send_json(self, 409, {"error": "You already have a family"})
                 return
+            row: dict[str, Any] = {"name": name, "owner_id": uid}
+            if desc is not None:
+                row["description"] = desc
+            if photo_out is not None:
+                row["photo_url"] = photo_out
             ins_f = requests.post(
                 f"{url}/rest/v1/families",
                 headers={**_sb_headers_json(url, key), "Prefer": "return=representation"},
-                json={"name": name, "owner_id": uid},
+                json=row,
                 timeout=30,
             )
             if ins_f.status_code not in (200, 201):
@@ -620,9 +650,28 @@ class handler(BaseHTTPRequestHandler):
             send_json(self, err[0], err[1])
             return
         body = _read_json(self)
-        name = (body.get("name") or "").strip()
-        if len(name) < 2:
-            send_json(self, 400, {"error": "Family name is required (min 2 characters)"})
+        updates: dict[str, Any] = {}
+        if "name" in body:
+            name = (body.get("name") or "").strip()
+            if len(name) < 2:
+                send_json(self, 400, {"error": "Family name must be at least 2 characters"})
+                return
+            updates["name"] = name
+        if "description" in body:
+            desc, derr = _norm_description(body)
+            if derr:
+                send_json(self, 400, {"error": derr})
+                return
+            updates["description"] = desc  # may be None to clear
+        if "photo_url" in body:
+            pu = body.get("photo_url")
+            if pu is None:
+                updates["photo_url"] = None
+            else:
+                ps = str(pu).strip()
+                updates["photo_url"] = ps if ps else None
+        if not updates:
+            send_json(self, 400, {"error": "No fields to update"})
             return
         url, key = supabase_config()
         fam = _owned_family(url, key, uid)
@@ -633,7 +682,7 @@ class handler(BaseHTTPRequestHandler):
         r = requests.patch(
             f"{url}/rest/v1/families?id=eq.{fid}",
             headers=_sb_headers_json(url, key),
-            json={"name": name},
+            json=updates,
             timeout=30,
         )
         if r.status_code not in (200, 204):

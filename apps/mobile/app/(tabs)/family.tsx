@@ -1,20 +1,26 @@
 import { useCallback, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
+  Image,
+  Keyboard,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import * as ImagePicker from 'expo-image-picker'
 import { StatusBar } from 'expo-status-bar'
 import { router, useFocusEffect } from 'expo-router'
 
 import type { FamilyDashboard, FamilyMemberRow } from '../../features/family/api'
-import { getFamilyDashboard } from '../../features/family/api'
+import { getFamilyDashboard, updateFamily } from '../../features/family/api'
+import { uploadFamilyCoverPhoto } from '../../features/family/cover-upload'
 import { supabase } from '../../lib/supabase'
 
 const WINE = '#722F37'
@@ -22,12 +28,13 @@ const INK = '#3F2A2E'
 const SUBTLE = '#C2703E'
 const BG = '#F5EBE0'
 const CTA_BG = '#5C4033'
+const DESC_MAX = 80
 
 function EmptyNoFamily({ onCreate }: { onCreate: () => void }) {
   return (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconWrapper}>
-        <Text style={styles.emptyEmoji}>👨‍👩‍👧‍👦</Text>
+        <Ionicons name="wine" size={48} color={WINE} />
       </View>
       <Text style={styles.emptyTitle}>No Family Yet</Text>
       <Text style={styles.emptySubtitle}>
@@ -77,8 +84,102 @@ export default function FamilyScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [selfId, setSelfId] = useState<string | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
-  /** Bumps on blur so in-flight fetches from a previous visit cannot overwrite state after create/back. */
+  const [editingDetails, setEditingDetails] = useState(false)
+  const [draftName, setDraftName] = useState('')
+  const [draftDescription, setDraftDescription] = useState('')
+  const [savingDetails, setSavingDetails] = useState(false)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const fetchGenerationRef = useRef(0)
+
+  const beginEditDetails = useCallback(() => {
+    if (!dash?.family) return
+    setDraftName(dash.family.name)
+    setDraftDescription((dash.family.description ?? '').slice(0, DESC_MAX))
+    setEditingDetails(true)
+  }, [dash?.family])
+
+  const cancelEditDetails = useCallback(() => {
+    Keyboard.dismiss()
+    setEditingDetails(false)
+  }, [])
+
+  const saveEditDetails = useCallback(async () => {
+    if (!dash?.family) return
+    const n = draftName.trim()
+    if (n.length < 2) {
+      Alert.alert('Name required', 'Enter at least 2 characters.')
+      return
+    }
+    const d = draftDescription.trim()
+    if (d.length > DESC_MAX) {
+      Alert.alert('Description', `Maximum ${DESC_MAX} characters.`)
+      return
+    }
+    setSavingDetails(true)
+    try {
+      const { family } = await updateFamily({
+        name: n,
+        description: d.length > 0 ? d : null,
+      })
+      Keyboard.dismiss()
+      setEditingDetails(false)
+      setDash((prev) =>
+        prev?.family
+          ? {
+              ...prev,
+              family: {
+                ...prev.family,
+                name: family.name,
+                description: family.description ?? null,
+                photo_url: family.photo_url ?? prev.family.photo_url,
+                updated_at: family.updated_at,
+              },
+            }
+          : prev,
+      )
+    } catch (e) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Could not save')
+    } finally {
+      setSavingDetails(false)
+    }
+  }, [dash?.family, draftName, draftDescription])
+
+  const pickCoverPhoto = useCallback(async () => {
+    if (!dash?.family || !dash.isOwner || !selfId) return
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!perm.granted) {
+      Alert.alert('Photos', 'Allow photo library access to change the cover image.')
+      return
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.85,
+    })
+    if (result.canceled || !result.assets[0]?.uri) return
+    setUploadingPhoto(true)
+    try {
+      const url = await uploadFamilyCoverPhoto(selfId, dash.family.id, result.assets[0].uri)
+      const { family } = await updateFamily({ photo_url: url })
+      setDash((prev) =>
+        prev?.family
+          ? {
+              ...prev,
+              family: {
+                ...prev.family,
+                photo_url: family.photo_url ?? null,
+                updated_at: family.updated_at,
+              },
+            }
+          : prev,
+      )
+    } catch (e) {
+      Alert.alert('Upload failed', e instanceof Error ? e.message : 'Could not update cover photo')
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }, [dash?.family, dash?.isOwner, selfId])
 
   const load = useCallback(async () => {
     const gen = ++fetchGenerationRef.current
@@ -114,12 +215,16 @@ export default function FamilyScreen() {
         cancelled = true
         fetchGenerationRef.current += 1
         setLoading(false)
+        setEditingDetails(false)
+        Keyboard.dismiss()
       }
     }, [load]),
   )
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
+    setEditingDetails(false)
+    Keyboard.dismiss()
     try {
       await load()
     } catch (e) {
@@ -131,6 +236,7 @@ export default function FamilyScreen() {
 
   const hasFamily = Boolean(dash?.family)
   const soloAdmin = hasFamily && Boolean(dash?.isOwner) && (dash?.members.length ?? 0) === 1
+  const descRemaining = DESC_MAX - draftDescription.length
 
   return (
     <View style={styles.container}>
@@ -138,21 +244,6 @@ export default function FamilyScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Family</Text>
-          {hasFamily && dash?.isOwner ? (
-            <TouchableOpacity
-              style={styles.settingsBtn}
-              onPress={() =>
-                router.push({
-                  pathname: '/family/edit',
-                  params: { name: dash!.family!.name },
-                })
-              }
-            >
-              <Ionicons name="settings-outline" size={20} color={WINE} />
-            </TouchableOpacity>
-          ) : (
-            <View style={{ width: 40 }} />
-          )}
         </View>
 
         {loadError ? (
@@ -171,14 +262,104 @@ export default function FamilyScreen() {
           <ScrollView
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={WINE} />}
           >
             <View style={styles.familyCard}>
               <View style={styles.familyBanner}>
-                <Text style={styles.familyBannerEmoji}>👨‍👩‍👧‍👦</Text>
+                {dash!.family!.photo_url ? (
+                  <Image
+                    source={{ uri: dash!.family!.photo_url }}
+                    style={StyleSheet.absoluteFillObject}
+                    resizeMode="cover"
+                  />
+                ) : null}
+                {dash!.isOwner ? (
+                  <TouchableOpacity
+                    style={styles.bannerEditFab}
+                    onPress={pickCoverPhoto}
+                    disabled={uploadingPhoto}
+                    activeOpacity={0.85}
+                    accessibilityLabel="Change family cover photo"
+                  >
+                    {uploadingPhoto ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Ionicons name="create-outline" size={20} color="#FFFFFF" />
+                    )}
+                  </TouchableOpacity>
+                ) : null}
               </View>
               <View style={styles.familyCardBody}>
-                <Text style={styles.familyName}>{dash!.family!.name}</Text>
+                {dash!.isOwner && editingDetails ? (
+                  <>
+                    <Text style={styles.inlineLabel}>Family name</Text>
+                    <TextInput
+                      value={draftName}
+                      onChangeText={setDraftName}
+                      placeholder="Family name"
+                      placeholderTextColor="#A98B7E"
+                      style={styles.inlineInput}
+                      autoCapitalize="words"
+                      editable={!savingDetails}
+                    />
+                    <Text style={styles.inlineLabel}>Description (optional)</Text>
+                    <TextInput
+                      value={draftDescription}
+                      onChangeText={(t) => setDraftDescription(t.slice(0, DESC_MAX))}
+                      placeholder="Short line about your family"
+                      placeholderTextColor="#A98B7E"
+                      style={[styles.inlineInput, styles.inlineInputMultiline]}
+                      multiline
+                      maxLength={DESC_MAX}
+                      editable={!savingDetails}
+                    />
+                    <Text style={styles.inlineCounter}>{descRemaining} characters left</Text>
+                    <View style={styles.inlineActions}>
+                      <TouchableOpacity
+                        style={[styles.inlineBtn, styles.inlineBtnSecondary]}
+                        onPress={cancelEditDetails}
+                        disabled={savingDetails}
+                      >
+                        <Text style={styles.inlineBtnSecondaryText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.inlineBtn, styles.inlineBtnPrimary, savingDetails && styles.inlineBtnDisabled]}
+                        onPress={() => void saveEditDetails()}
+                        disabled={savingDetails}
+                      >
+                        {savingDetails ? (
+                          <ActivityIndicator color="#FFFFFF" size="small" />
+                        ) : (
+                          <Text style={styles.inlineBtnPrimaryText}>Save</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : dash!.isOwner ? (
+                  <View style={styles.familyNameRow}>
+                    <Text style={styles.familyName} numberOfLines={2}>
+                      {dash!.family!.name}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.nameEditBtn}
+                      onPress={beginEditDetails}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityLabel="Edit family name and description"
+                    >
+                      <Ionicons name="create-outline" size={22} color={WINE} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <Text style={styles.familyNameOnly} numberOfLines={2}>
+                    {dash!.family!.name}
+                  </Text>
+                )}
+                {!dash!.isOwner || !editingDetails ? (
+                  dash!.family!.description ? (
+                    <Text style={styles.familyDescription}>{dash!.family!.description}</Text>
+                  ) : null
+                ) : null}
                 <Text style={styles.familyMeta}>
                   {dash!.members.length} member{dash!.members.length === 1 ? '' : 's'}
                   {dash!.pendingInvitations.length > 0
@@ -238,7 +419,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 16,
@@ -261,19 +442,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     fontSize: 14,
   },
-  settingsBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   emptyContainer: {
@@ -295,7 +463,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  emptyEmoji: { fontSize: 44 },
   emptyTitle: {
     fontSize: 22,
     fontFamily: 'DMSerifDisplay_400Regular',
@@ -341,14 +508,101 @@ const styles = StyleSheet.create({
     backgroundColor: '#8B4513',
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
   },
-  familyBannerEmoji: { fontSize: 52 },
-  familyCardBody: { padding: 16, alignItems: 'center' },
+  bannerEditFab: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  familyCardBody: { padding: 16, alignItems: 'stretch' },
+  familyNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    maxWidth: '100%',
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
   familyName: {
     fontSize: 20,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
+    textAlign: 'left',
+    flexShrink: 1,
+  },
+  familyNameOnly: {
+    fontSize: 20,
+    fontFamily: 'DMSerifDisplay_400Regular',
+    color: WINE,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  nameEditBtn: { marginLeft: 6, flexShrink: 0 },
+  inlineLabel: {
+    fontSize: 12,
+    fontFamily: 'DMSans_600SemiBold',
+    color: SUBTLE,
+    marginBottom: 6,
+  },
+  inlineInput: {
+    backgroundColor: '#F5EBE0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    color: INK,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E8DDD4',
+  },
+  inlineInputMultiline: { minHeight: 72, textAlignVertical: 'top' },
+  inlineCounter: {
+    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    color: SUBTLE,
+    alignSelf: 'flex-end',
+    marginBottom: 12,
+  },
+  inlineActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
     marginBottom: 4,
+  },
+  inlineBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    minWidth: 88,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inlineBtnPrimary: { backgroundColor: CTA_BG },
+  inlineBtnPrimaryText: { color: '#FFFFFF', fontFamily: 'DMSans_600SemiBold', fontSize: 15 },
+  inlineBtnSecondary: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D4C4B8',
+  },
+  inlineBtnSecondaryText: { color: INK, fontFamily: 'DMSans_600SemiBold', fontSize: 15 },
+  inlineBtnDisabled: { opacity: 0.6 },
+  familyDescription: {
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    color: INK,
+    textAlign: 'center',
+    lineHeight: 21,
+    marginBottom: 8,
   },
   familyMeta: {
     fontSize: 13,

@@ -14,6 +14,8 @@ export type FamilyRow = {
   owner_id: string
   created_at: string
   updated_at: string
+  description?: string | null
+  photo_url?: string | null
 }
 
 export type FamilyMemberRow = {
@@ -59,7 +61,13 @@ export async function getFamilyDashboard(): Promise<FamilyDashboard> {
   return res.json() as Promise<FamilyDashboard>
 }
 
-export async function createFamily(name: string): Promise<{ family: FamilyRow }> {
+export type CreateFamilyInput = {
+  name: string
+  description?: string | null
+  photo_url?: string | null
+}
+
+export async function createFamily(input: CreateFamilyInput): Promise<{ family: FamilyRow }> {
   const token = await getAccessToken()
   const res = await fetch(`${getApiBaseUrl()}/family`, {
     method: 'POST',
@@ -67,7 +75,11 @@ export async function createFamily(name: string): Promise<{ family: FamilyRow }>
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({
+      name: input.name,
+      ...(input.description != null && input.description !== '' ? { description: input.description } : {}),
+      ...(input.photo_url != null && input.photo_url !== '' ? { photo_url: input.photo_url } : {}),
+    }),
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
@@ -76,15 +88,25 @@ export async function createFamily(name: string): Promise<{ family: FamilyRow }>
   return res.json() as Promise<{ family: FamilyRow }>
 }
 
-export async function updateFamily(name: string): Promise<{ family: FamilyRow }> {
+export type UpdateFamilyInput = {
+  name?: string
+  description?: string | null
+  photo_url?: string | null
+}
+
+export async function updateFamily(input: UpdateFamilyInput): Promise<{ family: FamilyRow }> {
   const token = await getAccessToken()
+  const body: Record<string, unknown> = {}
+  if (input.name !== undefined) body.name = input.name
+  if (input.description !== undefined) body.description = input.description
+  if (input.photo_url !== undefined) body.photo_url = input.photo_url
   const res = await fetch(`${getApiBaseUrl()}/family`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
