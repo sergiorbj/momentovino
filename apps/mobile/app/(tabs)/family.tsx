@@ -1,9 +1,13 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  Animated,
+  Easing,
   Image,
   Keyboard,
+  Modal,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -11,9 +15,11 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  useWindowDimensions,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { BlurView } from 'expo-blur'
 import * as ImagePicker from 'expo-image-picker'
 import { StatusBar } from 'expo-status-bar'
 import { router, useFocusEffect } from 'expo-router'
@@ -29,6 +35,8 @@ const SUBTLE = '#C2703E'
 const BG = '#F5EBE0'
 const CTA_BG = '#5C4033'
 const DESC_MAX = 80
+/** Letterboxing inside the preview card: black with readable opacity. */
+const COVER_PREVIEW_LETTERBOX = 'rgba(0,0,0,0.5)'
 
 function EmptyNoFamily({ onCreate }: { onCreate: () => void }) {
   return (
@@ -79,6 +87,8 @@ function MemberRow({ member, isSelf }: { member: FamilyMemberRow; isSelf: boolea
 }
 
 export default function FamilyScreen() {
+  const { width: winW, height: winH } = useWindowDimensions()
+  const safeInsets = useSafeAreaInsets()
   const [dash, setDash] = useState<FamilyDashboard | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -89,7 +99,82 @@ export default function FamilyScreen() {
   const [draftDescription, setDraftDescription] = useState('')
   const [savingDetails, setSavingDetails] = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [coverPreviewVisible, setCoverPreviewVisible] = useState(false)
+  const coverUri = dash?.family?.photo_url ?? null
   const fetchGenerationRef = useRef(0)
+  const coverBackdropOp = useRef(new Animated.Value(0)).current
+  const coverCardOp = useRef(new Animated.Value(0)).current
+  const coverCardScale = useRef(new Animated.Value(0.94)).current
+  const coverClosingRef = useRef(false)
+
+  const resetCoverPreviewAnims = useCallback(() => {
+    coverBackdropOp.setValue(0)
+    coverCardOp.setValue(0)
+    coverCardScale.setValue(0.94)
+    coverClosingRef.current = false
+  }, [coverBackdropOp, coverCardOp, coverCardScale])
+
+  const playCoverPreviewOpen = useCallback(() => {
+    coverClosingRef.current = false
+    coverBackdropOp.setValue(0)
+    coverCardOp.setValue(0)
+    coverCardScale.setValue(0.94)
+    Animated.parallel([
+      Animated.timing(coverBackdropOp, {
+        toValue: 1,
+        duration: 280,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(coverCardOp, {
+        toValue: 1,
+        duration: 320,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.spring(coverCardScale, {
+        toValue: 1,
+        damping: 20,
+        stiffness: 200,
+        mass: 0.85,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }, [coverBackdropOp, coverCardOp, coverCardScale])
+
+  const closeCoverPreview = useCallback(() => {
+    if (coverClosingRef.current) return
+    coverClosingRef.current = true
+    Animated.parallel([
+      Animated.timing(coverBackdropOp, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(coverCardOp, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(coverCardScale, {
+        toValue: 0.94,
+        duration: 220,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
+      coverClosingRef.current = false
+      if (finished) setCoverPreviewVisible(false)
+    })
+  }, [coverBackdropOp, coverCardOp, coverCardScale])
+
+  useEffect(() => {
+    if (coverPreviewVisible && coverUri) {
+      playCoverPreviewOpen()
+    }
+  }, [coverPreviewVisible, coverUri, playCoverPreviewOpen])
 
   const beginEditDetails = useCallback(() => {
     if (!dash?.family) return
@@ -216,14 +301,18 @@ export default function FamilyScreen() {
         fetchGenerationRef.current += 1
         setLoading(false)
         setEditingDetails(false)
+        setCoverPreviewVisible(false)
+        resetCoverPreviewAnims()
         Keyboard.dismiss()
       }
-    }, [load]),
+    }, [load, resetCoverPreviewAnims]),
   )
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
     setEditingDetails(false)
+    setCoverPreviewVisible(false)
+    resetCoverPreviewAnims()
     Keyboard.dismiss()
     try {
       await load()
@@ -232,7 +321,7 @@ export default function FamilyScreen() {
     } finally {
       setRefreshing(false)
     }
-  }, [load])
+  }, [load, resetCoverPreviewAnims])
 
   const hasFamily = Boolean(dash?.family)
   const soloAdmin = hasFamily && Boolean(dash?.isOwner) && (dash?.members.length ?? 0) === 1
@@ -241,6 +330,72 @@ export default function FamilyScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
+      <Modal
+        visible={Boolean(coverUri && coverPreviewVisible)}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        onRequestClose={closeCoverPreview}
+      >
+        <View style={styles.coverModalRoot}>
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.coverModalBlurWrap, { opacity: coverBackdropOp }]}
+          >
+            <BlurView intensity={48} tint="dark" style={StyleSheet.absoluteFillObject} />
+            <View style={[StyleSheet.absoluteFillObject, styles.coverModalTintOverlay]} />
+          </Animated.View>
+          {coverUri ? (
+            <>
+              <Animated.View
+                style={[
+                  styles.coverModalImageLayer,
+                  {
+                    width: winW,
+                    height: winH,
+                    opacity: coverCardOp,
+                    transform: [{ scale: coverCardScale }],
+                  },
+                ]}
+              >
+                <Pressable
+                  style={styles.coverModalPressLayer}
+                  onPress={closeCoverPreview}
+                  accessibilityLabel="Dismiss photo preview"
+                >
+                  <View style={[styles.coverModalImageFrame, { backgroundColor: COVER_PREVIEW_LETTERBOX }]}>
+                    <View style={styles.coverModalImageHitThrough} pointerEvents="none">
+                      <Image
+                        source={{ uri: coverUri }}
+                        style={styles.coverModalCardImage}
+                        resizeMode="contain"
+                      />
+                    </View>
+                  </View>
+                </Pressable>
+              </Animated.View>
+              <View
+                style={[
+                  styles.coverModalChrome,
+                  {
+                    paddingTop: safeInsets.top + 14,
+                    paddingEnd: safeInsets.right + 18,
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.coverModalClose}
+                  onPress={closeCoverPreview}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityLabel="Close photo preview"
+                >
+                  <Ionicons name="close" size={26} color={INK} />
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : null}
+        </View>
+      </Modal>
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Family</Text>
@@ -268,11 +423,18 @@ export default function FamilyScreen() {
             <View style={styles.familyCard}>
               <View style={styles.familyBanner}>
                 {dash!.family!.photo_url ? (
-                  <Image
-                    source={{ uri: dash!.family!.photo_url }}
+                  <Pressable
                     style={StyleSheet.absoluteFillObject}
-                    resizeMode="cover"
-                  />
+                    onPress={() => setCoverPreviewVisible(true)}
+                    accessibilityRole="imagebutton"
+                    accessibilityLabel="View cover photo full screen"
+                  >
+                    <Image
+                      source={{ uri: dash!.family!.photo_url }}
+                      style={StyleSheet.absoluteFillObject}
+                      resizeMode="cover"
+                    />
+                  </Pressable>
                 ) : null}
                 {dash!.isOwner ? (
                   <TouchableOpacity
@@ -515,12 +677,64 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
+    zIndex: 2,
+    elevation: 4,
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  coverModalRoot: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  coverModalBlurWrap: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  coverModalTintOverlay: {
+    backgroundColor: 'rgba(63, 42, 46, 0.2)',
+  },
+  coverModalImageLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    overflow: 'hidden',
+    zIndex: 1,
+  },
+  coverModalPressLayer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  coverModalImageFrame: {
+    flex: 1,
+    width: '100%',
+    position: 'relative',
+  },
+  coverModalImageHitThrough: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  coverModalCardImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  coverModalChrome: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 2,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-start',
+    pointerEvents: 'box-none',
+  },
+  coverModalClose: {
+    padding: 10,
+    borderRadius: 24,
+    backgroundColor: 'rgba(245, 235, 224, 0.92)',
   },
   familyCardBody: { padding: 16, alignItems: 'stretch' },
   familyNameRow: {
@@ -548,7 +762,7 @@ const styles = StyleSheet.create({
   },
   nameEditBtn: { marginLeft: 6, flexShrink: 0 },
   inlineLabel: {
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: 'DMSans_600SemiBold',
     color: SUBTLE,
     marginBottom: 6,
@@ -605,7 +819,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   familyMeta: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: 'DMSans_400Regular',
     color: SUBTLE,
     textAlign: 'center',
