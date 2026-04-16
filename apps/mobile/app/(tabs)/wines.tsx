@@ -154,7 +154,7 @@ export default function WinesScreen() {
 
   const emptyLabel = useMemo(() => {
     if (loading) return ''
-    if (query.trim().length === 0) return 'No wines yet — create the first one.'
+    if (query.trim().length === 0) return 'No wines yet. Create the first one.'
     return `No wines match "${query}". Create a new one.`
   }, [loading, query])
 

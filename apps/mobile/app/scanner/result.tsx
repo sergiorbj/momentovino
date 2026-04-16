@@ -77,9 +77,9 @@ export default function ScanResultScreen() {
       } else {
         const reused = Boolean(wine.reusedExisting)
         Alert.alert(
-          reused ? 'Wine recognized' : 'Wine added',
+          reused ? 'Already in your wines' : 'Wine added',
           reused
-            ? `${wine.name} was already in your collection — we kept your original name.`
+            ? `${wine.name} was already in your list. We added another bottle to your quantity.`
             : `${wine.name} has been saved to your collection.`,
           [{ text: 'OK', onPress: () => router.replace('/(tabs)/wines') }]
         )
@@ -120,8 +120,8 @@ export default function ScanResultScreen() {
 
           <View style={styles.card}>
             {params.producer ? <InfoRow label="Producer" value={params.producer} /> : null}
-            <InfoRow label="Region" value={params.region || '—'} />
-            <InfoRow label="Country" value={params.country || '—'} />
+            <InfoRow label="Region" value={params.region?.trim() ? params.region : 'Not set'} />
+            <InfoRow label="Country" value={params.country?.trim() ? params.country : 'Not set'} />
             {params.type ? <InfoRow label="Type" value={params.type} /> : null}
           </View>
         </ScrollView>

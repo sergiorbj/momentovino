@@ -6,7 +6,7 @@ import unicodedata
 from typing import Any, Optional
 
 # Must match apps/mobile/features/wines/similarity.ts MATCH_THRESHOLD
-MATCH_THRESHOLD = 0.76
+MATCH_THRESHOLD = 0.72
 
 
 def _lev_ratio(a: str, b: str) -> float:
@@ -35,6 +35,20 @@ def normalize(s: Optional[str]) -> str:
     t = "".join(c for c in t if not unicodedata.combining(c))
     t = re.sub(r"[^a-z0-9\s]", " ", t)
     return re.sub(r"\s+", " ", t).strip()
+
+
+def _brand_prefix_bonus(nn: str, en: str) -> float:
+    a = [t for t in nn.split() if t]
+    b = [t for t in en.split() if t]
+    if len(a) < 2 or len(b) < 2:
+        return 0.0
+    lim = min(3, len(a), len(b))
+    i = 0
+    while i < lim and a[i] == b[i]:
+        i += 1
+    if i < 2:
+        return 0.0
+    return min(0.14, 0.07 * (i - 1))
 
 
 def _token_jaccard(a: str, b: str) -> float:
@@ -67,7 +81,7 @@ def similarity_score(
 
     char = _lev_ratio(nn, en)
     tok = _token_jaccard(nn, en)
-    name_s = max(char, tok)
+    name_s = min(1.0, max(char, tok) + _brand_prefix_bonus(nn, en))
 
     np = normalize(producer)
     ep = normalize(existing.get("producer"))
@@ -78,7 +92,11 @@ def similarity_score(
     else:
         prod_s = 0.55
 
-    return 0.68 * name_s + 0.32 * prod_s
+    combined = 0.68 * name_s + 0.32 * prod_s
+    # Same wine re-scanned: name matches strongly but producer string may differ (brand vs estate).
+    if name_s >= 0.88:
+        combined = max(combined, 0.755)
+    return min(combined, 1.0)
 
 
 def find_matching_wine(

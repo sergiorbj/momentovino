@@ -38,6 +38,39 @@ def _fetch_user_wines(
     return (rows if isinstance(rows, list) else []), None
 
 
+def _post_wine_row(url: str, key: str, row: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None]:
+    rest_url = f"{url}/rest/v1/wines"
+    try:
+        r = requests.post(
+            rest_url,
+            headers={
+                "Authorization": f"Bearer {key}",
+                "apikey": key,
+                "Content-Type": "application/json",
+                "Prefer": "return=representation",
+            },
+            data=json.dumps(row),
+            timeout=30,
+        )
+    except requests.RequestException as e:
+        return None, str(e)
+    if r.status_code not in (200, 201):
+        try:
+            detail = r.json()
+        except Exception:
+            detail = r.text
+        return None, detail if isinstance(detail, str) else str(detail)
+    try:
+        created = r.json()
+    except Exception:
+        return None, "Invalid response from database"
+    if isinstance(created, list) and created:
+        return created[0], None
+    if isinstance(created, dict):
+        return created, None
+    return None, "Failed to create wine"
+
+
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         user_id, err = auth_bearer_user_id(self)
@@ -100,48 +133,35 @@ class handler(BaseHTTPRequestHandler):
             row.get("country"),
         )
         if match is not None:
-            out = dict(match)
+            dup_row: dict[str, Any] = {
+                "created_by": user_id,
+                "name": str(match.get("name", "")).strip(),
+                "producer": _opt_str(match.get("producer")),
+                "vintage": match.get("vintage"),
+                "region": _opt_str(match.get("region")),
+                "country": _opt_str(match.get("country")),
+                "type": match.get("type") or None,
+            }
+            created, ins_err = _post_wine_row(url, key, dup_row)
+            if ins_err is not None:
+                send_json(self, 500, {"error": ins_err})
+                return
+            if not created:
+                send_json(self, 500, {"error": "Failed to create wine"})
+                return
+            out = dict(created)
             out["reusedExisting"] = True
-            send_json(self, 200, out)
+            send_json(self, 201, out)
             return
 
-        rest_url = f"{url}/rest/v1/wines"
-        try:
-            r = requests.post(
-                rest_url,
-                headers={
-                    "Authorization": f"Bearer {key}",
-                    "apikey": key,
-                    "Content-Type": "application/json",
-                    "Prefer": "return=representation",
-                },
-                data=json.dumps(row),
-                timeout=30,
-            )
-        except requests.RequestException as e:
-            send_json(self, 500, {"error": str(e)})
+        created, ins_err = _post_wine_row(url, key, row)
+        if ins_err is not None:
+            send_json(self, 500, {"error": ins_err})
             return
-
-        if r.status_code not in (200, 201):
-            try:
-                detail = r.json()
-            except Exception:
-                detail = r.text
-            send_json(self, 500, {"error": detail if isinstance(detail, str) else str(detail)})
-            return
-
-        try:
-            created = r.json()
-        except Exception:
-            send_json(self, 500, {"error": "Invalid response from database"})
-            return
-
-        if isinstance(created, list) and created:
-            send_json(self, 201, created[0])
-        elif isinstance(created, dict):
-            send_json(self, 201, created)
-        else:
+        if not created:
             send_json(self, 500, {"error": "Failed to create wine"})
+            return
+        send_json(self, 201, created)
 
     def do_DELETE(self):
         user_id, err = auth_bearer_user_id(self)

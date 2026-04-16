@@ -5,13 +5,14 @@ import type { Database } from '../../lib/database.types'
 
 export type WineRow = Database['public']['Tables']['wines']['Row']
 
-export const MATCH_THRESHOLD = 0.76
+/** Keep in sync with apps/web/api/_wine_match.py MATCH_THRESHOLD */
+export const MATCH_THRESHOLD = 0.72
 
 export function normalize(s: string | null | undefined): string {
   if (!s) return ''
   const t = s
     .toLowerCase()
-    .normalize('NFD')
+    .normalize('NFKD')
     .replace(/\p{M}/gu, '')
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
@@ -31,7 +32,19 @@ function tokenJaccard(a: string, b: string): number {
   return inter / (ta.size + tb.size - inter)
 }
 
-/** 0..1 — same formula as Python `_wine_match.similarity_score` */
+/** Same brand line, different suffix ("Tradizione Bordo" vs "Bordô Suave"): boost name alignment. */
+function brandPrefixBonus(nn: string, en: string): number {
+  const a = nn.split(/\s+/).filter(Boolean)
+  const b = en.split(/\s+/).filter(Boolean)
+  if (a.length < 2 || b.length < 2) return 0
+  let i = 0
+  const lim = Math.min(3, a.length, b.length)
+  while (i < lim && a[i] === b[i]) i++
+  if (i < 2) return 0
+  return Math.min(0.14, 0.07 * (i - 1))
+}
+
+/** 0..1 — same formula as Python `_wine_match.similarity_score` (NFKD normalize, threshold, bonuses). */
 export function wineSimilarityScore(
   name: string,
   producer: string | null | undefined,
@@ -65,7 +78,7 @@ export function wineSimilarityScore(
   const char = 1 - dist / Math.max(m, n, 1)
 
   const tok = tokenJaccard(nn, en)
-  const nameS = Math.max(char, tok)
+  const nameS = Math.min(1, Math.max(char, tok) + brandPrefixBonus(nn, en))
 
   const np = normalize(producer ?? undefined)
   const ep = normalize(existing.producer ?? undefined)
@@ -94,7 +107,12 @@ export function wineSimilarityScore(
     prodS = 0.55
   }
 
-  return 0.68 * nameS + 0.32 * prodS
+  let combined = 0.68 * nameS + 0.32 * prodS
+  // Same label scanned twice often differs only by producer (winery vs brand on bottle).
+  if (nameS >= 0.88) {
+    combined = Math.max(combined, 0.755)
+  }
+  return Math.min(combined, 1)
 }
 
 export type WineCluster = {
