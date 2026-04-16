@@ -1,7 +1,7 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 type TabRoute = BottomTabBarProps['state']['routes'][number]
@@ -38,6 +38,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           }
 
           const fg = focused ? WINE : BAR_BG
+          const isWines = route.name === 'wines'
 
           return (
             <Pressable
@@ -45,7 +46,17 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               onPress={onPress}
               style={[styles.tab, focused && styles.tabActive]}
             >
-              <Ionicons name={meta.icon} size={22} color={fg} />
+              <View style={styles.tabIconSlot}>
+                {isWines ? (
+                  <Image
+                    source={require('../../assets/glass.png')}
+                    style={[styles.tabWineIcon, { tintColor: fg }]}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <Ionicons name={meta.icon} size={22} color={fg} />
+                )}
+              </View>
               <Text style={[styles.label, { color: fg }]}>{meta.label}</Text>
             </Pressable>
           )
@@ -96,5 +107,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'DMSans_600SemiBold',
     marginTop: 3,
+  },
+  /** Same bounding box as Ionicons `size={22}` for row alignment */
+  tabIconSlot: {
+    width: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabWineIcon: {
+    width: 34,
+    height: 34,
   },
 })
