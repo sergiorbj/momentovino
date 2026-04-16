@@ -107,6 +107,19 @@ export type WineCluster = {
  * Group likely-duplicate wines (same person, fuzzy name/producer/country).
  * Oldest `created_at` row becomes canonical (keeps the name you stored first).
  */
+/**
+ * Picks which wine row IDs to delete within a cluster: newest `created_at` first,
+ * so older rows (the displayed “canonical”) tend to survive when count < members.length.
+ */
+export function pickWineIdsToDelete(cluster: WineCluster, count: number): string[] {
+  if (count <= 0 || cluster.members.length === 0) return []
+  const n = Math.min(count, cluster.members.length)
+  const sorted = [...cluster.members].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  )
+  return sorted.slice(0, n).map((w) => w.id)
+}
+
 export function clusterWinesForDisplay(rows: WineRow[]): WineCluster[] {
   if (rows.length === 0) return []
   const asc = [...rows].sort(

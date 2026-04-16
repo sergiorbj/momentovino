@@ -142,3 +142,88 @@ class handler(BaseHTTPRequestHandler):
             send_json(self, 201, created)
         else:
             send_json(self, 500, {"error": "Failed to create wine"})
+
+    def do_DELETE(self):
+        user_id, err = auth_bearer_user_id(self)
+        if err:
+            send_json(self, err[0], err[1])
+            return
+
+        length = int(self.headers.get("Content-Length", 0))
+        raw = self.rfile.read(length) if length else b""
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+        except json.JSONDecodeError:
+            send_json(self, 400, {"error": "Invalid request body"})
+            return
+
+        ids_raw = body.get("ids")
+        if not isinstance(ids_raw, list) or not ids_raw:
+            send_json(self, 400, {"error": "Expected non-empty array \"ids\" of wine UUIDs"})
+            return
+
+        ids: list[str] = []
+        for x in ids_raw:
+            s = str(x).strip()
+            if s:
+                ids.append(s)
+        if not ids:
+            send_json(self, 400, {"error": "Expected non-empty array \"ids\" of wine UUIDs"})
+            return
+
+        url, key = supabase_config()
+        in_list = ",".join(ids)
+        verify_url = f"{url}/rest/v1/wines?select=id&id=in.({in_list})&created_by=eq.{user_id}"
+        try:
+            vr = requests.get(
+                verify_url,
+                headers={"Authorization": f"Bearer {key}", "apikey": key},
+                timeout=30,
+            )
+        except requests.RequestException as e:
+            send_json(self, 500, {"error": str(e)})
+            return
+        if vr.status_code != 200:
+            send_json(self, 500, {"error": vr.text or "Failed to verify wines"})
+            return
+        try:
+            found = vr.json()
+        except Exception:
+            send_json(self, 500, {"error": "Invalid response from database"})
+            return
+        if not isinstance(found, list) or len(found) != len(ids):
+            send_json(
+                self,
+                400,
+                {"error": "One or more wines were not found or do not belong to you"},
+            )
+            return
+
+        rest_url = f"{url}/rest/v1/wines?id=in.({in_list})&created_by=eq.{user_id}"
+        try:
+            r = requests.delete(
+                rest_url,
+                headers={
+                    "Authorization": f"Bearer {key}",
+                    "apikey": key,
+                    "Prefer": "return=minimal",
+                },
+                timeout=30,
+            )
+        except requests.RequestException as e:
+            send_json(self, 500, {"error": str(e)})
+            return
+
+        if r.status_code not in (200, 204):
+            try:
+                detail = r.json()
+            except Exception:
+                detail = r.text
+            send_json(
+                self,
+                500,
+                {"error": detail if isinstance(detail, str) else str(detail)},
+            )
+            return
+
+        send_json(self, 200, {"deleted": len(ids)})

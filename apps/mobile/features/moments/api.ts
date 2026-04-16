@@ -84,6 +84,22 @@ export async function createWine(input: WineInput): Promise<WineRow> {
   return data
 }
 
+/** Deletes wine rows owned by the current user. Moments keep `wine_id` null via FK. */
+export async function deleteWinesByIds(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
+  const { data: userData, error: userErr } = await supabase.auth.getUser()
+  if (userErr || !userData.user) throw userErr ?? new Error('No authenticated user')
+
+  const { data, error } = await supabase.from('wines').delete().in('id', ids).select('id')
+  if (error) throw error
+  const removed = data?.length ?? 0
+  if (removed !== ids.length) {
+    throw new Error(
+      'Could not remove wine(s). If this persists, apply the Supabase migration 0008_wines_delete_own.sql (wines delete policy).',
+    )
+  }
+}
+
 async function uploadPhoto(
   userId: string,
   momentId: string,
