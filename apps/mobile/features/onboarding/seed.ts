@@ -1,5 +1,3 @@
-import { Image } from 'react-native'
-
 import { createMoment, createWine } from '../moments/api'
 import { STARTER_DECK, getStarterWine, type StarterWine } from './starter-deck'
 
@@ -10,12 +8,6 @@ function titleFor(index: number): string {
   return `My ${word} wine moment`
 }
 
-function resolveAssetUri(asset: number): string {
-  const resolved = Image.resolveAssetSource(asset)
-  if (!resolved?.uri) throw new Error('Failed to resolve starter wine image')
-  return resolved.uri
-}
-
 export type SeededMoment = {
   wineId: string
   momentId: string
@@ -24,8 +16,10 @@ export type SeededMoment = {
 
 /**
  * Creates one `wines` row and one `moments` row per picked starter, in order.
- * Each moment's photo is the bundled label image from the starter deck, so the
- * schema's `photos.min(1)` invariant is satisfied without any special-case.
+ * Seeded moments intentionally ship without a cover photo — the label PNGs are
+ * bundled assets, not the user's own photos, and uploading them to storage
+ * currently fails RLS for anonymous sessions. The UI shows a wine-icon
+ * placeholder until the user adds their own photo from the moment detail.
  */
 export async function seedStarterJournal(pickedKeys: string[]): Promise<SeededMoment[]> {
   const starters = pickedKeys
@@ -45,7 +39,7 @@ export async function seedStarterJournal(pickedKeys: string[]): Promise<SeededMo
       latitude: starter.latitude,
       longitude: starter.longitude,
       wineId: wineRow.id,
-      photos: [{ uri: resolveAssetUri(starter.image), isCover: true }],
+      photos: [],
     })
     out.push({ wineId: wineRow.id, momentId: momentRow.id, starter })
   }
