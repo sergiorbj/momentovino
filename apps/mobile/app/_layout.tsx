@@ -11,6 +11,7 @@ import * as SplashScreen from 'expo-splash-screen'
 import { useEffect, useState } from 'react'
 import '../global.css'
 import { ensureAnonymousSession } from '../lib/session'
+import { hasCompletedOnboarding } from '../features/onboarding/state'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -24,6 +25,7 @@ export default function RootLayout() {
   })
 
   const [sessionReady, setSessionReady] = useState(false)
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null)
 
   useEffect(() => {
     ensureAnonymousSession()
@@ -35,18 +37,25 @@ export default function RootLayout() {
   }, [])
 
   useEffect(() => {
-    if ((fontsLoaded || fontError) && sessionReady) {
-      SplashScreen.hideAsync()
-    }
-  }, [fontsLoaded, fontError, sessionReady])
+    hasCompletedOnboarding()
+      .then(setOnboardingDone)
+      .catch(() => setOnboardingDone(false))
+  }, [])
 
-  if ((!fontsLoaded && !fontError) || !sessionReady) {
+  const ready = (fontsLoaded || fontError) && sessionReady && onboardingDone !== null
+
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync()
+  }, [ready])
+
+  if (!ready) {
     return null
   }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="onboarding" />
       <Stack.Screen name="moments" />
       <Stack.Screen name="scanner" />
       <Stack.Screen name="family" />
