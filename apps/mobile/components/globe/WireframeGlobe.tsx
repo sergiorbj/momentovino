@@ -1,7 +1,7 @@
-import React, { useCallback, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
-import { Renderer } from 'expo-three'
+import { Renderer, TextureLoader } from 'expo-three'
 import * as THREE from 'three'
 
 import {
@@ -15,12 +15,22 @@ interface WireframeGlobeProps {
   pins?: MomentPin[]
   onPress?: () => void
   config?: Partial<GlobeConfig>
+  /**
+   * Optional icon (from `require('...png')`) to render at each pin as a
+   * camera-facing sprite, tinted with `config.pinColor`. When omitted, pins
+   * fall back to the original small spheres.
+   */
+  pinIcon?: number
+  /** Sprite scale in world units when `pinIcon` is provided. Defaults to 0.1. */
+  pinIconScale?: number
 }
 
 export default function WireframeGlobe({
   pins = [],
   onPress,
   config: configOverrides,
+  pinIcon,
+  pinIconScale = 0.1,
 }: WireframeGlobeProps) {
   const cfg = { ...DEFAULT_GLOBE_CONFIG, ...configOverrides }
   const rafRef = useRef<number>(0)
@@ -63,14 +73,58 @@ export default function WireframeGlobe({
       // Country outlines (thick tube lines from real Natural Earth data)
       buildCountryOutlines(globeGroup, cfg.lineColor, cfg.countryLineRadius)
 
-      // Moment pins
-      const pinMat = new THREE.MeshBasicMaterial({ color: cfg.pinColor })
-      for (const pin of pins) {
-        const pos = latLngToVector3(pin.latitude, pin.longitude, 1.04)
-        const pinGeo = new THREE.SphereGeometry(0.03, 8, 8)
-        const mesh = new THREE.Mesh(pinGeo, pinMat)
-        mesh.position.copy(pos)
-        globeGroup.add(mesh)
+      // Moment pins — wine-glass icons stuck radially into the globe like
+      // darts. The PNG already has colour + alpha baked in, so we just
+      // upload it as the material's map. Each plane stands perpendicular
+      // to the globe surface with its base touching the surface and the
+      // cup pointing outward into space.
+      if (pinIcon != null) {
+        const pinTexture = new TextureLoader().load(pinIcon)
+        const pinGeo = new THREE.PlaneGeometry(pinIconScale, pinIconScale)
+        const GLOBAL_UP = new THREE.Vector3(0, 1, 0)
+        for (const pin of pins) {
+          const surfacePos = latLngToVector3(pin.latitude, pin.longitude, 1.0)
+          const outward = surfacePos.clone().normalize()
+
+          // Pick a tangent "right" direction; fall back near the poles where
+          // outward is parallel to the global up axis.
+          let tangentRight = new THREE.Vector3().crossVectors(GLOBAL_UP, outward)
+          if (tangentRight.lengthSq() < 1e-6) {
+            tangentRight.set(1, 0, 0)
+          } else {
+            tangentRight.normalize()
+          }
+
+          const material = new THREE.MeshBasicMaterial({
+            map: pinTexture,
+            transparent: true,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            alphaTest: 0.5,
+          })
+
+          const mesh = new THREE.Mesh(pinGeo, material)
+          // The PNG has ~25% transparent padding around the silhouette; we
+          // offset by that amount so the visible glass base lands on the
+          // surface, then add a small 5% lift so it hovers just above
+          // instead of touching.
+          mesh.position.copy(surfacePos).addScaledVector(outward, pinIconScale * 0.3)
+          // Orient: local +Y (image top = wine glass cup) aligned with
+          // outward (radial), local +Z (plane normal) aligned with a tangent
+          // direction so the glass is viewed face-on from the side.
+          mesh.up.copy(outward)
+          mesh.lookAt(mesh.position.clone().sub(tangentRight))
+          globeGroup.add(mesh)
+        }
+      } else {
+        const pinMat = new THREE.MeshBasicMaterial({ color: cfg.pinColor })
+        for (const pin of pins) {
+          const pos = latLngToVector3(pin.latitude, pin.longitude, 1.04)
+          const pinGeo = new THREE.SphereGeometry(0.03, 8, 8)
+          const mesh = new THREE.Mesh(pinGeo, pinMat)
+          mesh.position.copy(pos)
+          globeGroup.add(mesh)
+        }
       }
 
       globeGroup.rotation.x = 0.2
@@ -84,7 +138,7 @@ export default function WireframeGlobe({
 
       animate()
     },
-    [pins, cfg]
+    [pins, cfg, pinIcon, pinIconScale]
   )
 
   return (
