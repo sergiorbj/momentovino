@@ -1,7 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,10 +15,9 @@ import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 
-import { ProgressBar } from '../../components/onboarding/ProgressBar'
-import { supabase } from '../../lib/supabase'
-import { getSelections } from '../../features/onboarding/selections'
-import { getStarterWine, type StarterWine } from '../../features/onboarding/starter-deck'
+import { supabase } from '../lib/supabase'
+import { markOnboardingCompleted } from '../features/onboarding/state'
+import { resetSelections } from '../features/onboarding/selections'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -29,13 +27,7 @@ const BORDER = '#E8DDD4'
 
 type Mode = 'buttons' | 'email'
 
-export default function AccountScreen() {
-  const picked = useRef<StarterWine[]>(
-    getSelections()
-      .pickedWineKeys.map((k) => getStarterWine(k))
-      .filter((s): s is StarterWine => s != null)
-  ).current
-
+export default function LoginScreen() {
   const [mode, setMode] = useState<Mode>('buttons')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -47,46 +39,73 @@ export default function AccountScreen() {
   )
 
   const onApple = () => {
-    // TODO(auth): install expo-apple-authentication and wire up:
-    //   const credential = await AppleAuthentication.signInAsync({ requestedScopes: [...] })
-    //   await supabase.auth.linkIdentity({ provider: 'apple', credential: { id_token, nonce } })
-    // linkIdentity preserves the current anonymous user_id — the 3 starter wines/moments
-    // seeded in /onboarding/atlas stay linked to the upgraded account.
+    // TODO(auth): mirror the Apple linkIdentity flow from onboarding/account.tsx,
+    // but here call supabase.auth.signInWithIdToken (no anon session to preserve).
     Alert.alert('Apple sign-in', 'Not wired yet — use email for now.')
   }
 
   const onGoogle = () => {
-    // TODO(auth): install @react-native-google-signin/google-signin (or expo-auth-session)
-    // and call supabase.auth.linkIdentity({ provider: 'google', credential: { id_token } }).
+    // TODO(auth): supabase.auth.signInWithIdToken({ provider: 'google', token: id_token })
     Alert.alert('Google sign-in', 'Not wired yet — use email for now.')
   }
 
-  const upgradeWithEmail = async () => {
+  const signIn = async () => {
     if (!canSubmit) return
     setSubmitting(true)
     try {
-      // updateUser on an anonymous session attaches the email + password to the
-      // SAME user_id — so the seeded wines/moments remain linked. Supabase may
-      // send a confirmation email depending on project settings.
-      const { error } = await supabase.auth.updateUser({
+      // If a local anonymous session exists with seeded onboarding state,
+      // it'll be replaced by signInWithPassword. The user is explicitly
+      // telling us they have another account, so we discard local anon work.
+      const { error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       })
       if (error) throw error
-      router.push('/onboarding/paywall')
+      resetSelections()
+      await markOnboardingCompleted()
+      router.replace('/(tabs)/moments')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Could not create account'
-      Alert.alert('Account creation failed', msg)
+      const msg = err instanceof Error ? err.message : 'Could not sign in'
+      Alert.alert('Sign-in failed', msg)
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const forgot = async () => {
+    const target = email.trim().toLowerCase()
+    if (!/.+@.+\..+/.test(target)) {
+      Alert.alert('Reset password', 'Enter your email first, then tap Forgot password.')
+      return
+    }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(target)
+      if (error) throw error
+      Alert.alert('Check your inbox', `We sent a reset link to ${target}.`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not send reset email'
+      Alert.alert('Reset password', msg)
+    }
+  }
+
+  const goSignUp = () => {
+    router.replace('/onboarding')
+  }
+
+  const goBack = () => {
+    if (router.canGoBack()) router.back()
+    else router.replace('/onboarding')
   }
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
       <SafeAreaView style={styles.safe}>
-        <ProgressBar step={5} total={6} />
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={goBack} style={styles.backBtn} activeOpacity={0.7}>
+            <Ionicons name="chevron-back" size={26} color={WINE} />
+          </TouchableOpacity>
+        </View>
 
         <KeyboardAvoidingView
           style={styles.kav}
@@ -97,19 +116,11 @@ export default function AccountScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.shelf}>
-              {picked.map((s) => (
-                <View key={s.key} style={styles.shelfCard}>
-                  <Image source={s.image} style={styles.shelfImg} resizeMode="contain" />
-                </View>
-              ))}
-            </View>
-
             <View style={styles.copy}>
-              <Text style={styles.headline}>Save your journal.</Text>
+              <Text style={styles.headline}>Welcome back.</Text>
               <Text style={styles.sub}>
-                Your {picked.length} moments are ready. Create a free account so they're yours
-                forever — on this phone, your next phone, and shared with whoever you choose.
+                Sign in to pick up your journal — wines, moments, and places, right where
+                you left them.
               </Text>
             </View>
 
@@ -162,12 +173,15 @@ export default function AccountScreen() {
                   style={styles.input}
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="At least 6 characters"
+                  placeholder="Your password"
                   placeholderTextColor="#B5A6A8"
                   secureTextEntry
-                  autoComplete="new-password"
-                  textContentType="newPassword"
+                  autoComplete="password"
+                  textContentType="password"
                 />
+                <TouchableOpacity onPress={forgot} activeOpacity={0.7} style={styles.forgotLink}>
+                  <Text style={styles.forgotLinkText}>Forgot password?</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setMode('buttons')}
                   activeOpacity={0.7}
@@ -178,30 +192,22 @@ export default function AccountScreen() {
               </View>
             )}
 
-            <TouchableOpacity
-              onPress={() => router.push('/login')}
-              activeOpacity={0.7}
-              style={styles.loginLink}
-            >
-              <Text style={styles.loginLinkText}>I already have an account</Text>
+            <TouchableOpacity onPress={goSignUp} activeOpacity={0.7} style={styles.signUpLink}>
+              <Text style={styles.signUpLinkText}>
+                Don't have an account? <Text style={styles.signUpLinkStrong}>Create one</Text>
+              </Text>
             </TouchableOpacity>
-
-            <Text style={styles.legal}>
-              By continuing you agree to our Terms and Privacy Policy.
-            </Text>
           </ScrollView>
 
           {mode === 'email' ? (
             <View style={styles.footer}>
               <TouchableOpacity
                 style={[styles.cta, !canSubmit && styles.ctaDisabled]}
-                onPress={upgradeWithEmail}
+                onPress={signIn}
                 disabled={!canSubmit}
                 activeOpacity={0.85}
               >
-                <Text style={styles.ctaText}>
-                  {submitting ? 'Saving…' : 'Save my journal'}
-                </Text>
+                <Text style={styles.ctaText}>{submitting ? 'Signing in…' : 'Sign in'}</Text>
               </TouchableOpacity>
             </View>
           ) : null}
@@ -215,31 +221,18 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   safe: { flex: 1 },
   kav: { flex: 1 },
-  scroll: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 },
-  shelf: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    gap: 10,
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  shelfCard: {
-    width: 70,
-    height: 100,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: BORDER,
-    padding: 6,
+  topBar: { flexDirection: 'row', paddingHorizontal: 8, paddingTop: 4 },
+  backBtn: {
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shelfImg: { width: '100%', height: '100%' },
-  copy: { gap: 8, marginBottom: 24 },
+  scroll: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 24 },
+  copy: { gap: 8, marginBottom: 28 },
   headline: {
-    fontSize: 26,
-    lineHeight: 32,
+    fontSize: 30,
+    lineHeight: 36,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
   },
@@ -300,24 +293,27 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     color: INK,
   },
+  forgotLink: { alignSelf: 'flex-end', paddingVertical: 4 },
+  forgotLinkText: {
+    fontSize: 13,
+    fontFamily: 'DMSans_600SemiBold',
+    color: '#C2703E',
+  },
   backLink: { alignSelf: 'flex-start', paddingVertical: 8 },
   backLinkText: {
     fontSize: 13,
     fontFamily: 'DMSans_600SemiBold',
     color: WINE,
   },
-  loginLink: { alignItems: 'center', paddingVertical: 14, marginTop: 8 },
-  loginLinkText: {
+  signUpLink: { alignItems: 'center', paddingVertical: 18, marginTop: 12 },
+  signUpLinkText: {
     fontSize: 14,
-    fontFamily: 'DMSans_600SemiBold',
-    color: '#C2703E',
+    fontFamily: 'DMSans_500Medium',
+    color: INK,
   },
-  legal: {
-    fontSize: 11,
-    fontFamily: 'DMSans_400Regular',
-    color: SUBTLE,
-    textAlign: 'center',
-    paddingHorizontal: 16,
+  signUpLinkStrong: {
+    fontFamily: 'DMSans_600SemiBold',
+    color: WINE,
   },
   footer: { paddingHorizontal: 24, paddingBottom: 16, paddingTop: 8 },
   cta: {

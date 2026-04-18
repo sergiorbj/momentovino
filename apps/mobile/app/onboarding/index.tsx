@@ -60,7 +60,7 @@ export default function WelcomeScreen() {
 
   const goLogin = () => {
     resetSelections()
-    router.push('/onboarding/account?mode=login')
+    router.push('/login')
   }
 
   return (
