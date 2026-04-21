@@ -78,6 +78,10 @@ export default function LoginScreen() {
       const outcome = await signInWithGoogle()
       if (outcome.kind === 'success') return afterProviderSignIn()
       if (outcome.kind === 'cancelled') return
+      if (outcome.kind === 'unavailable') {
+        Alert.alert('Google sign-in unavailable', outcome.message)
+        return
+      }
       Alert.alert('Google sign-in failed', outcome.message)
     } finally {
       setSubmitting(false)

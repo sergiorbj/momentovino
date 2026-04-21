@@ -11,6 +11,10 @@
     "dev:web": "turbo run dev --filter=web",
     "dev:web:with-flask": "pnpm --filter web dev:with-flask",
     "dev:mobile": "turbo run dev --filter=mobile",
+    "mobile:start": "pnpm --filter mobile exec expo start",
+    "mobile:prebuild": "pnpm --filter mobile exec expo prebuild --platform ios --clean",
+    "mobile:ios": "pnpm --filter mobile exec expo run:ios",
+    "mobile:xcode": "open apps/mobile/ios/MomentoVino.xcworkspace",
     "ios": "pnpm --filter mobile ios",
     "android": "pnpm --filter mobile android"
   },

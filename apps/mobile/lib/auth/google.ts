@@ -1,19 +1,46 @@
-import {
-  GoogleSignin,
-  statusCodes,
-} from '@react-native-google-signin/google-signin'
+import Constants from 'expo-constants'
 
 import { supabase } from '../supabase'
 
 const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
 const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
 
+// Expo Go ships a fixed set of native modules and does not include
+// `@react-native-google-signin/google-signin`. Detect the runtime so we can
+// skip native access entirely and surface a clear message instead of crashing.
+const isExpoGo = Constants.appOwnership === 'expo'
+
+type GoogleSigninModule = {
+  GoogleSignin: {
+    configure: (opts: { iosClientId?: string; webClientId?: string }) => void
+    hasPlayServices: (opts?: { showPlayServicesUpdateDialog?: boolean }) => Promise<boolean>
+    signIn: () => Promise<unknown>
+  }
+  statusCodes: { SIGN_IN_CANCELLED: string; IN_PROGRESS: string }
+}
+
+let nativeModule: GoogleSigninModule | null = null
 let configured = false
 
-// Must be called once at app start before any sign-in attempt. `webClientId`
-// is the audience Supabase validates against, so it is required even on iOS.
+function loadNative(): GoogleSigninModule | null {
+  if (nativeModule) return nativeModule
+  if (isExpoGo) return null
+  try {
+    nativeModule = require('@react-native-google-signin/google-signin') as GoogleSigninModule
+    return nativeModule
+  } catch (err) {
+    console.warn('[auth/google] Native module not linked:', err)
+    return null
+  }
+}
+
 export function configureGoogleSignIn(): void {
   if (configured) return
+
+  if (isExpoGo) {
+    console.warn('[auth/google] Running in Expo Go — Google sign-in disabled (needs dev client).')
+    return
+  }
 
   if (!iosClientId || !webClientId) {
     console.warn(
@@ -22,21 +49,26 @@ export function configureGoogleSignIn(): void {
     return
   }
 
-  GoogleSignin.configure({
-    iosClientId,
-    webClientId,
-  })
+  const mod = loadNative()
+  if (!mod) return
+
+  mod.GoogleSignin.configure({ iosClientId, webClientId })
   configured = true
 }
 
 export type GoogleSignInOutcome =
   | { kind: 'success' }
   | { kind: 'cancelled' }
+  | { kind: 'unavailable'; message: string }
   | { kind: 'error'; message: string }
 
-// Opens the native Google sign-in prompt, exchanges the returned ID token with
-// Supabase, and leaves the supabase client holding a live session on success.
 export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
+  if (isExpoGo) {
+    return {
+      kind: 'unavailable',
+      message: 'Google sign-in only works in a dev client build, not Expo Go.',
+    }
+  }
   if (!configured) {
     return {
       kind: 'error',
@@ -44,11 +76,18 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
     }
   }
 
-  try {
-    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: false })
-    const result = await GoogleSignin.signIn()
+  const mod = loadNative()
+  if (!mod) {
+    return {
+      kind: 'unavailable',
+      message: 'Google sign-in native module is not available.',
+    }
+  }
 
-    // Response shape differs between v15 and v16; normalise the two shapes.
+  try {
+    await mod.GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: false })
+    const result = await mod.GoogleSignin.signIn()
+
     const idToken =
       (result as { data?: { idToken?: string | null } }).data?.idToken ??
       (result as { idToken?: string | null }).idToken ??
@@ -68,8 +107,8 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
   } catch (err) {
     const code = (err as { code?: string }).code
     if (
-      code === statusCodes.SIGN_IN_CANCELLED ||
-      code === statusCodes.IN_PROGRESS
+      code === mod.statusCodes.SIGN_IN_CANCELLED ||
+      code === mod.statusCodes.IN_PROGRESS
     ) {
       return { kind: 'cancelled' }
     }
