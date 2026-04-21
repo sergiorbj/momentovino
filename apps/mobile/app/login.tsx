@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,8 +14,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import * as AppleAuthentication from 'expo-apple-authentication'
 
 import { supabase } from '../lib/supabase'
+import { signInWithGoogle } from '../lib/auth/google'
+import { signInWithApple } from '../lib/auth/apple'
 import { markOnboardingCompleted } from '../features/onboarding/state'
 import { resetSelections } from '../features/onboarding/selections'
 
@@ -32,38 +35,65 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [appleAvailable, setAppleAvailable] = useState(false)
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return
+    AppleAuthentication.isAvailableAsync()
+      .then(setAppleAvailable)
+      .catch(() => setAppleAvailable(false))
+  }, [])
 
   const canSubmit = useMemo(
     () => /.+@.+\..+/.test(email) && password.length >= 6 && !submitting,
     [email, password, submitting]
   )
 
-  const onApple = () => {
-    // TODO(auth): mirror the Apple linkIdentity flow from onboarding/account.tsx,
-    // but here call supabase.auth.signInWithIdToken (no anon session to preserve).
-    Alert.alert('Apple sign-in', 'Not wired yet — use email for now.')
+  // Both providers replace the (possibly anonymous) local session with the
+  // returning user's real session. The user is explicitly telling us they
+  // already have an account, so any local anon work is discarded on purpose.
+  const afterProviderSignIn = async () => {
+    resetSelections()
+    await markOnboardingCompleted()
+    router.replace('/(tabs)/moments')
   }
 
-  const onGoogle = () => {
-    // TODO(auth): supabase.auth.signInWithIdToken({ provider: 'google', token: id_token })
-    Alert.alert('Google sign-in', 'Not wired yet — use email for now.')
+  const onApple = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      const outcome = await signInWithApple()
+      if (outcome.kind === 'success') return afterProviderSignIn()
+      if (outcome.kind === 'cancelled' || outcome.kind === 'unavailable') return
+      Alert.alert('Apple sign-in failed', outcome.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const onGoogle = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      const outcome = await signInWithGoogle()
+      if (outcome.kind === 'success') return afterProviderSignIn()
+      if (outcome.kind === 'cancelled') return
+      Alert.alert('Google sign-in failed', outcome.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const signIn = async () => {
     if (!canSubmit) return
     setSubmitting(true)
     try {
-      // If a local anonymous session exists with seeded onboarding state,
-      // it'll be replaced by signInWithPassword. The user is explicitly
-      // telling us they have another account, so we discard local anon work.
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       })
       if (error) throw error
-      resetSelections()
-      await markOnboardingCompleted()
-      router.replace('/(tabs)/moments')
+      await afterProviderSignIn()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not sign in'
       Alert.alert('Sign-in failed', msg)
@@ -126,10 +156,11 @@ export default function LoginScreen() {
 
             {mode === 'buttons' ? (
               <View style={styles.buttons}>
-                {Platform.OS === 'ios' ? (
+                {Platform.OS === 'ios' && appleAvailable ? (
                   <TouchableOpacity
                     style={[styles.authBtn, styles.authApple]}
                     onPress={onApple}
+                    disabled={submitting}
                     activeOpacity={0.85}
                   >
                     <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
@@ -139,6 +170,7 @@ export default function LoginScreen() {
                 <TouchableOpacity
                   style={[styles.authBtn, styles.authGoogle]}
                   onPress={onGoogle}
+                  disabled={submitting}
                   activeOpacity={0.85}
                 >
                   <Ionicons name="logo-google" size={18} color={INK} />

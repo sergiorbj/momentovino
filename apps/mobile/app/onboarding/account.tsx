@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Image,
@@ -15,9 +15,12 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import * as AppleAuthentication from 'expo-apple-authentication'
 
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import { supabase } from '../../lib/supabase'
+import { signInWithGoogle } from '../../lib/auth/google'
+import { signInWithApple } from '../../lib/auth/apple'
 import { getSelections } from '../../features/onboarding/selections'
 import { getStarterWine, type StarterWine } from '../../features/onboarding/starter-deck'
 
@@ -40,25 +43,56 @@ export default function AccountScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [appleAvailable, setAppleAvailable] = useState(false)
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return
+    AppleAuthentication.isAvailableAsync()
+      .then(setAppleAvailable)
+      .catch(() => setAppleAvailable(false))
+  }, [])
 
   const canSubmit = useMemo(
     () => /.+@.+\..+/.test(email) && password.length >= 6 && !submitting,
     [email, password, submitting]
   )
 
-  const onApple = () => {
-    // TODO(auth): install expo-apple-authentication and wire up:
-    //   const credential = await AppleAuthentication.signInAsync({ requestedScopes: [...] })
-    //   await supabase.auth.linkIdentity({ provider: 'apple', credential: { id_token, nonce } })
-    // linkIdentity preserves the current anonymous user_id — the 3 starter wines/moments
-    // seeded in /onboarding/atlas stay linked to the upgraded account.
-    Alert.alert('Apple sign-in', 'Not wired yet — use email for now.')
+  // NOTE: `signInWithIdToken` replaces the anonymous session with the OAuth
+  // user. Any DB rows already written under the anon user_id become orphaned.
+  // Today the starter wines/moments are only in local state (see getSelections)
+  // and are persisted to the DB AFTER the paywall, so there is nothing to
+  // migrate. If we ever write to the DB before this screen, add a server-side
+  // merge (edge function or trigger on auth.users) to re-assign those rows.
+  const onApple = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      const outcome = await signInWithApple()
+      if (outcome.kind === 'success') {
+        router.push('/onboarding/paywall')
+        return
+      }
+      if (outcome.kind === 'cancelled' || outcome.kind === 'unavailable') return
+      Alert.alert('Apple sign-in failed', outcome.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const onGoogle = () => {
-    // TODO(auth): install @react-native-google-signin/google-signin (or expo-auth-session)
-    // and call supabase.auth.linkIdentity({ provider: 'google', credential: { id_token } }).
-    Alert.alert('Google sign-in', 'Not wired yet — use email for now.')
+  const onGoogle = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      const outcome = await signInWithGoogle()
+      if (outcome.kind === 'success') {
+        router.push('/onboarding/paywall')
+        return
+      }
+      if (outcome.kind === 'cancelled') return
+      Alert.alert('Google sign-in failed', outcome.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const upgradeWithEmail = async () => {
@@ -115,10 +149,11 @@ export default function AccountScreen() {
 
             {mode === 'buttons' ? (
               <View style={styles.buttons}>
-                {Platform.OS === 'ios' ? (
+                {Platform.OS === 'ios' && appleAvailable ? (
                   <TouchableOpacity
                     style={[styles.authBtn, styles.authApple]}
                     onPress={onApple}
+                    disabled={submitting}
                     activeOpacity={0.85}
                   >
                     <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
@@ -128,6 +163,7 @@ export default function AccountScreen() {
                 <TouchableOpacity
                   style={[styles.authBtn, styles.authGoogle]}
                   onPress={onGoogle}
+                  disabled={submitting}
                   activeOpacity={0.85}
                 >
                   <Ionicons name="logo-google" size={18} color={INK} />

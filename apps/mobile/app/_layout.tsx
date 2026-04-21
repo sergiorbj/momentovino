@@ -11,9 +11,12 @@ import * as SplashScreen from 'expo-splash-screen'
 import { useEffect, useState } from 'react'
 import '../global.css'
 import { ensureAnonymousSession } from '../lib/session'
+import { configureGoogleSignIn } from '../lib/auth/google'
 import { hasCompletedOnboarding } from '../features/onboarding/state'
 
 SplashScreen.preventAutoHideAsync()
+
+configureGoogleSignIn()
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
