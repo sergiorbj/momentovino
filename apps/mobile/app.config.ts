@@ -2,6 +2,8 @@ import type { ExpoConfig } from 'expo/config'
 
 const googleIosUrlScheme = process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME
 
+const appleSignInEnabled = process.env.APPLE_SIGN_IN_ENABLED !== 'false'
+
 const config: ExpoConfig = {
   name: 'MomentoVino',
   slug: 'momentovino',
@@ -18,7 +20,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.momentovino.app',
-    usesAppleSignIn: true,
+    usesAppleSignIn: appleSignInEnabled,
   },
   android: {
     adaptiveIcon: {
