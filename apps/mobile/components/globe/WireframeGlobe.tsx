@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { Renderer, TextureLoader } from 'expo-three'
@@ -141,10 +141,21 @@ export default function WireframeGlobe({
     [pins, cfg, pinIcon, pinIconScale]
   )
 
+  // `GLView.onContextCreate` only fires once per mount (when the WebGL
+  // context is created). If the `pins` prop arrives later (e.g. fetched
+  // async after first render), the scene stays frozen with whatever pins
+  // were passed on mount. Forcing a re-mount via a `key` derived from the
+  // pin identities keeps the scene in sync with the current `pins` list.
+  const pinsKey = useMemo(
+    () => pins.map((p) => `${p.id}:${p.latitude}:${p.longitude}`).join('|'),
+    [pins]
+  )
+
   return (
     <View style={[styles.container, { width: cfg.size, height: cfg.size }]}>
       <Pressable onPress={onPress} style={StyleSheet.absoluteFill}>
         <GLView
+          key={pinsKey}
           style={StyleSheet.absoluteFill}
           onContextCreate={onContextCreate}
         />

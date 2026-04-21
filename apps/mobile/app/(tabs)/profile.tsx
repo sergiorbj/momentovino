@@ -62,8 +62,27 @@ export default function ProfileScreen() {
     }
   }
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
+  const signOut = () => {
+    Alert.alert(
+      'Sign out',
+      "You'll need to sign in again to see your moments.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { error } = await supabase.auth.signOut()
+              if (error) throw error
+              router.replace('/login')
+            } catch (e) {
+              Alert.alert('Error', e instanceof Error ? e.message : 'Could not sign out')
+            }
+          },
+        },
+      ]
+    )
   }
 
   const displayName = profile?.display_name || 'User'

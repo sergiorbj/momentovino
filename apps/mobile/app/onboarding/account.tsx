@@ -103,14 +103,27 @@ export default function AccountScreen() {
     if (!canSubmit) return
     setSubmitting(true)
     try {
-      // updateUser on an anonymous session attaches the email + password to the
-      // SAME user_id — so the seeded wines/moments remain linked. Supabase may
-      // send a confirmation email depending on project settings.
-      const { error } = await supabase.auth.updateUser({
-        email: email.trim().toLowerCase(),
-        password,
-      })
-      if (error) throw error
+      const trimmedEmail = email.trim().toLowerCase()
+
+      // Prefer `updateUser` when there's an anonymous session, so the
+      // user_id stays stable and no orphan rows are created. Fall back to
+      // `signUp` if there's no session at all (e.g., the user just signed
+      // out in this app run and the onboarding-layout guard happened to
+      // fail to create a fresh anon session).
+      const { data: sessionData } = await supabase.auth.getSession()
+      if (sessionData.session?.user) {
+        const { error } = await supabase.auth.updateUser({
+          email: trimmedEmail,
+          password,
+        })
+        if (error) throw error
+      } else {
+        const { error } = await supabase.auth.signUp({
+          email: trimmedEmail,
+          password,
+        })
+        if (error) throw error
+      }
       router.push('/onboarding/paywall')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not create account'

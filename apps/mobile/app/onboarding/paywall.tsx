@@ -14,7 +14,8 @@ import { Ionicons } from '@expo/vector-icons'
 
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import { markOnboardingCompleted } from '../../features/onboarding/state'
-import { resetSelections } from '../../features/onboarding/selections'
+import { getSelections, resetSelections } from '../../features/onboarding/selections'
+import { seedStarterJournal } from '../../features/onboarding/seed'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -40,12 +41,23 @@ export default function PaywallScreen() {
       //   if (!pkg) throw new Error('No offering available')
       //   const { customerInfo } = await Purchases.purchasePackage(pkg)
       //   if (!customerInfo.entitlements.active['pro']) throw new Error('Trial not active')
+
+      // Persist the starter wines/moments NOW — we're past the account screen,
+      // so `supabase.auth.getUser()` is guaranteed to return the final user_id
+      // (same one for email upgrade, new one for Google/Apple). Seeding here
+      // avoids rows being orphaned under an anon user when OAuth replaces the
+      // session.
+      const { pickedWineKeys } = getSelections()
+      if (pickedWineKeys.length > 0) {
+        await seedStarterJournal(pickedWineKeys)
+      }
+
       await markOnboardingCompleted()
       resetSelections()
       router.replace('/(tabs)/moments')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not start trial'
-      Alert.alert('Purchase failed', msg)
+      Alert.alert('Could not save your journal', msg)
     } finally {
       setPurchasing(false)
     }

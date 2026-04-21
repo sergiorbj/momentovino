@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   Image,
   ScrollView,
@@ -21,7 +20,6 @@ import WireframeGlobe from '../../components/globe/WireframeGlobe'
 import type { MomentPin } from '../../components/globe/types'
 import { getSelections } from '../../features/onboarding/selections'
 import { getStarterWine, type StarterWine } from '../../features/onboarding/starter-deck'
-import { seedStarterJournal, type SeededMoment } from '../../features/onboarding/seed'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -33,7 +31,7 @@ const { width } = Dimensions.get('window')
 const GLOBE_SIZE = Math.min(width * 0.85, 300)
 const GLASS_ICON = require('../../assets/glass-vino.png')
 
-type Phase = 'processing' | 'reveal' | 'error'
+type Phase = 'processing' | 'reveal'
 
 export default function AtlasScreen() {
   const selections = useRef(getSelections()).current
@@ -44,28 +42,14 @@ export default function AtlasScreen() {
   ).current
 
   const [phase, setPhase] = useState<Phase>('processing')
-  const [seeded, setSeeded] = useState<SeededMoment[]>([])
-  const [error, setError] = useState<string | null>(null)
 
+  // No DB write here — this screen only previews the user's picks. The
+  // actual `seedStarterJournal` call lives in paywall.startTrial so the
+  // wines/moments are persisted under the authenticated user_id (post auth),
+  // not the pre-auth anonymous session which may or may not survive OAuth.
   useEffect(() => {
-    let cancelled = false
-    const minDelay = new Promise((r) => setTimeout(r, 1800))
-    Promise.all([seedStarterJournal(selections.pickedWineKeys), minDelay])
-      .then(([rows]) => {
-        if (cancelled) return
-        setSeeded(rows)
-        setPhase('reveal')
-      })
-      .catch((err) => {
-        if (cancelled) return
-        const msg = err instanceof Error ? err.message : 'Something went wrong'
-        setError(msg)
-        setPhase('error')
-      })
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const t = setTimeout(() => setPhase('reveal'), 1800)
+    return () => clearTimeout(t)
   }, [])
 
   const pins: MomentPin[] = pickedStarters.map((s) => ({
@@ -110,41 +94,6 @@ export default function AtlasScreen() {
     )
   }
 
-  if (phase === 'error') {
-    return (
-      <View style={styles.container}>
-        <StatusBar style="dark" />
-        <SafeAreaView style={styles.safe}>
-          <ProgressBar step={4} total={6} />
-          <View style={styles.processing}>
-            <Text style={styles.errorHead}>We couldn't save your atlas.</Text>
-            <Text style={styles.errorSub}>{error}</Text>
-            <TouchableOpacity
-              style={styles.cta}
-              onPress={() => {
-                setError(null)
-                setPhase('processing')
-                Alert.alert('Retrying', 'Seeding again…')
-                seedStarterJournal(selections.pickedWineKeys)
-                  .then((rows) => {
-                    setSeeded(rows)
-                    setPhase('reveal')
-                  })
-                  .catch((err) => {
-                    setError(err instanceof Error ? err.message : 'Failed again')
-                    setPhase('error')
-                  })
-              }}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.ctaText}>Try again</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </View>
-    )
-  }
-
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -174,16 +123,16 @@ export default function AtlasScreen() {
           </View>
 
           <View style={styles.stats}>
-            <Stat value={seeded.length} label="Moments" />
+            <Stat value={pickedStarters.length} label="Moments" />
             <View style={styles.statDivider} />
             <Stat value={countries} label={countries === 1 ? 'Country' : 'Countries'} />
             <View style={styles.statDivider} />
-            <Stat value={seeded.length} label={seeded.length === 1 ? 'Wine' : 'Wines'} />
+            <Stat value={pickedStarters.length} label={pickedStarters.length === 1 ? 'Wine' : 'Wines'} />
           </View>
 
           <View style={styles.feed}>
-            {seeded.map((m, i) => (
-              <MomentCard key={m.momentId} index={i} seeded={m} />
+            {pickedStarters.map((starter, i) => (
+              <MomentCard key={starter.key} index={i} starter={starter} />
             ))}
           </View>
 
@@ -211,21 +160,21 @@ function Stat({ value, label }: { value: number; label: string }) {
   )
 }
 
-function MomentCard({ index, seeded }: { index: number; seeded: SeededMoment }) {
+function MomentCard({ index, starter }: { index: number; starter: StarterWine }) {
   const ordinals = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']
   const title = `My ${ordinals[index] ?? `${index + 1}th`} wine moment`
   return (
     <View style={styles.momentCard}>
-      <Image source={seeded.starter.image} style={styles.momentThumb} resizeMode="contain" />
+      <Image source={starter.image} style={styles.momentThumb} resizeMode="contain" />
       <View style={styles.momentMeta}>
         <Text style={styles.momentTitle} numberOfLines={1}>
           {title}
         </Text>
         <Text style={styles.momentWine} numberOfLines={1}>
-          {seeded.starter.wine.name}
+          {starter.wine.name}
         </Text>
         <Text style={styles.momentPlace} numberOfLines={1}>
-          {seeded.starter.flag}  {seeded.starter.locationName}
+          {starter.flag}  {starter.locationName}
         </Text>
       </View>
     </View>
