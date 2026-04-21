@@ -11,12 +11,61 @@ async function getAccessToken(): Promise<string> {
 export type ProfileRow = {
   id: string
   display_name: string
+  username: string
   bio: string | null
   avatar_url: string | null
   language: 'en' | 'pt-BR'
   notifications_enabled: boolean
   created_at: string
   updated_at: string
+}
+
+export const USERNAME_REGEX = /^[a-z0-9_.]{3,20}$/
+export const USERNAME_MIN = 3
+export const USERNAME_MAX = 20
+
+/**
+ * Atomically assigns a username for the current user, retrying with a
+ * random 4-digit suffix on collision. Safe to call on every app start for
+ * authenticated non-anonymous users missing a username.
+ */
+export async function claimUsername(desired?: string | null): Promise<string> {
+  const { data, error } = await supabase.rpc('claim_username', {
+    desired: desired ?? '',
+  })
+  if (error) throw new Error(error.message || 'Could not claim username')
+  return String(data)
+}
+
+export class UsernameTakenError extends Error {
+  constructor() {
+    super('That username is already taken.')
+    this.name = 'UsernameTakenError'
+  }
+}
+
+export class UsernameFormatError extends Error {
+  constructor() {
+    super('3–20 lowercase letters, numbers, dots or underscores.')
+    this.name = 'UsernameFormatError'
+  }
+}
+
+/**
+ * Sets a user-picked username. Throws `UsernameTakenError` on collision or
+ * `UsernameFormatError` on invalid input.
+ */
+export async function setUsername(newUsername: string): Promise<string> {
+  const { data, error } = await supabase.rpc('set_username', {
+    new_username: newUsername,
+  })
+  if (error) {
+    const msg = error.message || ''
+    if (msg.includes('username_taken')) throw new UsernameTakenError()
+    if (msg.includes('invalid_format')) throw new UsernameFormatError()
+    throw new Error(msg || 'Could not update username')
+  }
+  return String(data)
 }
 
 export type ProfileStats = {

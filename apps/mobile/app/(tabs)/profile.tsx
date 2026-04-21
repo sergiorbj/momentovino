@@ -156,6 +156,7 @@ export default function ProfileScreen() {
               </View>
 
               <Text style={styles.name}>{displayName}</Text>
+              {profile?.username ? <Text style={styles.handle}>@{profile.username}</Text> : null}
               {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
 
               <View style={styles.divider} />
@@ -277,6 +278,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: '#1C1C1E',
+    marginBottom: 2,
+  },
+  handle: {
+    fontSize: 14,
+    fontFamily: 'DMSans_500Medium',
+    color: '#C2703E',
     marginBottom: 6,
   },
   bio: {

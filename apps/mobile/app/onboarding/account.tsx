@@ -40,6 +40,7 @@ export default function AccountScreen() {
   ).current
 
   const [mode, setMode] = useState<Mode>('buttons')
+  const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -53,8 +54,12 @@ export default function AccountScreen() {
   }, [])
 
   const canSubmit = useMemo(
-    () => /.+@.+\..+/.test(email) && password.length >= 6 && !submitting,
-    [email, password, submitting]
+    () =>
+      displayName.trim().length >= 2 &&
+      /.+@.+\..+/.test(email) &&
+      password.length >= 6 &&
+      !submitting,
+    [displayName, email, password, submitting]
   )
 
   // NOTE: `signInWithIdToken` replaces the anonymous session with the OAuth
@@ -104,6 +109,7 @@ export default function AccountScreen() {
     setSubmitting(true)
     try {
       const trimmedEmail = email.trim().toLowerCase()
+      const trimmedName = displayName.trim()
 
       // Prefer `updateUser` when there's an anonymous session, so the
       // user_id stays stable and no orphan rows are created. Fall back to
@@ -115,15 +121,31 @@ export default function AccountScreen() {
         const { error } = await supabase.auth.updateUser({
           email: trimmedEmail,
           password,
+          data: { full_name: trimmedName },
         })
         if (error) throw error
       } else {
         const { error } = await supabase.auth.signUp({
           email: trimmedEmail,
           password,
+          options: { data: { full_name: trimmedName } },
         })
         if (error) throw error
       }
+
+      // Persist display_name directly to public.profiles. The `handle_new_user`
+      // trigger only fires on auth.users INSERT, so `updateUser` above won't
+      // populate the profile; we write it ourselves under RLS (users can
+      // update their own profile row).
+      const { data: userData } = await supabase.auth.getUser()
+      const userId = userData.user?.id
+      if (userId) {
+        await supabase
+          .from('profiles')
+          .update({ display_name: trimmedName })
+          .eq('id', userId)
+      }
+
       router.push('/onboarding/paywall')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not create account'
@@ -197,6 +219,19 @@ export default function AccountScreen() {
               </View>
             ) : (
               <View style={styles.form}>
+                <Text style={styles.inputLabel}>Display name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={displayName}
+                  onChangeText={(t) => setDisplayName(t.slice(0, 50))}
+                  placeholder="How should we call you?"
+                  placeholderTextColor="#B5A6A8"
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  autoComplete="name"
+                  textContentType="name"
+                  maxLength={50}
+                />
                 <Text style={styles.inputLabel}>Email</Text>
                 <TextInput
                   style={styles.input}

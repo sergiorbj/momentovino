@@ -15,7 +15,16 @@ import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 
-import { getProfile, updateProfile, type ProfileRow } from '../../features/profile/api'
+import {
+  USERNAME_MAX,
+  USERNAME_MIN,
+  USERNAME_REGEX,
+  UsernameFormatError,
+  UsernameTakenError,
+  getProfile,
+  setUsername,
+  updateProfile,
+} from '../../features/profile/api'
 import { uploadAvatar } from '../../features/profile/avatar-upload'
 import { supabase } from '../../lib/supabase'
 
@@ -28,6 +37,8 @@ const BIO_MAX = 160
 
 export default function EditProfileScreen() {
   const [displayName, setDisplayName] = useState('')
+  const [username, setUsernameState] = useState('')
+  const [originalUsername, setOriginalUsername] = useState('')
   const [bio, setBio] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null)
@@ -39,6 +50,8 @@ export default function EditProfileScreen() {
       try {
         const { profile } = await getProfile()
         setDisplayName(profile.display_name || '')
+        setUsernameState(profile.username || '')
+        setOriginalUsername(profile.username || '')
         setBio(profile.bio || '')
         setAvatarUrl(profile.avatar_url)
       } catch (e) {
@@ -48,6 +61,9 @@ export default function EditProfileScreen() {
       }
     })()
   }, [])
+
+  const usernameValid = USERNAME_REGEX.test(username)
+  const usernameChanged = username !== originalUsername
 
   const pickAvatar = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -81,6 +97,14 @@ export default function EditProfileScreen() {
       Alert.alert('Bio too long', `Maximum ${BIO_MAX} characters.`)
       return
     }
+    const normalizedUsername = username.trim().toLowerCase()
+    if (!USERNAME_REGEX.test(normalizedUsername)) {
+      Alert.alert(
+        'Invalid username',
+        `Use ${USERNAME_MIN}–${USERNAME_MAX} lowercase letters, numbers, dots or underscores.`
+      )
+      return
+    }
 
     try {
       setSaving(true)
@@ -98,6 +122,25 @@ export default function EditProfileScreen() {
         bio: trimBio || null,
         avatar_url: newAvatarUrl,
       })
+
+      // Username goes through a dedicated RPC (atomic uniqueness check).
+      // Done after the main profile update so a conflict here doesn't
+      // silently discard other edits the user made.
+      if (usernameChanged) {
+        try {
+          await setUsername(normalizedUsername)
+        } catch (e) {
+          if (e instanceof UsernameTakenError) {
+            Alert.alert('Username taken', 'Try another one. Other changes were saved.')
+            return
+          }
+          if (e instanceof UsernameFormatError) {
+            Alert.alert('Invalid username', e.message)
+            return
+          }
+          throw e
+        }
+      }
 
       router.back()
     } catch (e) {
@@ -170,6 +213,34 @@ export default function EditProfileScreen() {
             autoCapitalize="words"
             maxLength={NAME_MAX}
           />
+
+          {/* Username */}
+          <Text style={styles.label}>Username</Text>
+          <View style={styles.usernameRow}>
+            <Text style={styles.usernamePrefix}>@</Text>
+            <TextInput
+              value={username}
+              onChangeText={(t) =>
+                setUsernameState(
+                  t
+                    .toLowerCase()
+                    .replace(/[^a-z0-9_.]/g, '')
+                    .slice(0, USERNAME_MAX)
+                )
+              }
+              placeholder="your_handle"
+              placeholderTextColor="#A98B7E"
+              style={styles.usernameInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={USERNAME_MAX}
+            />
+          </View>
+          <Text style={[styles.hint, !usernameValid && styles.hintError]}>
+            {username.length === 0
+              ? 'Required.'
+              : `${USERNAME_MIN}–${USERNAME_MAX} lowercase letters, numbers, dots or underscores.`}
+          </Text>
 
           {/* Bio */}
           <Text style={styles.label}>Bio</Text>
@@ -285,6 +356,34 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   inputMultiline: { minHeight: 100, textAlignVertical: 'top' },
+  usernameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    marginBottom: 4,
+  },
+  usernamePrefix: {
+    fontSize: 16,
+    fontFamily: 'DMSans_600SemiBold',
+    color: SUBTLE,
+    marginRight: 2,
+  },
+  usernameInput: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    color: INK,
+  },
+  hint: {
+    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    color: SUBTLE,
+    marginBottom: 16,
+  },
+  hintError: { color: '#C0392B' },
   counter: {
     fontSize: 12,
     fontFamily: 'DMSans_400Regular',

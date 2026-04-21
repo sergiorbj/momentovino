@@ -16,6 +16,8 @@ import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import { markOnboardingCompleted } from '../../features/onboarding/state'
 import { getSelections, resetSelections } from '../../features/onboarding/selections'
 import { seedStarterJournal } from '../../features/onboarding/seed'
+import { claimUsername } from '../../features/profile/api'
+import { supabase } from '../../lib/supabase'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -50,6 +52,26 @@ export default function PaywallScreen() {
       const { pickedWineKeys } = getSelections()
       if (pickedWineKeys.length > 0) {
         await seedStarterJournal(pickedWineKeys)
+      }
+
+      // Auto-claim a username from the user's email (or OAuth provider data),
+      // retrying with a random suffix on collision. Runs once per signup.
+      // Best-effort — don't block entry to the app if it fails.
+      try {
+        const { data: userData } = await supabase.auth.getUser()
+        const user = userData.user
+        if (user && !user.is_anonymous) {
+          const meta = user.user_metadata ?? {}
+          const emailPrefix = user.email ? user.email.split('@')[0] : ''
+          const desired =
+            (typeof meta.full_name === 'string' && meta.full_name) ||
+            (typeof meta.name === 'string' && meta.name) ||
+            emailPrefix ||
+            'user'
+          await claimUsername(desired)
+        }
+      } catch (e) {
+        console.warn('Failed to claim username (will retry on profile open)', e)
       }
 
       await markOnboardingCompleted()
