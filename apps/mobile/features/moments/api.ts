@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabase'
 import type { Database } from '../../lib/database.types'
+import type { MomentPin } from '../../components/globe/types'
 import type { MomentFormValues, WineInput } from './schema'
 
 type WineRow = Database['public']['Tables']['wines']['Row']
@@ -12,6 +13,13 @@ export interface MomentDetail {
   moment: MomentRow
   wine: WineRow | null
   photos: MomentPhotoRow[]
+}
+
+export interface MomentStats {
+  momentsCount: number
+  countriesCount: number
+  winesCount: number
+  pins: MomentPin[]
 }
 
 const BUCKET = 'moment-photos'
@@ -188,6 +196,57 @@ export async function fetchMoments(): Promise<MomentWithWine[]> {
     wine_name: row.wines?.name ?? null,
     wines: undefined,
   }))
+}
+
+/**
+ * Aggregates everything the Moments tab needs in a single round-trip:
+ * pin coordinates for the globe + totals for the stats row. Countries are
+ * derived from the associated wine's `country` field.
+ */
+export async function fetchMomentStats(): Promise<MomentStats> {
+  const empty: MomentStats = {
+    momentsCount: 0,
+    countriesCount: 0,
+    winesCount: 0,
+    pins: [],
+  }
+
+  const { data: userData, error: userErr } = await supabase.auth.getUser()
+  if (userErr || !userData.user) return empty
+  const userId = userData.user.id
+
+  const { data: moments, error: momentsErr } = await supabase
+    .from('moments')
+    .select('id, latitude, longitude, location_name, wines(country)')
+    .eq('user_id', userId)
+  if (momentsErr) throw momentsErr
+
+  const rows = moments ?? []
+  const pins: MomentPin[] = []
+  const countries = new Set<string>()
+  for (const row of rows) {
+    pins.push({
+      id: row.id,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      label: row.location_name,
+    })
+    const joined = (row as { wines?: { country: string | null } | null }).wines
+    if (joined?.country) countries.add(joined.country)
+  }
+
+  const { count: winesCount, error: winesErr } = await supabase
+    .from('wines')
+    .select('id', { count: 'exact', head: true })
+    .eq('created_by', userId)
+  if (winesErr) throw winesErr
+
+  return {
+    momentsCount: rows.length,
+    countriesCount: countries.size,
+    winesCount: winesCount ?? 0,
+    pins,
+  }
 }
 
 export async function fetchMomentDetail(id: string): Promise<MomentDetail> {

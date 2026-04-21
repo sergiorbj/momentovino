@@ -8,8 +8,10 @@ import {
   createWine,
   fetchMomentDetail,
   fetchMoments,
+  fetchMomentStats,
   searchWines,
   type MomentDetail,
+  type MomentStats,
   type MomentWithWine,
 } from './api'
 import type { MomentFormValues, WineInput } from './schema'
@@ -134,6 +136,41 @@ export function useMoments() {
   }, [load])
 
   return { moments, loading, error, refresh: load } as const
+}
+
+/**
+ * Moments tab dashboard stats — pins for the globe + counters. Refetches
+ * whenever `refresh()` is invoked (wire to `useFocusEffect` to update after
+ * a new moment is created).
+ */
+export function useMomentStats() {
+  const [stats, setStats] = useState<MomentStats>({
+    momentsCount: 0,
+    countriesCount: 0,
+    winesCount: 0,
+    pins: [],
+  })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const load = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await fetchMomentStats()
+      setStats(data)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to load stats'))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  return { stats, loading, error, refresh: load } as const
 }
 
 /**

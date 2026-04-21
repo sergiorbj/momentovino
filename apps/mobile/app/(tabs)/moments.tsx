@@ -1,7 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { StatusBar } from 'expo-status-bar'
 import { router, useFocusEffect } from 'expo-router'
 import Animated, {
@@ -13,19 +12,11 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import WireframeGlobe from '../../components/globe/WireframeGlobe'
-import type { MomentPin } from '../../components/globe/types'
+import { useMomentStats } from '../../features/moments/hooks'
 
 const { width } = Dimensions.get('window')
 const GLOBE_SIZE = Math.min(width * 1.30, 340)
 const GLASS_ICON = require('../../assets/glass-vino.png')
-
-const MOCK_PINS: MomentPin[] = [
-  { id: '1', latitude: 48.86, longitude: 2.35, label: 'Paris' },
-  { id: '2', latitude: 41.9, longitude: 12.5, label: 'Rome' },
-  { id: '3', latitude: -33.9, longitude: 18.4, label: 'Cape Town' },
-  { id: '4', latitude: 35.7, longitude: 139.7, label: 'Tokyo' },
-  { id: '5', latitude: -34.6, longitude: -58.4, label: 'Buenos Aires' },
-]
 
 const ANIM_DURATION = 350
 
@@ -34,12 +25,15 @@ export default function MomentsScreen() {
   const globeOpacity = useSharedValue(1)
   const animating = useRef(false)
 
+  const { stats, refresh } = useMomentStats()
+
   useFocusEffect(
     useCallback(() => {
       globeScale.value = 1
       globeOpacity.value = 1
       animating.current = false
-    }, [globeScale, globeOpacity])
+      refresh()
+    }, [globeScale, globeOpacity, refresh])
   )
 
   const navigateToList = useCallback(() => {
@@ -72,7 +66,7 @@ export default function MomentsScreen() {
 
         <Animated.View style={[styles.globeWrapper, globeAnimatedStyle]}>
           <WireframeGlobe
-            pins={MOCK_PINS}
+            pins={stats.pins}
             onPress={handleGlobePress}
             config={{ size: GLOBE_SIZE }}
             pinIcon={GLASS_ICON}
@@ -82,17 +76,17 @@ export default function MomentsScreen() {
 
         <View style={styles.stats}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>23</Text>
+            <Text style={styles.statNumber}>{stats.momentsCount}</Text>
             <Text style={styles.statLabel}>Moments</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>8</Text>
+            <Text style={styles.statNumber}>{stats.countriesCount}</Text>
             <Text style={styles.statLabel}>Countries</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>47</Text>
+            <Text style={styles.statNumber}>{stats.winesCount}</Text>
             <Text style={styles.statLabel}>Wines</Text>
           </View>
         </View>
