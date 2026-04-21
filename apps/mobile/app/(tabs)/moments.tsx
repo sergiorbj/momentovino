@@ -17,6 +17,7 @@ import type { MomentPin } from '../../components/globe/types'
 
 const { width } = Dimensions.get('window')
 const GLOBE_SIZE = Math.min(width * 1.30, 340)
+const GLASS_ICON = require('../../assets/glass-vino.png')
 
 const MOCK_PINS: MomentPin[] = [
   { id: '1', latitude: 48.86, longitude: 2.35, label: 'Paris' },
@@ -74,6 +75,8 @@ export default function MomentsScreen() {
             pins={MOCK_PINS}
             onPress={handleGlobePress}
             config={{ size: GLOBE_SIZE }}
+            pinIcon={GLASS_ICON}
+            pinIconScale={0.18}
           />
         </Animated.View>
 
