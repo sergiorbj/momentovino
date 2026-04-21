@@ -20,9 +20,13 @@ The email path works today: [account.tsx:64-83](apps/mobile/app/onboarding/accou
 ### 1.2 Google sign-in ([account.tsx:58-62](apps/mobile/app/onboarding/account.tsx#L58-L62))
 
 - [ ] Pick a library: `@react-native-google-signin/google-signin` (native, best UX) or `expo-auth-session/providers/google` (works in Expo Go).
-- [ ] Create iOS and Android OAuth clients in Google Cloud Console; add URL schemes to `app.json`.
+- [ ] Create **three** OAuth 2.0 client IDs in Google Cloud Console (one per platform; Supabase needs all three):
+  - iOS — bundle identifier = `app.json → ios.bundleIdentifier`
+  - Android — package name + SHA-1 fingerprint
+  - Web — used by Supabase to verify the ID token server-side
+- [ ] Populate `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`, `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID`, `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` in `apps/mobile/.env`.
 - [ ] Fetch the `idToken` and call `supabase.auth.linkIdentity({ provider: 'google', credential: { id_token } })`.
-- [ ] Configure the Google provider in the Supabase dashboard.
+- [ ] Configure the Google provider in the Supabase dashboard — paste the **Web** client ID + secret.
 - [ ] Same identity-preservation contract as Apple: **link, don't sign in**, or the seeded onboarding data orphans.
 
 ### 1.3 Shared post-link work
@@ -51,7 +55,15 @@ The screen supports email/password sign-in via `supabase.auth.signInWithPassword
 
 ### 3.1 Purchase flow
 
-- [ ] Install `react-native-purchases` and configure the SDK in the app root (`_layout.tsx`) with the RevenueCat public key.
+- [ ] Install `react-native-purchases`.
+- [ ] Grab the public SDK keys from RevenueCat → Project Settings → API keys (one per platform) and populate `EXPO_PUBLIC_REVENUECAT_IOS_KEY` / `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` in `apps/mobile/.env`.
+- [ ] Configure the SDK in the app root (`_layout.tsx`):
+  ```ts
+  const key = Platform.OS === 'ios'
+    ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY
+    : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY
+  Purchases.configure({ apiKey: key! })
+  ```
 - [ ] Create the `pro` entitlement and a monthly package (`$5.99/month`, 5-day free trial) in the RevenueCat dashboard, mirrored in App Store Connect and Play Console.
 - [ ] Identify the user in RevenueCat using the Supabase `user.id` (`Purchases.logIn(userId)`) so the subscription survives reinstalls and devices.
 - [ ] Replace the TODO block in `startTrial()`:
@@ -75,6 +87,7 @@ The screen supports email/password sign-in via `supabase.auth.signInWithPassword
 ### 3.4 Receipt validation / webhooks
 
 - [ ] Configure a RevenueCat webhook → Supabase edge function to persist subscription state in a `subscriptions` table (table does not exist yet). Needed so server-side features (e.g., the share feature on the atlas) can gate by entitlement.
+- [ ] The webhook shared-secret (RevenueCat → Project Settings → Webhooks → Authorization header) lives in Supabase edge function secrets, **not** in `apps/mobile/.env` — the mobile client never sees it. Set it via `supabase secrets set REVENUECAT_WEBHOOK_SECRET=…`.
 
 ## 4. Storage RLS issue — seeded moment photos
 
