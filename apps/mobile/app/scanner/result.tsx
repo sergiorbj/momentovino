@@ -107,7 +107,11 @@ export default function ScanResultScreen() {
               <Image source={{ uri: labelPhoto.uri }} style={styles.heroImage} resizeMode="cover" />
             ) : (
               <View style={styles.heroPlaceholder}>
-                <Ionicons name="wine" size={36} color={WINE} />
+                <Image
+                  source={require('../../assets/glass.png')}
+                  style={styles.heroPlaceholderIcon}
+                  resizeMode="contain"
+                />
               </View>
             )}
           </View>
@@ -209,6 +213,11 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  heroPlaceholderIcon: {
+    width: 56,
+    height: 56,
+    tintColor: WINE,
   },
   wineName: {
     fontFamily: 'DMSerifDisplay_400Regular',

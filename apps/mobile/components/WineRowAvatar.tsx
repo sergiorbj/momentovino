@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Image, StyleSheet, View } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
 
 const DEFAULT_ACCENT = '#722F37'
 
@@ -21,9 +20,14 @@ export function WineRowAvatar({ labelPhotoUrl, size = 36, accent = DEFAULT_ACCEN
   const r = size / 2
 
   if (!uri || loadFailed) {
+    const iconSize = Math.round(size * 0.7)
     return (
       <View style={[styles.placeholder, { width: size, height: size, borderRadius: r }]}>
-        <Ionicons name="wine" size={Math.round(size * 0.45)} color={accent} />
+        <Image
+          source={require('../assets/glass.png')}
+          style={{ width: iconSize, height: iconSize, tintColor: accent }}
+          resizeMode="contain"
+        />
       </View>
     )
   }

@@ -52,7 +52,11 @@ function MomentCard({ item }: { item: MomentWithWine }) {
         <Image source={{ uri: item.cover_photo_url }} style={styles.thumb} />
       ) : (
         <View style={[styles.thumb, styles.thumbPlaceholder]}>
-          <Ionicons name="wine" size={24} color={WINE} />
+          <Image
+            source={require('../../assets/glass.png')}
+            style={styles.thumbPlaceholderIcon}
+            resizeMode="contain"
+          />
         </View>
       )}
       <View style={styles.cardBody}>
@@ -62,7 +66,11 @@ function MomentCard({ item }: { item: MomentWithWine }) {
         </Text>
         {item.wine_name && (
           <View style={styles.wineChip}>
-            <Ionicons name="wine-outline" size={11} color={WINE} />
+            <Image
+              source={require('../../assets/glass.png')}
+              style={styles.wineChipIcon}
+              resizeMode="contain"
+            />
             <Text style={styles.wineChipText} numberOfLines={1}>{item.wine_name}</Text>
           </View>
         )}
@@ -174,6 +182,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  thumbPlaceholderIcon: { width: 32, height: 32, tintColor: WINE },
+  wineChipIcon: { width: 14, height: 14, tintColor: WINE },
   cardBody: { flex: 1, justifyContent: 'center', gap: 3 },
   cardTitle: {
     fontFamily: 'DMSans_600SemiBold',

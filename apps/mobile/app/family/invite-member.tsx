@@ -21,7 +21,7 @@ const INK = '#3F2A2E'
 const SUBTLE = '#C2703E'
 const BG = '#F5EBE0'
 const CTA = '#5C4033'
-const DEBOUNCE_MS = 2000
+const DEBOUNCE_MS = 1000
 
 function looksLikeEmail(s: string): boolean {
   return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s.trim().toLowerCase())

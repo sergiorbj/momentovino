@@ -111,7 +111,11 @@ export default function MomentDetailScreen() {
           {wine && (
             <View style={styles.wineCard}>
               <View style={styles.wineHeader}>
-                <Ionicons name="wine" size={18} color={WINE} />
+                <Image
+                  source={require('../../assets/glass.png')}
+                  style={styles.wineHeaderIcon}
+                  resizeMode="contain"
+                />
                 <Text style={styles.wineName}>{wine.name}</Text>
               </View>
               <View style={styles.wineMeta}>
@@ -222,6 +226,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   wineHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  wineHeaderIcon: { width: 22, height: 22, tintColor: WINE },
   wineName: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 16,
