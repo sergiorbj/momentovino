@@ -17,6 +17,7 @@ import { markOnboardingCompleted } from '../../features/onboarding/state'
 import { getSelections, resetSelections } from '../../features/onboarding/selections'
 import { seedStarterJournal } from '../../features/onboarding/seed'
 import { claimUsername } from '../../features/profile/api'
+import { getExistingMomentCount } from '../../lib/auth/returningUser'
 import { supabase } from '../../lib/supabase'
 
 const WINE = '#722F37'
@@ -51,7 +52,12 @@ export default function PaywallScreen() {
       // session.
       const { pickedWineKeys } = getSelections()
       if (pickedWineKeys.length > 0) {
-        await seedStarterJournal(pickedWineKeys)
+        const existing = await getExistingMomentCount()
+        if (existing === 0) {
+          await seedStarterJournal(pickedWineKeys)
+        }
+        // If this user already has moments (e.g. signed in with another provider
+        // under the same Supabase user), skip re-seeding to avoid duplicate bottles.
       }
 
       // Auto-claim a username from the user's email (or OAuth provider data),

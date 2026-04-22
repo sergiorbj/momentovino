@@ -18,8 +18,11 @@ import { Ionicons } from '@expo/vector-icons'
 
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import { supabase } from '../../lib/supabase'
+import { isAccountAlreadyExistsAuthError } from '../../lib/auth/registrationErrors'
+import { getExistingMomentCount } from '../../lib/auth/returningUser'
 import { signInWithGoogle } from '../../lib/auth/google'
-import { getSelections } from '../../features/onboarding/selections'
+import { markOnboardingCompleted } from '../../features/onboarding/state'
+import { getSelections, resetSelections } from '../../features/onboarding/selections'
 import { getStarterWine, type StarterWine } from '../../features/onboarding/starter-deck'
 
 const WINE = '#722F37'
@@ -58,12 +61,36 @@ export default function AccountScreen() {
   // and are persisted to the DB AFTER the paywall, so there is nothing to
   // migrate. If we ever write to the DB before this screen, add a server-side
   // merge (edge function or trigger on auth.users) to re-assign those rows.
+  const finishAsReturningUserWithJournal = () => {
+    Alert.alert(
+      'You already have an account',
+      'We found wine moments from this sign-in. We will open your journal and will not add duplicate starter entries.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            void (async () => {
+              await markOnboardingCompleted()
+              resetSelections()
+              router.replace('/(tabs)/moments')
+            })()
+          },
+        },
+      ]
+    )
+  }
+
   const onGoogle = async () => {
     if (submitting) return
     setSubmitting(true)
     try {
       const outcome = await signInWithGoogle()
       if (outcome.kind === 'success') {
+        const existing = await getExistingMomentCount()
+        if (existing > 0) {
+          finishAsReturningUserWithJournal()
+          return
+        }
         router.push('/onboarding/paywall')
         return
       }
@@ -120,8 +147,20 @@ export default function AccountScreen() {
           .eq('id', userId)
       }
 
+      const existing = await getExistingMomentCount()
+      if (existing > 0) {
+        finishAsReturningUserWithJournal()
+        return
+      }
       router.push('/onboarding/paywall')
     } catch (err) {
+      if (isAccountAlreadyExistsAuthError(err)) {
+        Alert.alert(
+          'You already have an account',
+          'This email is already registered. Please sign in from the login screen using the same method you used before, or with email and your password.',
+        )
+        return
+      }
       const msg = err instanceof Error ? err.message : 'Could not create account'
       Alert.alert('Account creation failed', msg)
     } finally {
