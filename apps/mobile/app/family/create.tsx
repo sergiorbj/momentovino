@@ -174,13 +174,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'DMSerifDisplay_400Regular',
-    fontSize: 22,
+    fontSize: 26,
     color: WINE,
   },
   scroll: { flex: 1 },
   scrollContent: { padding: 24, paddingBottom: 40 },
   label: {
-    fontSize: 13,
+    fontSize: 16,
     fontFamily: 'DMSans_600SemiBold',
     color: SUBTLE,
     marginBottom: 8,

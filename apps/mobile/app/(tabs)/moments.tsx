@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: '#722F37',
   },

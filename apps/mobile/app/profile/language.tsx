@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'DMSerifDisplay_400Regular',
-    fontSize: 22,
+    fontSize: 26,
     color: WINE,
   },
   list: {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -41,9 +41,7 @@ const COVER_PREVIEW_LETTERBOX = 'rgba(0,0,0,0.5)'
 function EmptyNoFamily({ onCreate }: { onCreate: () => void }) {
   return (
     <View style={styles.emptyContainer}>
-      <View style={styles.emptyIconWrapper}>
-        <Ionicons name="wine" size={48} color={WINE} />
-      </View>
+      <Ionicons name="people" size={96} color={WINE} style={styles.emptyIcon} />
       <Text style={styles.emptyTitle}>No Family Yet</Text>
       <Text style={styles.emptySubtitle}>
         Create a family group to share your{'\n'}wine moments with loved ones
@@ -588,7 +586,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   headerTitle: {
-    fontSize: 30,
+    fontSize: 28,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
   },
@@ -612,27 +610,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 40,
   },
-  emptyIconWrapper: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
+  emptyIcon: {
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
   },
   emptyTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
     marginBottom: 10,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: 18,
     fontFamily: 'DMSans_400Regular',
     color: '#5C4033',
     textAlign: 'center',
@@ -738,20 +726,16 @@ const styles = StyleSheet.create({
   },
   familyCardBody: { padding: 16, alignItems: 'stretch' },
   familyNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    maxWidth: '100%',
+    position: 'relative',
+    alignSelf: 'stretch',
     marginBottom: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 36,
   },
   familyName: {
     fontSize: 20,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
-    textAlign: 'left',
-    flexShrink: 1,
+    textAlign: 'center',
   },
   familyNameOnly: {
     fontSize: 20,
@@ -760,9 +744,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 8,
   },
-  nameEditBtn: { marginLeft: 6, flexShrink: 0 },
+  nameEditBtn: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
   inlineLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'DMSans_600SemiBold',
     color: SUBTLE,
     marginBottom: 6,
@@ -811,7 +802,7 @@ const styles = StyleSheet.create({
   inlineBtnSecondaryText: { color: INK, fontFamily: 'DMSans_600SemiBold', fontSize: 15 },
   inlineBtnDisabled: { opacity: 0.6 },
   familyDescription: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'DMSans_400Regular',
     color: INK,
     textAlign: 'center',
@@ -819,7 +810,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   familyMeta: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'DMSans_400Regular',
     color: SUBTLE,
     textAlign: 'center',

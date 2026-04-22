@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'DMSerifDisplay_400Regular',
-    fontSize: 22,
+    fontSize: 26,
     color: WINE,
   },
   scroll: { padding: 24, alignItems: 'center' },

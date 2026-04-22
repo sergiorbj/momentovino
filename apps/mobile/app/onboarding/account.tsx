@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   form: { gap: 10 },
   inputLabel: {
-    fontSize: 12,
+    fontSize: 16,
     fontFamily: 'DMSans_600SemiBold',
     color: SUBTLE,
     textTransform: 'uppercase',

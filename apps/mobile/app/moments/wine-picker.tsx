@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontFamily: 'DMSerifDisplay_400Regular',
-    fontSize: 22,
+    fontSize: 26,
     color: WINE,
   },
   iconBtn: {
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   },
   emptyBtnText: { color: '#FFFFFF', fontFamily: 'DMSans_600SemiBold' },
   label: {
-    fontSize: 13,
+    fontSize: 16,
     fontFamily: 'DMSans_600SemiBold',
     color: SUBTLE,
     marginBottom: 6,

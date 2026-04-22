@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   title: {
-    fontSize: 22,
+    fontSize: 28,
     fontFamily: 'DMSans_600SemiBold',
     color: '#FFFFFF',
   },

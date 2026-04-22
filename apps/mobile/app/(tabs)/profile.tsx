@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   headerTitle: {
-    fontSize: 30,
+    fontSize: 28,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
   },
@@ -281,13 +281,13 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   handle: {
-    fontSize: 14,
+    fontSize: 18,
     fontFamily: 'DMSans_500Medium',
     color: '#C2703E',
     marginBottom: 6,
   },
   bio: {
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: 'DMSans_400Regular',
     color: '#5C4033',
     textAlign: 'center',
