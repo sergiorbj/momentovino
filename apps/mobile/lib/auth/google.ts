@@ -97,11 +97,30 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
       return { kind: 'error', message: 'Google did not return an ID token.' }
     }
 
+    // GoTrue checks: sha256(nonce you send) (hex) == `nonce` claim in the id token.
+    // The iOS public Google Sign-In SDK does not let us supply a custom nonce, so
+    // we do not have the *raw* secret to send — only a digest ends up in the JWT.
+    // Passing the id_token's `nonce` claim back (as we used to) hashes it again
+    // server-side and triggers "Nonces mismatch".
+    //
+    // For this sign-in method, enable **Skip nonce check** on the Google provider
+    // in the Supabase dashboard (Auth → Providers → Google). A future option is
+    // a custom OAuth path where you set nonce digest in Google and pass the raw
+    // nonce to signInWithIdToken (e.g. Universal Sign-In, or AuthSession).
     const { error } = await supabase.auth.signInWithIdToken({
       provider: 'google',
       token: idToken,
     })
-    if (error) return { kind: 'error', message: error.message }
+    if (error) {
+      const msg = error.message
+      if (/nonce/i.test(msg)) {
+        return {
+          kind: 'error',
+          message: `${msg} In the Supabase dashboard, open Auth → Providers → Google and turn on "Skip nonce check" for native Google Sign-In (this library cannot provide the raw nonce).`,
+        }
+      }
+      return { kind: 'error', message: msg }
+    }
 
     return { kind: 'success' }
   } catch (err) {

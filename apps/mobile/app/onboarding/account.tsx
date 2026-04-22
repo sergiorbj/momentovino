@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Image,
@@ -15,12 +15,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import * as AppleAuthentication from 'expo-apple-authentication'
 
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import { supabase } from '../../lib/supabase'
 import { signInWithGoogle } from '../../lib/auth/google'
-import { signInWithApple } from '../../lib/auth/apple'
 import { getSelections } from '../../features/onboarding/selections'
 import { getStarterWine, type StarterWine } from '../../features/onboarding/starter-deck'
 
@@ -44,14 +42,6 @@ export default function AccountScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [appleAvailable, setAppleAvailable] = useState(false)
-
-  useEffect(() => {
-    if (Platform.OS !== 'ios') return
-    AppleAuthentication.isAvailableAsync()
-      .then(setAppleAvailable)
-      .catch(() => setAppleAvailable(false))
-  }, [])
 
   const canSubmit = useMemo(
     () =>
@@ -68,22 +58,6 @@ export default function AccountScreen() {
   // and are persisted to the DB AFTER the paywall, so there is nothing to
   // migrate. If we ever write to the DB before this screen, add a server-side
   // merge (edge function or trigger on auth.users) to re-assign those rows.
-  const onApple = async () => {
-    if (submitting) return
-    setSubmitting(true)
-    try {
-      const outcome = await signInWithApple()
-      if (outcome.kind === 'success') {
-        router.push('/onboarding/paywall')
-        return
-      }
-      if (outcome.kind === 'cancelled' || outcome.kind === 'unavailable') return
-      Alert.alert('Apple sign-in failed', outcome.message)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
   const onGoogle = async () => {
     if (submitting) return
     setSubmitting(true)
@@ -188,17 +162,6 @@ export default function AccountScreen() {
 
             {mode === 'buttons' ? (
               <View style={styles.buttons}>
-                {Platform.OS === 'ios' && appleAvailable ? (
-                  <TouchableOpacity
-                    style={[styles.authBtn, styles.authApple]}
-                    onPress={onApple}
-                    disabled={submitting}
-                    activeOpacity={0.85}
-                  >
-                    <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
-                    <Text style={styles.authAppleText}>Continue with Apple</Text>
-                  </TouchableOpacity>
-                ) : null}
                 <TouchableOpacity
                   style={[styles.authBtn, styles.authGoogle]}
                   onPress={onGoogle}
@@ -345,12 +308,6 @@ const styles = StyleSheet.create({
     gap: 10,
     borderRadius: 50,
     height: 52,
-  },
-  authApple: { backgroundColor: '#000000' },
-  authAppleText: {
-    color: '#FFFFFF',
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 15,
   },
   authGoogle: {
     backgroundColor: '#FFFFFF',

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
-import { Renderer, TextureLoader } from 'expo-three'
+import { Asset } from 'expo-asset'
 import * as THREE from 'three'
 
 import {
@@ -10,6 +10,45 @@ import {
   latLngToVector3,
 } from './globe-utils'
 import { DEFAULT_GLOBE_CONFIG, type GlobeConfig, type MomentPin } from './types'
+
+function createRenderer(gl: ExpoWebGLRenderingContext): THREE.WebGLRenderer {
+  const glAny = gl as unknown as {
+    drawingBufferWidth: number
+    drawingBufferHeight: number
+  }
+  const canvas = {
+    width: glAny.drawingBufferWidth,
+    height: glAny.drawingBufferHeight,
+    style: {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    clientHeight: glAny.drawingBufferHeight,
+  }
+  return new THREE.WebGLRenderer({
+    canvas: canvas as unknown as HTMLCanvasElement,
+    context: gl as unknown as WebGLRenderingContext,
+  })
+}
+
+function loadAssetTexture(moduleId: number): THREE.Texture {
+  const texture = new THREE.Texture()
+  const asset = Asset.fromModule(moduleId)
+  const apply = (a: Asset) => {
+    texture.image = {
+      data: a,
+      width: a.width ?? 1,
+      height: a.height ?? 1,
+    } as unknown as HTMLImageElement
+    ;(texture as unknown as { isDataTexture: boolean }).isDataTexture = true
+    texture.needsUpdate = true
+  }
+  if (asset.localUri && asset.width && asset.height) {
+    apply(asset)
+  } else {
+    asset.downloadAsync().then(apply).catch(() => {})
+  }
+  return texture
+}
 
 interface WireframeGlobeProps {
   pins?: MomentPin[]
@@ -37,8 +76,11 @@ export default function WireframeGlobe({
 
   const onContextCreate = useCallback(
     (gl: ExpoWebGLRenderingContext) => {
-      const renderer = new Renderer({ gl })
-      const glAny = gl as any
+      const renderer = createRenderer(gl)
+      const glAny = gl as unknown as {
+        drawingBufferWidth?: number
+        drawingBufferHeight?: number
+      }
       const bufferWidth: number = glAny.drawingBufferWidth ?? cfg.size * 2
       const bufferHeight: number = glAny.drawingBufferHeight ?? cfg.size * 2
       renderer.setSize(bufferWidth, bufferHeight)
@@ -79,7 +121,7 @@ export default function WireframeGlobe({
       // to the globe surface with its base touching the surface and the
       // cup pointing outward into space.
       if (pinIcon != null) {
-        const pinTexture = new TextureLoader().load(pinIcon)
+        const pinTexture = loadAssetTexture(pinIcon)
         const pinGeo = new THREE.PlaneGeometry(pinIconScale, pinIconScale)
         const GLOBAL_UP = new THREE.Vector3(0, 1, 0)
         for (const pin of pins) {

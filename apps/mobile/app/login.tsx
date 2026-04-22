@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,11 +14,9 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import * as AppleAuthentication from 'expo-apple-authentication'
 
 import { supabase } from '../lib/supabase'
 import { signInWithGoogle } from '../lib/auth/google'
-import { signInWithApple } from '../lib/auth/apple'
 import { markOnboardingCompleted } from '../features/onboarding/state'
 import { resetSelections } from '../features/onboarding/selections'
 
@@ -35,14 +33,6 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [appleAvailable, setAppleAvailable] = useState(false)
-
-  useEffect(() => {
-    if (Platform.OS !== 'ios') return
-    AppleAuthentication.isAvailableAsync()
-      .then(setAppleAvailable)
-      .catch(() => setAppleAvailable(false))
-  }, [])
 
   const canSubmit = useMemo(
     () => /.+@.+\..+/.test(email) && password.length >= 6 && !submitting,
@@ -56,19 +46,6 @@ export default function LoginScreen() {
     resetSelections()
     await markOnboardingCompleted()
     router.replace('/(tabs)/moments')
-  }
-
-  const onApple = async () => {
-    if (submitting) return
-    setSubmitting(true)
-    try {
-      const outcome = await signInWithApple()
-      if (outcome.kind === 'success') return afterProviderSignIn()
-      if (outcome.kind === 'cancelled' || outcome.kind === 'unavailable') return
-      Alert.alert('Apple sign-in failed', outcome.message)
-    } finally {
-      setSubmitting(false)
-    }
   }
 
   const onGoogle = async () => {
@@ -160,17 +137,6 @@ export default function LoginScreen() {
 
             {mode === 'buttons' ? (
               <View style={styles.buttons}>
-                {Platform.OS === 'ios' && appleAvailable ? (
-                  <TouchableOpacity
-                    style={[styles.authBtn, styles.authApple]}
-                    onPress={onApple}
-                    disabled={submitting}
-                    activeOpacity={0.85}
-                  >
-                    <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
-                    <Text style={styles.authAppleText}>Continue with Apple</Text>
-                  </TouchableOpacity>
-                ) : null}
                 <TouchableOpacity
                   style={[styles.authBtn, styles.authGoogle]}
                   onPress={onGoogle}
@@ -286,12 +252,6 @@ const styles = StyleSheet.create({
     gap: 10,
     borderRadius: 50,
     height: 52,
-  },
-  authApple: { backgroundColor: '#000000' },
-  authAppleText: {
-    color: '#FFFFFF',
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 15,
   },
   authGoogle: {
     backgroundColor: '#FFFFFF',
