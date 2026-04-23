@@ -9,7 +9,6 @@ import {
 import { DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect, useState } from 'react'
-import '../global.css'
 import { ensureAnonymousSession } from '../lib/session'
 import { configureGoogleSignIn } from '../lib/auth/google'
 import { hasCompletedOnboarding } from '../features/onboarding/state'

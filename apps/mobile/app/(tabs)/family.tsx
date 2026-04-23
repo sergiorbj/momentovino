@@ -532,6 +532,18 @@ export default function FamilyScreen() {
             {soloAdmin ? <EmptyMembersCallout /> : null}
 
             <Text style={styles.sectionTitle}>Members ({dash!.members.length})</Text>
+
+            {dash!.isOwner ? (
+              <TouchableOpacity
+                style={styles.inviteCta}
+                activeOpacity={0.85}
+                onPress={() => router.push('/family/invite-member')}
+              >
+                <Ionicons name="person-add-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.inviteCtaText}>Invite member</Text>
+              </TouchableOpacity>
+            ) : null}
+
             <View style={styles.membersList}>
               {dash!.members.map((m, index) => (
                 <View
@@ -555,17 +567,6 @@ export default function FamilyScreen() {
                   ))}
                 </View>
               </>
-            ) : null}
-
-            {dash!.isOwner ? (
-              <TouchableOpacity
-                style={styles.inviteCta}
-                activeOpacity={0.85}
-                onPress={() => router.push('/family/invite-member')}
-              >
-                <Ionicons name="person-add-outline" size={20} color="#FFFFFF" />
-                <Text style={styles.inviteCtaText}>Invite member</Text>
-              </TouchableOpacity>
             ) : null}
           </ScrollView>
         )}
