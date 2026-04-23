@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Overview
+
+MomentoVino is an app that stores moments and wines shared with family and friends. The app was developed for customers who are not specialized in wines, but persons who likes to taste a good one and also keep it in memory.
+
 ## Commands
 
 All root commands proxy through Turborepo and expect pnpm.
