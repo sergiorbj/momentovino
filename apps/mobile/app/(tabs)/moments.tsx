@@ -25,9 +25,9 @@ const { width } = Dimensions.get('window')
 const GLOBE_SIZE = Math.min(width * 1.30, 340)
 const GLASS_ICON = require('../../assets/glass-vino.png')
 
-const ANIM_DURATION = 350
-const ENTER_DURATION = 500
-const COUNT_DURATION = 900
+const NAV_ANIM_DURATION = 350
+const ENTER_DURATION = 650
+const COUNT_DURATION = 1500
 
 function AnimatedCounter({
   value,
@@ -82,18 +82,31 @@ function AnimatedCounter({
 export default function MomentsScreen() {
   const globeScale = useSharedValue(1)
   const globeOpacity = useSharedValue(1)
-  const animating = useRef(false)
+  const navigating = useRef(false)
 
   const contentOpacity = useSharedValue(0)
-  const contentTranslate = useSharedValue(12)
+  const contentTranslate = useSharedValue(16)
   const hasAnimatedInRef = useRef(false)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
+  const [dataReady, setDataReady] = useState(false)
+  const [globeReady, setGlobeReady] = useState(false)
+  const [valuesVisible, setValuesVisible] = useState(false)
 
   const { stats, loading, refresh } = useMomentStats()
 
   useEffect(() => {
-    if (loading || hasAnimatedInRef.current) return
+    if (!loading) setDataReady(true)
+  }, [loading])
+
+  const handleGlobeReady = useCallback(() => {
+    setGlobeReady(true)
+  }, [])
+
+  useEffect(() => {
+    if (hasAnimatedInRef.current) return
+    if (!dataReady || !globeReady) return
     hasAnimatedInRef.current = true
+
     contentOpacity.value = withTiming(1, {
       duration: ENTER_DURATION,
       easing: Easing.out(Easing.cubic),
@@ -102,18 +115,23 @@ export default function MomentsScreen() {
       duration: ENTER_DURATION,
       easing: Easing.out(Easing.cubic),
     })
-    const t = setTimeout(
+
+    const revealT = setTimeout(() => setValuesVisible(true), ENTER_DURATION)
+    const doneT = setTimeout(
       () => setFirstLoadDone(true),
-      ENTER_DURATION + COUNT_DURATION,
+      ENTER_DURATION + COUNT_DURATION + 100,
     )
-    return () => clearTimeout(t)
-  }, [loading, contentOpacity, contentTranslate])
+    return () => {
+      clearTimeout(revealT)
+      clearTimeout(doneT)
+    }
+  }, [dataReady, globeReady, contentOpacity, contentTranslate])
 
   useFocusEffect(
     useCallback(() => {
       globeScale.value = 1
       globeOpacity.value = 1
-      animating.current = false
+      navigating.current = false
       refresh()
     }, [globeScale, globeOpacity, refresh])
   )
@@ -123,10 +141,10 @@ export default function MomentsScreen() {
   }, [])
 
   const handleGlobePress = useCallback(() => {
-    if (animating.current) return
-    animating.current = true
+    if (navigating.current) return
+    navigating.current = true
 
-    const timingCfg = { duration: ANIM_DURATION, easing: Easing.out(Easing.cubic) }
+    const timingCfg = { duration: NAV_ANIM_DURATION, easing: Easing.out(Easing.cubic) }
     globeScale.value = withTiming(2.5, timingCfg)
     globeOpacity.value = withTiming(0, timingCfg, () => {
       runOnJS(navigateToList)()
@@ -144,6 +162,7 @@ export default function MomentsScreen() {
   }))
 
   const countersAnimate = !firstLoadDone
+  const displayCount = (n: number) => (valuesVisible ? n : 0)
 
   return (
     <View style={styles.container}>
@@ -155,19 +174,22 @@ export default function MomentsScreen() {
 
         <Animated.View style={[styles.contentFill, contentAnimatedStyle]}>
           <Animated.View style={[styles.globeWrapper, globeAnimatedStyle]}>
-            <WireframeGlobe
-              pins={stats.pins}
-              onPress={handleGlobePress}
-              config={{ size: GLOBE_SIZE }}
-              pinIcon={GLASS_ICON}
-              pinIconScale={0.18}
-            />
+            {dataReady && (
+              <WireframeGlobe
+                pins={stats.pins}
+                onPress={handleGlobePress}
+                config={{ size: GLOBE_SIZE }}
+                pinIcon={GLASS_ICON}
+                pinIconScale={0.18}
+                onReady={handleGlobeReady}
+              />
+            )}
           </Animated.View>
 
           <View style={styles.stats}>
             <View style={styles.statItem}>
               <AnimatedCounter
-                value={stats.momentsCount}
+                value={displayCount(stats.momentsCount)}
                 animate={countersAnimate}
                 style={styles.statNumber}
               />
@@ -176,7 +198,7 @@ export default function MomentsScreen() {
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <AnimatedCounter
-                value={stats.countriesCount}
+                value={displayCount(stats.countriesCount)}
                 animate={countersAnimate}
                 style={styles.statNumber}
               />
@@ -185,7 +207,7 @@ export default function MomentsScreen() {
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <AnimatedCounter
-                value={stats.winesCount}
+                value={displayCount(stats.winesCount)}
                 animate={countersAnimate}
                 style={styles.statNumber}
               />

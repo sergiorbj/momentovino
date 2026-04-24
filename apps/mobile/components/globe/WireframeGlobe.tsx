@@ -62,6 +62,8 @@ interface WireframeGlobeProps {
   pinIcon?: number
   /** Sprite scale in world units when `pinIcon` is provided. Defaults to 0.1. */
   pinIconScale?: number
+  /** Fires once after the first frame has rendered on this GL context. */
+  onReady?: () => void
 }
 
 export default function WireframeGlobe({
@@ -70,6 +72,7 @@ export default function WireframeGlobe({
   config: configOverrides,
   pinIcon,
   pinIconScale = 0.1,
+  onReady,
 }: WireframeGlobeProps) {
   const cfg = { ...DEFAULT_GLOBE_CONFIG, ...configOverrides }
   const rafRef = useRef<number>(0)
@@ -171,16 +174,21 @@ export default function WireframeGlobe({
 
       globeGroup.rotation.x = 0.2
 
+      let readyFired = false
       const animate = () => {
         rafRef.current = requestAnimationFrame(animate)
         globeGroup.rotation.y += cfg.rotationSpeed
         renderer.render(scene, camera)
         gl.endFrameEXP()
+        if (!readyFired) {
+          readyFired = true
+          onReady?.()
+        }
       }
 
       animate()
     },
-    [pins, cfg, pinIcon, pinIconScale]
+    [pins, cfg, pinIcon, pinIconScale, onReady]
   )
 
   // `GLView.onContextCreate` only fires once per mount (when the WebGL
