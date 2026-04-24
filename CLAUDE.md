@@ -71,13 +71,29 @@ When building a new mobile feature: Supabase RLS + the generated `lib/database.t
 
 `apps/mobile/features/<domain>/` owns the domain's data layer:
 
-- `api.ts` — functions that wrap Supabase calls and/or fetches to `getApiBaseUrl()`. Screens import from here; they do **not** call `supabase` directly.
-- `hooks.ts` (when needed) — React hooks composing the api layer (e.g. `useMoments`, `useMomentDetail`).
+- `api.ts` — functions that wrap Supabase calls and/or fetches to `getApiBaseUrl()`. Screens do **not** call `supabase` directly and generally do **not** import `api.ts` directly either — they go through `hooks.ts` so reads/writes go through the React Query cache (see below).
+- `hooks.ts` — React Query hooks wrapping the api layer (e.g. `useMoments`, `useMomentDetail`, `useCreateMoment`, `useInviteMember`). This is the entry point for screens.
 - `schema.ts` — Zod schemas and derived types (e.g. `features/moments/schema.ts`, `WINE_TYPES`).
 - `types.ts` — pure type aliases.
 - Additional domain helpers live as named files (e.g. `features/wines/similarity.ts` clusters duplicate wines, `features/scanner/pending-label-photo.ts` is a tiny module-level mutable handoff between the scanner camera screen and the result screen).
 
-Routes in `apps/mobile/app/` (Expo Router, file-based) should stay presentational — pull data via `features/<domain>/hooks.ts` or call `features/<domain>/api.ts` directly.
+Routes in `apps/mobile/app/` (Expo Router, file-based) should stay presentational — pull data via `features/<domain>/hooks.ts`. Direct `api.ts` calls from screens are only OK for non-cached one-shots (e.g. the scanner's `scanWineImage`).
+
+### Mobile data layer — React Query is the standard
+
+All server state on mobile flows through **TanStack Query** (`@tanstack/react-query`). The cache itself is the state — there is no Context API or Zustand store for server data. Before adding a new fetch or mutation, check if a hook already exists.
+
+- **QueryClient**: single instance in [apps/mobile/lib/query-client.ts](apps/mobile/lib/query-client.ts), mounted via `QueryClientProvider` in [apps/mobile/app/_layout.tsx](apps/mobile/app/_layout.tsx). Defaults: `staleTime: 30_000`, `gcTime: 5min`, `retry: 1`, `refetchOnWindowFocus: false`.
+- **Query keys**: centralized in [apps/mobile/lib/query-keys.ts](apps/mobile/lib/query-keys.ts). Always add/reuse keys here — never inline them in components — so invalidation stays consistent.
+- **Reads**: expose as `useXxx()` in `features/<domain>/hooks.ts` wrapping `useQuery`. Screens destructure `{ data, isLoading }`; they do **not** manage their own `useState`/`useEffect` loading.
+- **Writes**: expose as `useXxxMutation()` using `useMutation`. The hook is responsible for `invalidateQueries` in `onSuccess`. Cross-domain invalidation matters:
+  - Creating/deleting a **wine** → invalidate `['wines']` + `queryKeys.profile` + `queryKeys.momentStats`.
+  - Creating a **moment** → invalidate `['moments']` + `['wines']` + `queryKeys.profile`. Helper `invalidateMomentSurfaces(qc)` in [features/moments/hooks.ts](apps/mobile/features/moments/hooks.ts) already does this.
+  - Creating a **family** → invalidate `queryKeys.family` + `queryKeys.profile`.
+  - Updating family / inviting members → invalidate `queryKeys.family`.
+- **No `useFocusEffect`-driven reloads**. Tabs rely on the cache; mutations invalidate the right keys, so a focused tab already has fresh data. Don't reintroduce `setLoading(true)` on focus.
+- **Boot prefetch**: [apps/mobile/lib/prefetch.ts](apps/mobile/lib/prefetch.ts) fires parallel `prefetchQuery` calls for profile, moment stats, moments list, wines list + count, and family dashboard right after `ensureAnonymousSession()` resolves. That's why tabs open with data already in cache. If you add a new top-level tab query, add it to `prefetchCoreData` too.
+- **When to call `api.ts` directly from a screen**: only for fire-and-forget one-shots that don't need caching or invalidation (e.g. the scanner uploading a label photo). Anything that shows data or changes state that another screen reads → add a hook.
 
 ### Mobile navigation shape
 
