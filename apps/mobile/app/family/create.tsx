@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { router } from 'expo-router'
 
-import { createFamily, updateFamily } from '../../features/family/api'
+import { useCreateFamily, useUpdateFamily } from '../../features/family/hooks'
 import { uploadFamilyCoverPhoto } from '../../features/family/cover-upload'
 import { supabase } from '../../lib/supabase'
 
@@ -30,6 +30,8 @@ export default function FamilyCreateScreen() {
   const [description, setDescription] = useState('')
   const [coverUri, setCoverUri] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const createFamilyMutation = useCreateFamily()
+  const updateFamilyMutation = useUpdateFamily()
 
   const pickCover = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -65,14 +67,14 @@ export default function FamilyCreateScreen() {
       const userId = userData.user?.id
       if (!userId) throw new Error('Not signed in')
 
-      const { family } = await createFamily({
+      const { family } = await createFamilyMutation.mutateAsync({
         name: n,
         description: d.length > 0 ? d : undefined,
       })
 
       if (coverUri) {
         const url = await uploadFamilyCoverPhoto(userId, family.id, coverUri)
-        await updateFamily({ photo_url: url })
+        await updateFamilyMutation.mutateAsync({ photo_url: url })
       }
 
       router.back()

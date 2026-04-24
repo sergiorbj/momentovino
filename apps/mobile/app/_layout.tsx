@@ -9,9 +9,12 @@ import {
 import { DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect, useState } from 'react'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { ensureAnonymousSession } from '../lib/session'
 import { configureGoogleSignIn } from '../lib/auth/google'
 import { hasCompletedOnboarding } from '../features/onboarding/state'
+import { queryClient } from '../lib/query-client'
+import { prefetchCoreData } from '../lib/prefetch'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -31,7 +34,10 @@ export default function RootLayout() {
 
   useEffect(() => {
     ensureAnonymousSession()
-      .then(() => setSessionReady(true))
+      .then(() => {
+        prefetchCoreData(queryClient)
+        setSessionReady(true)
+      })
       .catch((err) => {
         console.error('Failed to establish Supabase session', err)
         setSessionReady(true)
@@ -55,14 +61,16 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="onboarding" />
-      <Stack.Screen name="login" />
-      <Stack.Screen name="moments" />
-      <Stack.Screen name="scanner" />
-      <Stack.Screen name="family" />
-      <Stack.Screen name="profile" />
-    </Stack>
+    <QueryClientProvider client={queryClient}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="moments" />
+        <Stack.Screen name="scanner" />
+        <Stack.Screen name="family" />
+        <Stack.Screen name="profile" />
+      </Stack>
+    </QueryClientProvider>
   )
 }

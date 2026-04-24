@@ -14,7 +14,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
 import type { FamilyInviteUserMatch } from '../../features/family/api'
-import { inviteMemberByEmail, searchFamilyInviteTargets } from '../../features/family/api'
+import { searchFamilyInviteTargets } from '../../features/family/api'
+import { useInviteMember } from '../../features/family/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -73,6 +74,7 @@ export default function FamilyInviteMemberScreen() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [searchFormatError, setSearchFormatError] = useState<string | null>(null)
+  const inviteMemberMutation = useInviteMember()
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -142,7 +144,7 @@ export default function FamilyInviteMemberScreen() {
     }
     try {
       setSaving(true)
-      const out = await inviteMemberByEmail(e)
+      const out = await inviteMemberMutation.mutateAsync(e)
       if ('addedMember' in out && out.addedMember) {
         Alert.alert('Member added', 'They already had an account and were added to your family.', [
           { text: 'OK', onPress: () => router.back() },

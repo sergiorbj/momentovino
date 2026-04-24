@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Alert } from 'react-native'
 import { router } from 'expo-router'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { Database } from '../../lib/database.types'
+import { queryKeys } from '../../lib/query-keys'
 import {
   createMoment,
   createWine,
@@ -10,39 +12,47 @@ import {
   fetchMoments,
   fetchMomentStats,
   searchWines,
-  type MomentDetail,
-  type MomentStats,
-  type MomentWithWine,
 } from './api'
 import type { MomentFormValues, WineInput } from './schema'
 
 type WineRow = Database['public']['Tables']['wines']['Row']
 type MomentRow = Database['public']['Tables']['moments']['Row']
 
+function invalidateMomentSurfaces(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ['moments'] })
+  qc.invalidateQueries({ queryKey: ['wines'] })
+  qc.invalidateQueries({ queryKey: queryKeys.profile })
+}
+
 /**
  * Handles the full moment creation flow: submit, loading state, error handling,
  * and navigation on success.
  */
 export function useCreateMoment() {
+  const qc = useQueryClient()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const submit = useCallback(async (values: MomentFormValues): Promise<MomentRow | null> => {
-    try {
-      setSubmitting(true)
-      setError(null)
-      const result = await createMoment(values)
-      router.back()
-      return result
-    } catch (err) {
-      const e = err instanceof Error ? err : new Error('Unknown error')
-      setError(e)
-      Alert.alert('Could not save moment', e.message)
-      return null
-    } finally {
-      setSubmitting(false)
-    }
-  }, [])
+  const submit = useCallback(
+    async (values: MomentFormValues): Promise<MomentRow | null> => {
+      try {
+        setSubmitting(true)
+        setError(null)
+        const result = await createMoment(values)
+        invalidateMomentSurfaces(qc)
+        router.back()
+        return result
+      } catch (err) {
+        const e = err instanceof Error ? err : new Error('Unknown error')
+        setError(e)
+        Alert.alert('Could not save moment', e.message)
+        return null
+      } finally {
+        setSubmitting(false)
+      }
+    },
+    [qc],
+  )
 
   return { submit, submitting, error } as const
 }
@@ -82,124 +92,92 @@ export function useWineSearch(debounceMs = 220) {
 }
 
 /**
- * Handles creating a new wine entry and selecting it by navigating back
- * to the new-moment form with the wine params.
+ * Creates a new wine entry and navigates back to the new-moment form with
+ * the wine params. Invalidates wine + profile-stats caches on success.
  */
 export function useCreateWine() {
-  const [creating, setCreating] = useState(false)
+  const qc = useQueryClient()
+  const mutation = useMutation({
+    mutationFn: (input: WineInput) => createWine(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['wines'] })
+      qc.invalidateQueries({ queryKey: queryKeys.profile })
+    },
+  })
 
-  const submit = useCallback(async (input: WineInput): Promise<WineRow | null> => {
-    try {
-      setCreating(true)
-      const row = await createWine(input)
-      router.replace({
-        pathname: '/moments/new',
-        params: { wineId: row.id, wineName: row.name },
-      })
-      return row
-    } catch (err) {
-      const e = err instanceof Error ? err : new Error('Unknown error')
-      Alert.alert('Could not create wine', e.message)
-      return null
-    } finally {
-      setCreating(false)
-    }
-  }, [])
+  const submit = useCallback(
+    async (input: WineInput): Promise<WineRow | null> => {
+      try {
+        const row = await mutation.mutateAsync(input)
+        router.replace({
+          pathname: '/moments/new',
+          params: { wineId: row.id, wineName: row.name },
+        })
+        return row
+      } catch (err) {
+        const e = err instanceof Error ? err : new Error('Unknown error')
+        Alert.alert('Could not create wine', e.message)
+        return null
+      }
+    },
+    [mutation],
+  )
 
-  return { submit, creating } as const
+  return { submit, creating: mutation.isPending } as const
 }
 
 /**
  * Fetches the current user's moments sorted by happened_at desc.
- * Provides `refresh()` for pull-to-refresh.
  */
 export function useMoments() {
-  const [moments, setMoments] = useState<MomentWithWine[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-
-  const load = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await fetchMoments()
-      setMoments(data)
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to load moments'))
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
-  return { moments, loading, error, refresh: load } as const
+  const query = useQuery({
+    queryKey: queryKeys.moments,
+    queryFn: fetchMoments,
+  })
+  const qc = useQueryClient()
+  return {
+    moments: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error instanceof Error ? query.error : null,
+    refresh: () => qc.invalidateQueries({ queryKey: queryKeys.moments }),
+  } as const
 }
 
 /**
- * Moments tab dashboard stats — pins for the globe + counters. Refetches
- * whenever `refresh()` is invoked (wire to `useFocusEffect` to update after
- * a new moment is created).
+ * Moments tab dashboard stats — pins for the globe + counters.
  */
 export function useMomentStats() {
-  const [stats, setStats] = useState<MomentStats>({
-    momentsCount: 0,
-    countriesCount: 0,
-    winesCount: 0,
-    pins: [],
+  const query = useQuery({
+    queryKey: queryKeys.momentStats,
+    queryFn: fetchMomentStats,
   })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-
-  const load = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await fetchMomentStats()
-      setStats(data)
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to load stats'))
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
-  return { stats, loading, error, refresh: load } as const
+  const qc = useQueryClient()
+  return {
+    stats: query.data ?? {
+      momentsCount: 0,
+      countriesCount: 0,
+      winesCount: 0,
+      pins: [],
+    },
+    loading: query.isLoading,
+    error: query.error instanceof Error ? query.error : null,
+    refresh: () => qc.invalidateQueries({ queryKey: queryKeys.momentStats }),
+  } as const
 }
 
 /**
  * Fetches a single moment with its wine and photos.
  */
 export function useMomentDetail(id: string) {
-  const [data, setData] = useState<MomentDetail | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    fetchMomentDetail(id)
-      .then((result) => {
-        if (!cancelled) setData(result)
-      })
-      .catch((err) => console.error('Failed to load moment detail', err))
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [id])
-
+  const query = useQuery({
+    queryKey: queryKeys.momentDetail(id),
+    queryFn: () => fetchMomentDetail(id),
+    enabled: !!id,
+  })
   return {
-    moment: data?.moment ?? null,
-    wine: data?.wine ?? null,
-    photos: data?.photos ?? [],
-    loading,
+    moment: query.data?.moment ?? null,
+    wine: query.data?.wine ?? null,
+    photos: query.data?.photos ?? [],
+    loading: query.isLoading,
   } as const
 }

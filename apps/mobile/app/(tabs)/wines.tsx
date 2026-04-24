@@ -13,20 +13,21 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { router, useFocusEffect } from 'expo-router'
+import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 
 import { WineRowAvatar } from '../../components/WineRowAvatar'
-import { countUserWines, deleteWinesByIds, searchWines } from '../../features/moments/api'
+import {
+  useDeleteWines,
+  useWinesCount,
+  useWinesSearch,
+} from '../../features/wines/hooks'
 import {
   bestLabelPhotoInCluster,
   clusterWinesForDisplay,
   pickWineIdsToDelete,
   type WineCluster,
 } from '../../features/wines/similarity'
-import type { Database } from '../../lib/database.types'
-
-type WineRow = Database['public']['Tables']['wines']['Row']
 
 const WINE_C = '#722F37'
 const INK = '#3F2A2E'
@@ -40,71 +41,26 @@ type DeleteModalState =
 
 export default function WinesScreen() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<WineRow[]>([])
-  const [totalWines, setTotalWines] = useState<number | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedQuery(query), 220)
+    return () => clearTimeout(handle)
+  }, [query])
+
+  const winesQuery = useWinesSearch(debouncedQuery)
+  const countQuery = useWinesCount()
+  const deleteMutation = useDeleteWines()
+
+  const results = winesQuery.data ?? []
+  const totalWines = countQuery.data ?? null
+  const loading = winesQuery.isFetching
 
   const [deleteModal, setDeleteModal] = useState<DeleteModalState>(null)
   const [qtyToRemove, setQtyToRemove] = useState(1)
-  const [deleting, setDeleting] = useState(false)
+  const deleting = deleteMutation.isPending
 
   const clusters = useMemo(() => clusterWinesForDisplay(results), [results])
-
-  const loadWines = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [rows, total] = await Promise.all([searchWines(query), countUserWines()])
-      setResults(rows)
-      setTotalWines(total)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [query])
-
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    const handle = setTimeout(async () => {
-      try {
-        const [rows, total] = await Promise.all([searchWines(query), countUserWines()])
-        if (!cancelled) {
-          setResults(rows)
-          setTotalWines(total)
-        }
-      } catch (err) {
-        console.error(err)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }, 220)
-    return () => {
-      cancelled = true
-      clearTimeout(handle)
-    }
-  }, [query])
-
-  useFocusEffect(
-    useCallback(() => {
-      let cancelled = false
-      setLoading(true)
-      Promise.all([searchWines(query), countUserWines()])
-        .then(([rows, total]) => {
-          if (!cancelled) {
-            setResults(rows)
-            setTotalWines(total)
-          }
-        })
-        .catch(console.error)
-        .finally(() => {
-          if (!cancelled) setLoading(false)
-        })
-      return () => {
-        cancelled = true
-      }
-    }, [query]),
-  )
 
   const emptyLabel = useMemo(() => {
     if (loading) return ''
@@ -113,7 +69,6 @@ export default function WinesScreen() {
   }, [loading, query])
 
   const openDeleteFlow = useCallback((cluster: WineCluster) => {
-    setDeleting(false)
     if (cluster.members.length === 1) {
       setDeleteModal({ mode: 'confirm', cluster })
     } else {
@@ -124,7 +79,6 @@ export default function WinesScreen() {
 
   const closeDeleteModal = useCallback(() => {
     setDeleteModal(null)
-    setDeleting(false)
   }, [])
 
   const runDelete = useCallback(
@@ -134,21 +88,15 @@ export default function WinesScreen() {
         Alert.alert('Error', 'Could not resolve which wine to delete.')
         return
       }
-      setDeleting(true)
       try {
-        await deleteWinesByIds(ids)
+        await deleteMutation.mutateAsync(ids)
         setDeleteModal(null)
-        setResults((prev) => prev.filter((r) => !ids.includes(r.id)))
-        setTotalWines((prev) => (prev == null ? null : Math.max(0, prev - ids.length)))
-        await loadWines()
       } catch (err) {
         console.error(err)
         Alert.alert('Error', err instanceof Error ? err.message : 'Could not remove wine.')
-      } finally {
-        setDeleting(false)
       }
     },
-    [loadWines],
+    [deleteMutation],
   )
 
   const qtyCluster = deleteModal?.mode === 'quantity' ? deleteModal.cluster : null
@@ -184,7 +132,6 @@ export default function WinesScreen() {
               style={styles.search}
               autoCapitalize="none"
             />
-            {loading && <ActivityIndicator color={WINE_C} />}
           </View>
 
           <FlatList<WineCluster>

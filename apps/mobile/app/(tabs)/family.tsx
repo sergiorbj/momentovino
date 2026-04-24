@@ -24,8 +24,8 @@ import * as ImagePicker from 'expo-image-picker'
 import { StatusBar } from 'expo-status-bar'
 import { router, useFocusEffect } from 'expo-router'
 
-import type { FamilyDashboard, FamilyMemberRow } from '../../features/family/api'
-import { getFamilyDashboard, updateFamily } from '../../features/family/api'
+import type { FamilyMemberRow } from '../../features/family/api'
+import { useFamily, useUpdateFamily } from '../../features/family/hooks'
 import { uploadFamilyCoverPhoto } from '../../features/family/cover-upload'
 import { supabase } from '../../lib/supabase'
 
@@ -87,11 +87,19 @@ function MemberRow({ member, isSelf }: { member: FamilyMemberRow; isSelf: boolea
 export default function FamilyScreen() {
   const { width: winW, height: winH } = useWindowDimensions()
   const safeInsets = useSafeAreaInsets()
-  const [dash, setDash] = useState<FamilyDashboard | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
+  const {
+    data: dash,
+    isLoading,
+    isFetching,
+    refetch,
+    error: familyError,
+  } = useFamily()
+  const updateFamilyMutation = useUpdateFamily()
+  const loading = isLoading && !dash
+  const refreshing = isFetching && !isLoading
+  const loadError =
+    familyError instanceof Error ? familyError.message : null
   const [selfId, setSelfId] = useState<string | null>(null)
-  const [loadError, setLoadError] = useState<string | null>(null)
   const [editingDetails, setEditingDetails] = useState(false)
   const [draftName, setDraftName] = useState('')
   const [draftDescription, setDraftDescription] = useState('')
@@ -99,7 +107,6 @@ export default function FamilyScreen() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [coverPreviewVisible, setCoverPreviewVisible] = useState(false)
   const coverUri = dash?.family?.photo_url ?? null
-  const fetchGenerationRef = useRef(0)
   const coverBackdropOp = useRef(new Animated.Value(0)).current
   const coverCardOp = useRef(new Animated.Value(0)).current
   const coverCardScale = useRef(new Animated.Value(0.94)).current
@@ -200,32 +207,18 @@ export default function FamilyScreen() {
     }
     setSavingDetails(true)
     try {
-      const { family } = await updateFamily({
+      await updateFamilyMutation.mutateAsync({
         name: n,
         description: d.length > 0 ? d : null,
       })
       Keyboard.dismiss()
       setEditingDetails(false)
-      setDash((prev) =>
-        prev?.family
-          ? {
-              ...prev,
-              family: {
-                ...prev.family,
-                name: family.name,
-                description: family.description ?? null,
-                photo_url: family.photo_url ?? prev.family.photo_url,
-                updated_at: family.updated_at,
-              },
-            }
-          : prev,
-      )
     } catch (e) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Could not save')
     } finally {
       setSavingDetails(false)
     }
-  }, [dash?.family, draftName, draftDescription])
+  }, [dash?.family, draftName, draftDescription, updateFamilyMutation])
 
   const pickCoverPhoto = useCallback(async () => {
     if (!dash?.family || !dash.isOwner || !selfId) return
@@ -244,82 +237,47 @@ export default function FamilyScreen() {
     setUploadingPhoto(true)
     try {
       const url = await uploadFamilyCoverPhoto(selfId, dash.family.id, result.assets[0].uri)
-      const { family } = await updateFamily({ photo_url: url })
-      setDash((prev) =>
-        prev?.family
-          ? {
-              ...prev,
-              family: {
-                ...prev.family,
-                photo_url: family.photo_url ?? null,
-                updated_at: family.updated_at,
-              },
-            }
-          : prev,
-      )
+      await updateFamilyMutation.mutateAsync({ photo_url: url })
     } catch (e) {
       Alert.alert('Upload failed', e instanceof Error ? e.message : 'Could not update cover photo')
     } finally {
       setUploadingPhoto(false)
     }
-  }, [dash?.family, dash?.isOwner, selfId])
+  }, [dash?.family, dash?.isOwner, selfId, updateFamilyMutation])
 
-  const load = useCallback(async () => {
-    const gen = ++fetchGenerationRef.current
-    setLoadError(null)
-    try {
-      const { data } = await supabase.auth.getUser()
-      if (gen !== fetchGenerationRef.current) return
+  useEffect(() => {
+    let cancelled = false
+    supabase.auth.getUser().then(({ data }) => {
+      if (cancelled) return
       setSelfId(data.user?.id ?? null)
-      const d = await getFamilyDashboard()
-      if (gen !== fetchGenerationRef.current) return
-      setDash(d)
-    } catch (e) {
-      console.error(e)
-      if (gen !== fetchGenerationRef.current) return
-      setLoadError(e instanceof Error ? e.message : 'Could not load family')
-      setDash({
-        family: null,
-        members: [],
-        pendingInvitations: [],
-        isOwner: false,
-      })
+    })
+    return () => {
+      cancelled = true
     }
   }, [])
 
   useFocusEffect(
     useCallback(() => {
-      let cancelled = false
-      setLoading(true)
-      load().finally(() => {
-        if (!cancelled) setLoading(false)
-      })
       return () => {
-        cancelled = true
-        fetchGenerationRef.current += 1
-        setLoading(false)
         setEditingDetails(false)
         setCoverPreviewVisible(false)
         resetCoverPreviewAnims()
         Keyboard.dismiss()
       }
-    }, [load, resetCoverPreviewAnims]),
+    }, [resetCoverPreviewAnims]),
   )
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true)
     setEditingDetails(false)
     setCoverPreviewVisible(false)
     resetCoverPreviewAnims()
     Keyboard.dismiss()
     try {
-      await load()
+      await refetch()
     } catch (e) {
       console.error(e)
-    } finally {
-      setRefreshing(false)
     }
-  }, [load, resetCoverPreviewAnims])
+  }, [refetch, resetCoverPreviewAnims])
 
   const hasFamily = Boolean(dash?.family)
   const soloAdmin = hasFamily && Boolean(dash?.isOwner) && (dash?.members.length ?? 0) === 1

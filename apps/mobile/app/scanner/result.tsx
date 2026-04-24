@@ -13,7 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 
-import { attachWineLabelPhoto, createWineViaApi } from '../../features/scanner/api'
+import { attachWineLabelPhoto } from '../../features/scanner/api'
+import { useCreateWineViaApi } from '../../features/scanner/hooks'
 import { takeLabelPhotoForResult, type PendingLabelPhoto } from '../../features/scanner/pending-label-photo'
 import { emitScannerReset } from '../../lib/scanner-reset'
 
@@ -35,6 +36,7 @@ export default function ScanResultScreen() {
 
   const [labelPhoto] = useState<PendingLabelPhoto | null>(() => takeLabelPhotoForResult())
   const [saving, setSaving] = useState(false)
+  const createWineMutation = useCreateWineViaApi()
 
   useEffect(() => {
     emitScannerReset()
@@ -47,7 +49,7 @@ export default function ScanResultScreen() {
     try {
       setSaving(true)
 
-      const wine = await createWineViaApi({
+      const wine = await createWineMutation.mutateAsync({
         name: params.name ?? '',
         producer: params.producer || null,
         region: params.region || null,

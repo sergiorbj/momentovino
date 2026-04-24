@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useState } from 'react'
 import {
   View,
   Text,
@@ -13,14 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { StatusBar } from 'expo-status-bar'
-import { router, useFocusEffect } from 'expo-router'
+import { router } from 'expo-router'
 
-import {
-  getProfile,
-  updateSettings,
-  type ProfileRow,
-  type ProfileStats,
-} from '../../features/profile/api'
+import { useProfile, useUpdateSettings } from '../../features/profile/hooks'
 import { supabase } from '../../lib/supabase'
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name']
@@ -29,37 +23,22 @@ const WINE = '#722F37'
 const BG = '#F5EBE0'
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState<ProfileRow | null>(null)
-  const [stats, setStats] = useState<ProfileStats>({ moments: 0, wines: 0, family: 0 })
-  const [loading, setLoading] = useState(true)
-  const load = useCallback(async () => {
-    try {
-      const data = await getProfile()
-      setProfile(data.profile)
-      setStats(data.stats)
-    } catch (e) {
-      console.warn('Failed to load profile', e)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const { data, isLoading } = useProfile()
+  const profile = data?.profile ?? null
+  const stats = data?.stats ?? { moments: 0, wines: 0, family: 0 }
+  const loading = isLoading && !data
 
-  useFocusEffect(
-    useCallback(() => {
-      load()
-    }, [load])
-  )
+  const updateSettingsMutation = useUpdateSettings()
 
-  const toggleNotifications = async (value: boolean) => {
-    if (!profile) return
-    const previous = profile.notifications_enabled
-    setProfile({ ...profile, notifications_enabled: value })
-    try {
-      await updateSettings({ notifications_enabled: value })
-    } catch (e) {
-      setProfile((p) => (p ? { ...p, notifications_enabled: previous } : p))
-      Alert.alert('Error', e instanceof Error ? e.message : 'Could not update notifications')
-    }
+  const toggleNotifications = (value: boolean) => {
+    updateSettingsMutation.mutate(
+      { notifications_enabled: value },
+      {
+        onError: (e) => {
+          Alert.alert('Error', e instanceof Error ? e.message : 'Could not update notifications')
+        },
+      },
+    )
   }
 
   const signOut = () => {

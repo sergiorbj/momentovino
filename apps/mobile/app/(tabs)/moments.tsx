@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Image,
   type TextStyle,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -14,6 +15,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withRepeat,
+  withSequence,
   Easing,
   runOnJS,
 } from 'react-native-reanimated'
@@ -86,13 +89,17 @@ export default function MomentsScreen() {
 
   const contentOpacity = useSharedValue(0)
   const contentTranslate = useSharedValue(16)
+  const loadingOpacity = useSharedValue(1)
+  const sway = useSharedValue(0)
+  const bob = useSharedValue(0)
   const hasAnimatedInRef = useRef(false)
   const [firstLoadDone, setFirstLoadDone] = useState(false)
   const [dataReady, setDataReady] = useState(false)
   const [globeReady, setGlobeReady] = useState(false)
   const [valuesVisible, setValuesVisible] = useState(false)
+  const [loadingMounted, setLoadingMounted] = useState(true)
 
-  const { stats, loading, refresh } = useMomentStats()
+  const { stats, loading } = useMomentStats()
 
   useEffect(() => {
     if (!loading) setDataReady(true)
@@ -102,11 +109,36 @@ export default function MomentsScreen() {
     setGlobeReady(true)
   }, [])
 
+  const unmountLoading = useCallback(() => setLoadingMounted(false), [])
+
+  useEffect(() => {
+    sway.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.sin) }),
+        withTiming(-1, { duration: 1100, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1,
+      false,
+    )
+    bob.value = withRepeat(
+      withTiming(1, { duration: 900, easing: Easing.inOut(Easing.sin) }),
+      -1,
+      true,
+    )
+  }, [sway, bob])
+
   useEffect(() => {
     if (hasAnimatedInRef.current) return
     if (!dataReady || !globeReady) return
     hasAnimatedInRef.current = true
 
+    loadingOpacity.value = withTiming(
+      0,
+      { duration: ENTER_DURATION, easing: Easing.out(Easing.cubic) },
+      (finished) => {
+        if (finished) runOnJS(unmountLoading)()
+      },
+    )
     contentOpacity.value = withTiming(1, {
       duration: ENTER_DURATION,
       easing: Easing.out(Easing.cubic),
@@ -125,15 +157,21 @@ export default function MomentsScreen() {
       clearTimeout(revealT)
       clearTimeout(doneT)
     }
-  }, [dataReady, globeReady, contentOpacity, contentTranslate])
+  }, [
+    dataReady,
+    globeReady,
+    contentOpacity,
+    contentTranslate,
+    loadingOpacity,
+    unmountLoading,
+  ])
 
   useFocusEffect(
     useCallback(() => {
       globeScale.value = 1
       globeOpacity.value = 1
       navigating.current = false
-      refresh()
-    }, [globeScale, globeOpacity, refresh])
+    }, [globeScale, globeOpacity])
   )
 
   const navigateToList = useCallback(() => {
@@ -159,6 +197,17 @@ export default function MomentsScreen() {
   const contentAnimatedStyle = useAnimatedStyle(() => ({
     opacity: contentOpacity.value,
     transform: [{ translateY: contentTranslate.value }],
+  }))
+
+  const loadingOverlayStyle = useAnimatedStyle(() => ({
+    opacity: loadingOpacity.value,
+  }))
+
+  const glassAnimStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: bob.value * -6 },
+      { rotate: `${sway.value * 14}deg` },
+    ],
   }))
 
   const countersAnimate = !firstLoadDone
@@ -226,6 +275,19 @@ export default function MomentsScreen() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+
+      {loadingMounted && (
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.loadingOverlay, loadingOverlayStyle]}
+        >
+          <Animated.Image
+            source={GLASS_ICON}
+            style={[styles.loadingGlass, glassAnimStyle]}
+          />
+          <Text style={styles.loadingText}>Pouring your moments…</Text>
+        </Animated.View>
+      )}
     </View>
   )
 }
@@ -293,5 +355,24 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'DMSans_600SemiBold',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#F5EBE0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  loadingGlass: {
+    width: 96,
+    height: 96,
+    marginBottom: 24,
+    resizeMode: 'contain',
+  },
+  loadingText: {
+    fontSize: 15,
+    fontFamily: 'DMSans_500Medium',
+    color: '#5C4033',
+    letterSpacing: 0.4,
   },
 })

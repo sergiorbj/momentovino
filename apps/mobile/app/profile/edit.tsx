@@ -21,10 +21,12 @@ import {
   USERNAME_REGEX,
   UsernameFormatError,
   UsernameTakenError,
-  getProfile,
-  setUsername,
-  updateProfile,
 } from '../../features/profile/api'
+import {
+  useProfile,
+  useSetUsername,
+  useUpdateProfile,
+} from '../../features/profile/hooks'
 import { uploadAvatar } from '../../features/profile/avatar-upload'
 import { supabase } from '../../lib/supabase'
 
@@ -36,31 +38,31 @@ const NAME_MAX = 50
 const BIO_MAX = 160
 
 export default function EditProfileScreen() {
+  const { data, isLoading } = useProfile()
+  const updateProfileMutation = useUpdateProfile()
+  const setUsernameMutation = useSetUsername()
+
   const [displayName, setDisplayName] = useState('')
   const [username, setUsernameState] = useState('')
   const [originalUsername, setOriginalUsername] = useState('')
   const [bio, setBio] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [hydrated, setHydrated] = useState(false)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    ;(async () => {
-      try {
-        const { profile } = await getProfile()
-        setDisplayName(profile.display_name || '')
-        setUsernameState(profile.username || '')
-        setOriginalUsername(profile.username || '')
-        setBio(profile.bio || '')
-        setAvatarUrl(profile.avatar_url)
-      } catch (e) {
-        console.warn('Failed to load profile for edit', e)
-      } finally {
-        setLoading(false)
-      }
-    })()
-  }, [])
+    if (hydrated || !data) return
+    const { profile } = data
+    setDisplayName(profile.display_name || '')
+    setUsernameState(profile.username || '')
+    setOriginalUsername(profile.username || '')
+    setBio(profile.bio || '')
+    setAvatarUrl(profile.avatar_url)
+    setHydrated(true)
+  }, [data, hydrated])
+
+  const loading = isLoading && !data
 
   const usernameValid = USERNAME_REGEX.test(username)
   const usernameChanged = username !== originalUsername
@@ -117,7 +119,7 @@ export default function EditProfileScreen() {
         newAvatarUrl = await uploadAvatar(userId, localAvatarUri)
       }
 
-      await updateProfile({
+      await updateProfileMutation.mutateAsync({
         display_name: name,
         bio: trimBio || null,
         avatar_url: newAvatarUrl,
@@ -128,7 +130,7 @@ export default function EditProfileScreen() {
       // silently discard other edits the user made.
       if (usernameChanged) {
         try {
-          await setUsername(normalizedUsername)
+          await setUsernameMutation.mutateAsync(normalizedUsername)
         } catch (e) {
           if (e instanceof UsernameTakenError) {
             Alert.alert('Username taken', 'Try another one. Other changes were saved.')
