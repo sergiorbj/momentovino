@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { useTranslations } from '@/hooks/use-translations'
 
@@ -14,14 +13,9 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-3">
           <div className="space-y-3">
             <Link href="/" className="flex items-center">
-              <Image
-                src="/logo.svg"
-                alt="MomentoVino"
-                width={56}
-                height={56}
-                className="h-12 w-12"
-              />
-              <span className="font-serif text-[20px] tracking-tight">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/adaptive-icon.png" alt="MomentoVino" className="h-20 w-20" />
+              <span className="-ml-3 font-serif text-[20px] tracking-tight">
                 <span className="text-wine-plum">Momento</span>
                 <span className="text-chocolate">Vino</span>
               </span>

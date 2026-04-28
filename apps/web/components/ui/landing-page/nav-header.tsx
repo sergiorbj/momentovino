@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import { ArrowDown } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
@@ -12,15 +11,10 @@ function Logo() {
   return (
     <div className="flex items-center">
       {/* MomentoVino official logo */}
-      <Image
-        src="/logo.svg"
-        alt="MomentoVino"
-        width={70}
-        height={70}
-        className="h-14 w-14"
-      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/adaptive-icon.png" alt="MomentoVino" className="h-20 w-20" />
       {/* Brand name with two colors - serif font */}
-      <span className="font-serif text-[22px] tracking-tight">
+      <span className="-ml-3 font-serif text-[22px] tracking-tight">
         <span className="text-wine-plum">Momento</span>
         <span className="text-chocolate">Vino</span>
       </span>
