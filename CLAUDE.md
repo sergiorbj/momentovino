@@ -43,7 +43,7 @@ The shim creates a Python venv in `apps/web/venv/` on first run (see `scripts/ru
 ### Environment files required
 
 - `apps/web/.env.local` — `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL`, `GEMINI_API_KEY` (for `scan-wine.py`).
-- `apps/mobile/.env` — `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_API_URL` (points at the Next.js/Flask host), `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME`.
+- `apps/mobile/.env` — `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_API_URL` (points at the Next.js/Flask host), `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME`. Also `EXPO_APPLE_ID` for `eas submit` (CLI-only, not bundled). The `appleId` was deliberately removed from [apps/mobile/eas.json](apps/mobile/eas.json) because the repo is public — `ascAppId` and `appleTeamId` stay there.
 
 ## Architecture
 
