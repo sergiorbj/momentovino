@@ -22,6 +22,14 @@ export const translations = {
       madeFor: 'Made',
       families: 'for families',
     },
+    footer: {
+      tagline: 'Every bottle tells a story. Save yours.',
+      legalHeading: 'Legal',
+      privacy: 'Privacy Policy',
+      terms: 'Terms of Service',
+      contactHeading: 'Contact',
+      copyright: 'BERNARDI TECH LTDA. All rights reserved.',
+    },
   },
   'pt-br': {
     nav: {
@@ -45,6 +53,14 @@ export const translations = {
       momentsLabel: 'momentos',
       madeFor: 'Feito',
       families: 'para famílias',
+    },
+    footer: {
+      tagline: 'Cada garrafa conta uma história. Guarde a sua.',
+      legalHeading: 'Legal',
+      privacy: 'Política de Privacidade',
+      terms: 'Termos de Serviço',
+      contactHeading: 'Contato',
+      copyright: 'BERNARDI TECH LTDA. Todos os direitos reservados.',
     },
   },
 } as const
