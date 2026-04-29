@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  ActivityIndicator,
-  Alert,
   FlatList,
-  Pressable,
+  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -15,223 +13,143 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
 import { WineRowAvatar } from '../../components/WineRowAvatar'
-import { createWine, searchWines } from '../../features/moments/api'
-import { WINE_TYPES, type WineTypeCode } from '../../features/moments/schema'
-import type { Database } from '../../lib/database.types'
+import { useWinesCount, useWinesSearch } from '../../features/wines/hooks'
+import {
+  bestLabelPhotoInCluster,
+  clusterWinesForDisplay,
+  type WineCluster,
+} from '../../features/wines/similarity'
 
-type WineRow = Database['public']['Tables']['wines']['Row']
-
-const WINE = '#722F37'
+const WINE_C = '#722F37'
 const INK = '#3F2A2E'
 const SUBTLE = '#C2703E'
 const BG = '#F5EBE0'
 
 export default function WinePickerScreen() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<WineRow[]>([])
-  const [loading, setLoading] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [createMode, setCreateMode] = useState(false)
-
-  const [newName, setNewName] = useState('')
-  const [newProducer, setNewProducer] = useState('')
-  const [newVintage, setNewVintage] = useState('')
-  const [newRegion, setNewRegion] = useState('')
-  const [newType, setNewType] = useState<WineTypeCode | null>(null)
+  const [debouncedQuery, setDebouncedQuery] = useState('')
 
   useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    const handle = setTimeout(async () => {
-      try {
-        const rows = await searchWines(query)
-        if (!cancelled) setResults(rows)
-      } catch (err) {
-        console.error(err)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }, 220)
-    return () => {
-      cancelled = true
-      clearTimeout(handle)
-    }
+    const handle = setTimeout(() => setDebouncedQuery(query), 220)
+    return () => clearTimeout(handle)
   }, [query])
 
-  const select = (row: WineRow) => {
-    router.replace({
-      pathname: '/moments/new',
-      params: { wineId: row.id, wineName: row.name },
-    })
-  }
+  const winesQuery = useWinesSearch(debouncedQuery)
+  const countQuery = useWinesCount()
 
-  const submitNew = async () => {
-    if (newName.trim().length < 2) {
-      Alert.alert('Wine name is required')
-      return
-    }
-    const vintageNum = newVintage.trim() ? Number(newVintage.trim()) : undefined
-    if (vintageNum !== undefined && Number.isNaN(vintageNum)) {
-      Alert.alert('Vintage must be a number')
-      return
-    }
-    try {
-      setCreating(true)
-      const row = await createWine({
-        name: newName.trim(),
-        producer: newProducer.trim() || undefined,
-        vintage: vintageNum,
-        region: newRegion.trim() || undefined,
-        type: newType ?? undefined,
-      })
-      select(row)
-    } catch (err) {
-      console.error(err)
-      Alert.alert('Could not create wine', err instanceof Error ? err.message : 'Unknown error')
-    } finally {
-      setCreating(false)
-    }
-  }
+  const results = winesQuery.data ?? []
+  const totalWines = countQuery.data ?? null
+  const loading = winesQuery.isFetching
+
+  const clusters = useMemo(() => clusterWinesForDisplay(results), [results])
 
   const emptyLabel = useMemo(() => {
     if (loading) return ''
-    if (query.trim().length === 0) return 'No wines yet. Create the first one.'
-    return `No wines match "${query}". Create a new one.`
+    if (query.trim().length === 0) return 'No wines yet. Scan a bottle to add your first one.'
+    return `No wines match "${query}".`
   }, [loading, query])
+
+  const select = (cluster: WineCluster) => {
+    const w = cluster.canonical
+    router.replace({
+      pathname: '/moments/new',
+      params: { wineId: w.id, wineName: w.name },
+    })
+  }
 
   return (
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-            <Ionicons name="chevron-back" size={22} color={WINE} />
+            <Ionicons name="chevron-back" size={22} color={WINE_C} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Select wine</Text>
-          <TouchableOpacity
-            onPress={() => setCreateMode((v) => !v)}
-            style={styles.iconBtn}
-          >
-            <Ionicons name={createMode ? 'list' : 'add'} size={22} color={WINE} />
-          </TouchableOpacity>
+          <View style={styles.headerTitleRow}>
+            <Text style={styles.headerTitle}>Select wine</Text>
+            {totalWines !== null ? <Text style={styles.headerCount}>{totalWines}</Text> : null}
+          </View>
+          <View style={styles.iconBtnPlaceholder} />
         </View>
 
-        {createMode ? (
-          <View style={styles.body}>
-            <LabeledInput label="Name*" value={newName} onChangeText={setNewName} placeholder="Malbec Reserva" />
-            <LabeledInput label="Producer" value={newProducer} onChangeText={setNewProducer} placeholder="Catena Zapata" />
-            <LabeledInput
-              label="Vintage"
-              value={newVintage}
-              onChangeText={setNewVintage}
-              placeholder="2019"
-              keyboardType="number-pad"
+        <View style={styles.body}>
+          <TouchableOpacity
+            style={styles.scanCta}
+            onPress={() => router.push('/(tabs)/scanner')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="scan-outline" size={18} color="#FFFFFF" />
+            <Text style={styles.scanCtaText}>Scan to add a wine</Text>
+          </TouchableOpacity>
+
+          <View style={styles.searchWrap}>
+            <Ionicons name="search" size={18} color={SUBTLE} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search wines"
+              placeholderTextColor="#A98B7E"
+              style={styles.search}
+              autoCapitalize="none"
             />
-            <LabeledInput label="Region" value={newRegion} onChangeText={setNewRegion} placeholder="Mendoza" />
-
-            <Text style={styles.label}>Type</Text>
-            <View style={styles.chips}>
-              {WINE_TYPES.map((t) => (
-                <Pressable
-                  key={t}
-                  onPress={() => setNewType(t === newType ? null : t)}
-                  style={[styles.chip, newType === t && styles.chipActive]}
-                >
-                  <Text style={[styles.chipText, newType === t && styles.chipTextActive]}>{t}</Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <TouchableOpacity
-              style={[styles.submit, creating && styles.submitDisabled]}
-              onPress={submitNew}
-              disabled={creating}
-              activeOpacity={0.85}
-            >
-              {creating ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.submitText}>Create & select</Text>
-              )}
-            </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.body}>
-            <View style={styles.searchWrap}>
-              <Ionicons name="search" size={18} color={SUBTLE} />
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                placeholder="Search wines"
-                placeholderTextColor="#A98B7E"
-                style={styles.search}
-                autoCapitalize="none"
-              />
-              {loading && <ActivityIndicator color={WINE} />}
-            </View>
 
-            <FlatList
-              data={results}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{ paddingBottom: 24 }}
-              ItemSeparatorComponent={() => <View style={styles.divider} />}
-              ListEmptyComponent={
-                loading ? null : (
-                  <View style={styles.empty}>
-                    <Text style={styles.emptyText}>{emptyLabel}</Text>
-                    <TouchableOpacity
-                      style={styles.emptyBtn}
-                      onPress={() => setCreateMode(true)}
-                    >
-                      <Text style={styles.emptyBtnText}>+ Create new wine</Text>
-                    </TouchableOpacity>
+          <FlatList<WineCluster>
+            data={clusters}
+            keyExtractor={(c) => c.canonical.id}
+            contentContainerStyle={{ paddingBottom: 24 }}
+            ItemSeparatorComponent={() => <View style={styles.divider} />}
+            ListEmptyComponent={
+              loading ? null : (
+                <View style={styles.empty}>
+                  <Image
+                    source={require('../../assets/glass.png')}
+                    style={styles.emptyIcon}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.emptyText}>{emptyLabel}</Text>
+                  <TouchableOpacity
+                    style={styles.emptyBtn}
+                    onPress={() => router.push('/(tabs)/scanner')}
+                  >
+                    <Text style={styles.emptyBtnText}>Scan a bottle</Text>
+                  </TouchableOpacity>
+                </View>
+              )
+            }
+            renderItem={({ item }) => {
+              const w = item.canonical
+              const photo = bestLabelPhotoInCluster(item.members)
+              const dup = item.members.length > 1
+              return (
+                <TouchableOpacity
+                  style={styles.row}
+                  onPress={() => select(item)}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.rowLeft}>
+                    <WineRowAvatar labelPhotoUrl={photo} size={40} accent={WINE_C} />
                   </View>
-                )
-              }
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.row} onPress={() => select(item)}>
-                  <View style={styles.rowAvatar}>
-                    <WineRowAvatar labelPhotoUrl={item.label_photo_url} size={40} accent={WINE} />
-                  </View>
-                  <View style={styles.rowText}>
-                    <Text style={styles.rowTitle}>{item.name}</Text>
+                  <View style={styles.rowBody}>
+                    <View style={styles.rowTitleRow}>
+                      <Text style={styles.rowTitle} numberOfLines={2}>
+                        {w.name}
+                      </Text>
+                      {dup ? (
+                        <View style={styles.countBadge}>
+                          <Text style={styles.countBadgeText}>×{item.members.length}</Text>
+                        </View>
+                      ) : null}
+                    </View>
                     <Text style={styles.rowMeta}>
-                      {[item.producer, item.vintage, item.region].filter(Boolean).join(' · ')}
+                      {[w.producer, w.vintage, w.country, w.type].filter(Boolean).join(' · ')}
                     </Text>
                   </View>
                 </TouchableOpacity>
-              )}
-            />
-          </View>
-        )}
+              )
+            }}
+          />
+        </View>
       </SafeAreaView>
-    </View>
-  )
-}
-
-function LabeledInput({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  keyboardType,
-}: {
-  label: string
-  value: string
-  onChangeText: (v: string) => void
-  placeholder: string
-  keyboardType?: 'default' | 'number-pad'
-}) {
-  return (
-    <View style={{ marginBottom: 12 }}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor="#A98B7E"
-        style={styles.input}
-        keyboardType={keyboardType}
-      />
     </View>
   )
 }
@@ -242,14 +160,26 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
+    gap: 8,
+  },
+  headerTitleRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 10,
   },
   headerTitle: {
     fontFamily: 'DMSerifDisplay_400Regular',
-    fontSize: 26,
-    color: WINE,
+    fontSize: 28,
+    color: WINE_C,
+  },
+  headerCount: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 28,
+    color: SUBTLE,
   },
   iconBtn: {
     width: 40,
@@ -259,7 +189,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconBtnPlaceholder: { width: 40, height: 40 },
   body: { flex: 1, padding: 20 },
+  scanCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: WINE_C,
+    borderRadius: 50,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  scanCtaText: {
+    color: '#FFFFFF',
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+  },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -268,7 +215,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   search: {
     flex: 1,
@@ -276,73 +223,44 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     color: INK,
   },
-  divider: { height: 1, backgroundColor: '#E5D5C5' },
+  divider: { height: 8 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
     backgroundColor: '#FFFFFF',
     paddingVertical: 14,
     paddingHorizontal: 14,
     borderRadius: 12,
-    marginBottom: 4,
+    gap: 12,
   },
-  rowAvatar: {
+  rowLeft: {
     width: 40,
     height: 40,
     borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: '#FDF2F4',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  rowText: { flex: 1 },
-  rowTitle: { fontSize: 15, fontFamily: 'DMSans_600SemiBold', color: INK },
+  rowBody: { flex: 1, minWidth: 0 },
+  rowTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  rowTitle: { flex: 1, fontSize: 15, fontFamily: 'DMSans_600SemiBold', color: INK },
+  countBadge: {
+    backgroundColor: WINE_C,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  countBadgeText: { fontSize: 12, fontFamily: 'DMSans_700Bold', color: '#FFFFFF' },
   rowMeta: { fontSize: 13, fontFamily: 'DMSans_400Regular', color: SUBTLE, marginTop: 2 },
   empty: { alignItems: 'center', paddingVertical: 40, gap: 16 },
+  emptyIcon: { width: 60, height: 60, tintColor: SUBTLE },
   emptyText: { fontFamily: 'DMSans_400Regular', color: SUBTLE, textAlign: 'center' },
   emptyBtn: {
-    backgroundColor: WINE,
+    backgroundColor: WINE_C,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 50,
   },
   emptyBtnText: { color: '#FFFFFF', fontFamily: 'DMSans_600SemiBold' },
-  label: {
-    fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
-    color: SUBTLE,
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    fontFamily: 'DMSans_400Regular',
-    color: INK,
-  },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-  },
-  chipActive: { backgroundColor: WINE },
-  chipText: { fontFamily: 'DMSans_600SemiBold', color: WINE, fontSize: 12 },
-  chipTextActive: { color: '#FFFFFF' },
-  submit: {
-    backgroundColor: WINE,
-    borderRadius: 50,
-    height: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-  },
-  submitDisabled: { opacity: 0.6 },
-  submitText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
-  },
 })
