@@ -27,23 +27,28 @@ const BG = '#F5EBE0'
 const BORDER = '#E8DDD4'
 
 const BENEFITS: { icon: string; text: string }[] = [
-  { icon: '📖', text: 'Unlimited wines and moments' },
-  { icon: '🌍', text: 'Your wine atlas, synced across devices' },
-  { icon: '🍷', text: 'Share with family — everyone adds their own bottles' },
+  { icon: '🌍', text: 'Your wine atlas, every bottle on the map' },
+  { icon: '🍷', text: 'Share with family, register moments together' },
+  { icon: '📸', text: 'Save the story behind every bottle' },
 ]
+
+type PlanId = 'yearly' | 'monthly'
 
 export default function PaywallScreen() {
   const [purchasing, setPurchasing] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>('yearly')
 
-  const startTrial = async () => {
+  const subscribe = async () => {
     setPurchasing(true)
     try {
-      // TODO(revenuecat): replace with actual trial purchase.
+      // TODO(revenuecat): replace with actual purchase based on selectedPlan.
       //   const offerings = await Purchases.getOfferings()
-      //   const pkg = offerings.current?.monthly // 5-day free trial, $5.99/mo
+      //   const pkg = selectedPlan === 'yearly'
+      //     ? offerings.current?.annual    // $39.99/year, no trial
+      //     : offerings.current?.monthly   // $4.99/month with 5-day free trial
       //   if (!pkg) throw new Error('No offering available')
       //   const { customerInfo } = await Purchases.purchasePackage(pkg)
-      //   if (!customerInfo.entitlements.active['pro']) throw new Error('Trial not active')
+      //   if (!customerInfo.entitlements.active['pro']) throw new Error('Subscription not active')
 
       // Persist the starter wines/moments NOW — we're past the account screen,
       // so `supabase.auth.getUser()` is guaranteed to return the final user_id
@@ -84,7 +89,7 @@ export default function PaywallScreen() {
       resetSelections()
       router.replace('/(tabs)/moments')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Could not start trial'
+      const msg = err instanceof Error ? err.message : 'Could not start subscription'
       Alert.alert('Could not save your journal', msg)
     } finally {
       setPurchasing(false)
@@ -96,6 +101,17 @@ export default function PaywallScreen() {
     Alert.alert('Restore purchases', 'Not wired yet.')
   }
 
+  const ctaLabel = purchasing
+    ? 'Starting…'
+    : selectedPlan === 'yearly'
+      ? 'Subscribe — $39.99/year'
+      : 'Start my 5-day free trial'
+
+  const reassureText =
+    selectedPlan === 'yearly'
+      ? 'Billed annually. Cancel renewal anytime in Settings.'
+      : 'Free for 5 days, then $4.99/month. Cancel anytime to avoid being charged.'
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -106,17 +122,11 @@ export default function PaywallScreen() {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.hero}>
-            <View style={styles.heroInner}>
-              <Ionicons name="globe-outline" size={48} color={WINE} />
-            </View>
-          </View>
-
           <View style={styles.copy}>
             <Text style={styles.headline}>Your wine memories, forever.</Text>
             <Text style={styles.sub}>
-              Unlimited moments. Unlimited bottles. One beautiful journal you'll still have in 10
-              years.
+              Unlimited moments. Unlimited bottles. One beautiful journal you'll
+              still have in 10 years.
             </Text>
           </View>
 
@@ -129,27 +139,86 @@ export default function PaywallScreen() {
             ))}
           </View>
 
-          <View style={styles.priceCard}>
-            <Text style={styles.priceHead}>5 days free</Text>
-            <Text style={styles.priceSub}>then $5.99/month</Text>
-            <Text style={styles.priceNote}>Cancel anytime in Settings.</Text>
+          <View style={styles.plans}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setSelectedPlan('monthly')}
+              style={[
+                styles.planCard,
+                selectedPlan === 'monthly' && styles.planCardSelected,
+              ]}
+            >
+              <View style={styles.planRow}>
+                <View style={styles.planLeft}>
+                  <Text style={styles.planTitle}>Monthly</Text>
+                  <Text style={styles.planDetail} numberOfLines={1}>
+                    <Text style={styles.planDetailStrong}>5 days free</Text>
+                    , then billed
+                  </Text>
+                </View>
+                <View style={styles.planRight}>
+                  <Text style={styles.planPrice}>$4.99</Text>
+                  <Text style={styles.planPeriod}>per month</Text>
+                </View>
+                <View
+                  style={[
+                    styles.radio,
+                    selectedPlan === 'monthly' && styles.radioSelected,
+                  ]}
+                >
+                  {selectedPlan === 'monthly' && (
+                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                  )}
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setSelectedPlan('yearly')}
+              style={[
+                styles.planCard,
+                styles.planCardYearly,
+                selectedPlan === 'yearly' && styles.planCardSelected,
+              ]}
+            >
+              <View style={styles.planBadge}>
+                <Text style={styles.planBadgeText}>BEST VALUE · SAVE 33%</Text>
+              </View>
+              <View style={styles.planRow}>
+                <View style={styles.planLeft}>
+                  <Text style={styles.planTitle}>Annual</Text>
+                  <Text style={styles.planDetail}>Just $3.33/month</Text>
+                </View>
+                <View style={styles.planRight}>
+                  <Text style={styles.planPrice}>$39.99</Text>
+                  <Text style={styles.planPeriod}>per year</Text>
+                </View>
+                <View
+                  style={[
+                    styles.radio,
+                    selectedPlan === 'yearly' && styles.radioSelected,
+                  ]}
+                >
+                  {selectedPlan === 'yearly' && (
+                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                  )}
+                </View>
+              </View>
+            </TouchableOpacity>
           </View>
         </ScrollView>
 
         <View style={styles.footer}>
           <TouchableOpacity
             style={[styles.cta, purchasing && styles.ctaDisabled]}
-            onPress={startTrial}
+            onPress={subscribe}
             disabled={purchasing}
             activeOpacity={0.85}
           >
-            <Text style={styles.ctaText}>
-              {purchasing ? 'Starting…' : 'Start my 5-day free trial'}
-            </Text>
+            <Text style={styles.ctaText}>{ctaLabel}</Text>
           </TouchableOpacity>
-          <Text style={styles.reassure}>
-            No charge today. We'll remind you 2 days before your trial ends.
-          </Text>
+          <Text style={styles.reassure}>{reassureText}</Text>
           <View style={styles.tinyRow}>
             <TouchableOpacity onPress={restore} activeOpacity={0.7}>
               <Text style={styles.tinyLink}>Restore purchases</Text>
@@ -172,34 +241,23 @@ export default function PaywallScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   safe: { flex: 1 },
-  scroll: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16 },
-  hero: { alignItems: 'center', marginBottom: 16 },
-  heroInner: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: BORDER,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  copy: { alignItems: 'center', gap: 8, marginBottom: 24 },
+  scroll: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 },
+  copy: { alignItems: 'center', gap: 10, marginBottom: 22 },
   headline: {
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 30,
+    lineHeight: 36,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
     textAlign: 'center',
   },
   sub: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
     fontFamily: 'DMSans_400Regular',
     color: INK,
     textAlign: 'center',
   },
-  benefits: { gap: 10, marginBottom: 20 },
+  benefits: { gap: 10, marginBottom: 24 },
   benefitRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -208,58 +266,100 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BORDER,
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 14,
   },
-  benefitIcon: { fontSize: 20 },
+  benefitIcon: { fontSize: 22 },
   benefitText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'DMSans_500Medium',
     color: INK,
   },
-  priceCard: {
+  plans: { gap: 14 },
+  planCard: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: WINE,
+    borderWidth: 1.5,
+    borderColor: BORDER,
     borderRadius: 16,
     paddingVertical: 18,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    gap: 4,
+    paddingHorizontal: 16,
   },
-  priceHead: {
-    fontSize: 28,
+  planCardYearly: { marginTop: 8 },
+  planCardSelected: { borderColor: WINE, borderWidth: 2 },
+  planBadge: {
+    position: 'absolute',
+    top: -10,
+    left: 16,
+    backgroundColor: WINE,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  planBadgeText: {
+    fontSize: 11,
+    fontFamily: 'DMSans_700Bold',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  planRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  planLeft: { flex: 1, gap: 4 },
+  planTitle: {
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: 'DMSans_700Bold',
+    color: INK,
+  },
+  planDetail: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: 'DMSans_400Regular',
+    color: SUBTLE,
+  },
+  planDetailStrong: {
+    fontFamily: 'DMSans_700Bold',
+    color: INK,
+  },
+  planRight: { alignItems: 'flex-end', gap: 4 },
+  planPrice: {
+    fontSize: 20,
+    lineHeight: 22,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
   },
-  priceSub: {
-    fontSize: 15,
-    fontFamily: 'DMSans_600SemiBold',
-    color: INK,
-  },
-  priceNote: {
-    fontSize: 12,
-    fontFamily: 'DMSans_400Regular',
+  planPeriod: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: 'DMSans_500Medium',
     color: SUBTLE,
-    marginTop: 4,
   },
-  footer: { paddingHorizontal: 24, paddingBottom: 14, gap: 10 },
+  radio: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: BORDER,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioSelected: { backgroundColor: WINE, borderColor: WINE },
+  footer: { paddingHorizontal: 24, paddingBottom: 14, gap: 12 },
   cta: {
     backgroundColor: WINE,
     borderRadius: 50,
-    height: 56,
+    height: 58,
     alignItems: 'center',
     justifyContent: 'center',
   },
   ctaDisabled: { opacity: 0.6 },
   ctaText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 17,
     fontFamily: 'DMSans_600SemiBold',
   },
   reassure: {
-    fontSize: 12,
+    fontSize: 14,
+    lineHeight: 19,
     fontFamily: 'DMSans_400Regular',
     color: SUBTLE,
     textAlign: 'center',
@@ -268,13 +368,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
   tinyLink: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: 'DMSans_500Medium',
     color: SUBTLE,
     textDecorationLine: 'underline',
   },
-  tinyDot: { fontSize: 12, color: SUBTLE },
+  tinyDot: { fontSize: 13, color: SUBTLE },
 })
