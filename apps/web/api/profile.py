@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
+import sys
 from http.server import BaseHTTPRequestHandler
 from typing import Any, Optional
 from urllib.parse import urlparse
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import requests
 

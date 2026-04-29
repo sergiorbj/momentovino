@@ -1,8 +1,11 @@
 import json
 import os
+import sys
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from typing import Optional
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import requests
 
