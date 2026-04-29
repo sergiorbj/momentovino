@@ -116,7 +116,7 @@ NativeWind / Tailwind is **not** used on mobile (removed). Use `StyleSheet.creat
 
 ### Onboarding
 
-`app/onboarding/` is a separate stack with a fixed screen order (`index → pain → atlas → demo → goal → account → paywall`). The completion flag is stored via `features/onboarding/state.ts` and checked by the root layout; `features/onboarding/seed.ts` and `starter-deck.ts` seed initial data after account creation.
+`app/onboarding/` is a separate stack with a fixed screen order (`index → goal → pain → demo → atlas → account → paywall`). The completion flag is stored via `features/onboarding/state.ts` and checked by the root layout; `features/onboarding/seed.ts` and `starter-deck.ts` seed initial data after account creation.
 
 ## Conventions
 

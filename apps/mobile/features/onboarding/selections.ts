@@ -11,27 +11,27 @@ export type OnboardingPain =
   | 'trip_blur'
 
 export type OnboardingSelections = {
-  goal: OnboardingGoal | null
+  goals: OnboardingGoal[]
   painPoints: OnboardingPain[]
   pickedWineKeys: string[]
 }
 
 let state: OnboardingSelections = {
-  goal: null,
+  goals: [],
   painPoints: [],
   pickedWineKeys: [],
 }
 
 export function getSelections(): OnboardingSelections {
   return {
-    goal: state.goal,
+    goals: [...state.goals],
     painPoints: [...state.painPoints],
     pickedWineKeys: [...state.pickedWineKeys],
   }
 }
 
-export function setGoal(goal: OnboardingGoal): void {
-  state.goal = goal
+export function setGoals(goals: OnboardingGoal[]): void {
+  state.goals = goals
 }
 
 export function setPainPoints(points: OnboardingPain[]): void {
@@ -43,5 +43,5 @@ export function setPickedWineKeys(keys: string[]): void {
 }
 
 export function resetSelections(): void {
-  state = { goal: null, painPoints: [], pickedWineKeys: [] }
+  state = { goals: [], painPoints: [], pickedWineKeys: [] }
 }

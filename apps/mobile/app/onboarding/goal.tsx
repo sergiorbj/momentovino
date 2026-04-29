@@ -6,7 +6,7 @@ import { router } from 'expo-router'
 
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import { OptionRow } from '../../components/onboarding/OptionRow'
-import { setGoal, type OnboardingGoal } from '../../features/onboarding/selections'
+import { setGoals, type OnboardingGoal } from '../../features/onboarding/selections'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -22,11 +22,22 @@ const OPTIONS: GoalOption[] = [
 ]
 
 export default function GoalScreen() {
-  const [selected, setSelected] = useState<OnboardingGoal | null>(null)
+  const [selected, setSelected] = useState<Set<OnboardingGoal>>(new Set())
+
+  const toggle = (key: OnboardingGoal) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const canContinue = selected.size > 0
 
   const cont = () => {
-    if (!selected) return
-    setGoal(selected)
+    if (!canContinue) return
+    setGoals(Array.from(selected))
     router.push('/onboarding/pain')
   }
 
@@ -39,18 +50,18 @@ export default function GoalScreen() {
         <View style={styles.body}>
           <View style={styles.copy}>
             <Text style={styles.headline}>What brings you to MomentoVino?</Text>
-            <Text style={styles.sub}>We'll tailor your journal around it.</Text>
+            <Text style={styles.sub}>Pick all that apply — we'll tailor your journal around them.</Text>
           </View>
 
           <View style={styles.options}>
             {OPTIONS.map((opt) => (
               <OptionRow
                 key={opt.key}
-                mode="single"
+                mode="multi"
                 emoji={opt.emoji}
                 label={opt.label}
-                selected={selected === opt.key}
-                onPress={() => setSelected(opt.key)}
+                selected={selected.has(opt.key)}
+                onPress={() => toggle(opt.key)}
               />
             ))}
           </View>
@@ -58,9 +69,9 @@ export default function GoalScreen() {
 
         <View style={styles.footer}>
           <TouchableOpacity
-            style={[styles.cta, !selected && styles.ctaDisabled]}
+            style={[styles.cta, !canContinue && styles.ctaDisabled]}
             onPress={cont}
-            disabled={!selected}
+            disabled={!canContinue}
             activeOpacity={0.85}
           >
             <Text style={styles.ctaText}>Continue</Text>
