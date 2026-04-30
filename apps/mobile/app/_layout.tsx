@@ -15,6 +15,7 @@ import { configureGoogleSignIn } from '../lib/auth/google'
 import { hasCompletedOnboarding } from '../features/onboarding/state'
 import { queryClient } from '../lib/query-client'
 import { prefetchCoreData } from '../lib/prefetch'
+import { configurePurchases } from '../lib/purchases'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -34,8 +35,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     ensureAnonymousSession()
-      .then(() => {
+      .then(async (userId) => {
         prefetchCoreData(queryClient)
+        try {
+          await configurePurchases(userId)
+        } catch (err) {
+          console.warn('Failed to configure RevenueCat', err)
+        }
         setSessionReady(true)
       })
       .catch((err) => {
