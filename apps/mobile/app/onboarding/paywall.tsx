@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Alert,
   ScrollView,
@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases'
 
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import { markOnboardingCompleted } from '../../features/onboarding/state'
@@ -19,6 +20,12 @@ import { seedStarterJournal } from '../../features/onboarding/seed'
 import { claimUsername } from '../../features/profile/api'
 import { getExistingMomentCount } from '../../lib/auth/returningUser'
 import { supabase } from '../../lib/supabase'
+import {
+  getCurrentOffering,
+  hasProEntitlement,
+  purchasePackage,
+  restorePurchases,
+} from '../../lib/purchases'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -34,83 +41,117 @@ const BENEFITS: { icon: string; text: string }[] = [
 
 type PlanId = 'yearly' | 'monthly'
 
+async function finishOnboarding() {
+  const { pickedWineKeys } = getSelections()
+  if (pickedWineKeys.length > 0) {
+    const existing = await getExistingMomentCount()
+    if (existing === 0) {
+      await seedStarterJournal(pickedWineKeys)
+    }
+  }
+
+  try {
+    const { data: userData } = await supabase.auth.getUser()
+    const user = userData.user
+    if (user && !user.is_anonymous) {
+      const meta = user.user_metadata ?? {}
+      const emailPrefix = user.email ? user.email.split('@')[0] : ''
+      const desired =
+        (typeof meta.full_name === 'string' && meta.full_name) ||
+        (typeof meta.name === 'string' && meta.name) ||
+        emailPrefix ||
+        'user'
+      await claimUsername(desired)
+    }
+  } catch (e) {
+    console.warn('Failed to claim username (will retry on profile open)', e)
+  }
+
+  await markOnboardingCompleted()
+  resetSelections()
+  router.replace('/(tabs)/moments')
+}
+
 export default function PaywallScreen() {
   const [purchasing, setPurchasing] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('yearly')
+  const [offering, setOffering] = useState<PurchasesOffering | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    getCurrentOffering()
+      .then((o) => {
+        if (!cancelled) setOffering(o)
+      })
+      .catch((err) => console.warn('Failed to load offering', err))
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const monthlyPkg: PurchasesPackage | null = offering?.monthly ?? null
+  const annualPkg: PurchasesPackage | null = offering?.annual ?? null
+  const monthlyPriceString = monthlyPkg?.product.priceString ?? '$4.99'
+  const annualPriceString = annualPkg?.product.priceString ?? '$39.99'
 
   const subscribe = async () => {
+    const pkg = selectedPlan === 'yearly' ? annualPkg : monthlyPkg
+    if (!pkg) {
+      Alert.alert(
+        'Subscription unavailable',
+        'Could not load subscription options. Please try again.',
+      )
+      return
+    }
     setPurchasing(true)
     try {
-      // TODO(revenuecat): replace with actual purchase based on selectedPlan.
-      //   const offerings = await Purchases.getOfferings()
-      //   const pkg = selectedPlan === 'yearly'
-      //     ? offerings.current?.annual    // $39.99/year, no trial
-      //     : offerings.current?.monthly   // $4.99/month with 5-day free trial
-      //   if (!pkg) throw new Error('No offering available')
-      //   const { customerInfo } = await Purchases.purchasePackage(pkg)
-      //   if (!customerInfo.entitlements.active['pro']) throw new Error('Subscription not active')
-
-      // Persist the starter wines/moments NOW — we're past the account screen,
-      // so `supabase.auth.getUser()` is guaranteed to return the final user_id
-      // (same one for email upgrade, new one for Google/Apple). Seeding here
-      // avoids rows being orphaned under an anon user when OAuth replaces the
-      // session.
-      const { pickedWineKeys } = getSelections()
-      if (pickedWineKeys.length > 0) {
-        const existing = await getExistingMomentCount()
-        if (existing === 0) {
-          await seedStarterJournal(pickedWineKeys)
-        }
-        // If this user already has moments (e.g. signed in with another provider
-        // under the same Supabase user), skip re-seeding to avoid duplicate bottles.
+      const customerInfo = await purchasePackage(pkg)
+      if (!hasProEntitlement(customerInfo)) {
+        throw new Error('Subscription was not activated')
       }
-
-      // Auto-claim a username from the user's email (or OAuth provider data),
-      // retrying with a random suffix on collision. Runs once per signup.
-      // Best-effort — don't block entry to the app if it fails.
-      try {
-        const { data: userData } = await supabase.auth.getUser()
-        const user = userData.user
-        if (user && !user.is_anonymous) {
-          const meta = user.user_metadata ?? {}
-          const emailPrefix = user.email ? user.email.split('@')[0] : ''
-          const desired =
-            (typeof meta.full_name === 'string' && meta.full_name) ||
-            (typeof meta.name === 'string' && meta.name) ||
-            emailPrefix ||
-            'user'
-          await claimUsername(desired)
-        }
-      } catch (e) {
-        console.warn('Failed to claim username (will retry on profile open)', e)
+      await finishOnboarding()
+    } catch (err: unknown) {
+      // RC sets `userCancelled: true` when user dismisses the Apple sheet.
+      if (err && typeof err === 'object' && 'userCancelled' in err && err.userCancelled) {
+        return
       }
-
-      await markOnboardingCompleted()
-      resetSelections()
-      router.replace('/(tabs)/moments')
-    } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not start subscription'
-      Alert.alert('Could not save your journal', msg)
+      Alert.alert('Subscription failed', msg)
     } finally {
       setPurchasing(false)
     }
   }
 
   const restore = async () => {
-    // TODO(revenuecat): await Purchases.restorePurchases() — if entitlement active, finish onboarding.
-    Alert.alert('Restore purchases', 'Not wired yet.')
+    setPurchasing(true)
+    try {
+      const customerInfo = await restorePurchases()
+      if (!hasProEntitlement(customerInfo)) {
+        Alert.alert(
+          'Nothing to restore',
+          'No active subscription found on this Apple ID.',
+        )
+        return
+      }
+      await finishOnboarding()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not restore purchases'
+      Alert.alert('Restore failed', msg)
+    } finally {
+      setPurchasing(false)
+    }
   }
 
   const ctaLabel = purchasing
     ? 'Starting…'
     : selectedPlan === 'yearly'
-      ? 'Subscribe — $39.99/year'
+      ? `Subscribe — ${annualPriceString}/year`
       : 'Start my 5-day free trial'
 
   const reassureText =
     selectedPlan === 'yearly'
       ? 'Billed annually. Cancel renewal anytime in Settings.'
-      : 'Free for 5 days, then $4.99/month. Cancel anytime to avoid being charged.'
+      : `Free for 5 days, then ${monthlyPriceString}/month. Cancel anytime to avoid being charged.`
 
   return (
     <View style={styles.container}>
@@ -157,7 +198,7 @@ export default function PaywallScreen() {
                   </Text>
                 </View>
                 <View style={styles.planRight}>
-                  <Text style={styles.planPrice}>$4.99</Text>
+                  <Text style={styles.planPrice}>{monthlyPriceString}</Text>
                   <Text style={styles.planPeriod}>per month</Text>
                 </View>
                 <View
@@ -191,7 +232,7 @@ export default function PaywallScreen() {
                   <Text style={styles.planDetail}>Just $3.33/month</Text>
                 </View>
                 <View style={styles.planRight}>
-                  <Text style={styles.planPrice}>$39.99</Text>
+                  <Text style={styles.planPrice}>{annualPriceString}</Text>
                   <Text style={styles.planPeriod}>per year</Text>
                 </View>
                 <View

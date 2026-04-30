@@ -51,3 +51,17 @@ export function hasProEntitlement(info: CustomerInfo | null | undefined): boolea
   if (!info) return false
   return info.entitlements.active[PRO_ENTITLEMENT_ID] !== undefined
 }
+
+// Boot-time gate. Treats unconfigured environments (non-iOS, missing API key)
+// as "active" so dev/Android builds aren't blocked by the paywall.
+export async function isProActive(): Promise<boolean> {
+  if (Platform.OS !== 'ios') return true
+  if (!IOS_API_KEY) return true
+  try {
+    const info = await getCustomerInfo()
+    return hasProEntitlement(info)
+  } catch (err) {
+    console.warn('Failed to check entitlement', err)
+    return false
+  }
+}
