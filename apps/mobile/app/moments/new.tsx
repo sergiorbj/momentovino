@@ -15,13 +15,14 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { router, useLocalSearchParams } from 'expo-router'
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as ImagePicker from 'expo-image-picker'
 import DateTimePickerModal from 'react-native-modal-datetime-picker'
 
 import { createMoment } from '../../features/moments/api'
+import { takePendingWinePick } from '../../features/moments/wine-picker-handoff'
 import { momentFormSchema, type MomentFormValues, type PhotoInput } from '../../features/moments/schema'
 import { searchLocations, type LocationResult } from '../../features/moments/location-api'
 
@@ -54,10 +55,15 @@ export default function NewMomentScreen() {
     },
   })
 
-  if (params.wineId && watch('wineId') !== params.wineId) {
-    setValue('wineId', params.wineId, { shouldValidate: true })
-    if (params.wineName) setWineLabel(params.wineName)
-  }
+  useFocusEffect(
+    useCallback(() => {
+      const pick = takePendingWinePick()
+      if (pick) {
+        setValue('wineId', pick.wineId, { shouldValidate: true })
+        setWineLabel(pick.wineName)
+      }
+    }, [setValue])
+  )
 
   const photos = watch('photos')
   const rating = watch('rating')

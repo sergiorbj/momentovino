@@ -124,7 +124,8 @@ async function uploadPhoto(
     .from(BUCKET)
     .upload(path, arrayBuffer, {
       contentType: contentTypeFor(ext),
-      upsert: true,
+      // Paths are `${userId}/${newMomentId}/${i}.ext` — unique per save; avoid upsert so we only need INSERT RLS (upsert also requires UPDATE policies).
+      upsert: false,
     })
   if (uploadError) throw uploadError
 

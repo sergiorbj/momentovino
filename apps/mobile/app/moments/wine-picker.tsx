@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
 import { WineRowAvatar } from '../../components/WineRowAvatar'
+import { setPendingWinePick } from '../../features/moments/wine-picker-handoff'
 import { useWinesCount, useWinesSearch } from '../../features/wines/hooks'
 import {
   bestLabelPhotoInCluster,
@@ -51,10 +52,8 @@ export default function WinePickerScreen() {
 
   const select = (cluster: WineCluster) => {
     const w = cluster.canonical
-    router.replace({
-      pathname: '/moments/new',
-      params: { wineId: w.id, wineName: w.name },
-    })
+    setPendingWinePick({ wineId: w.id, wineName: w.name })
+    router.back()
   }
 
   return (
