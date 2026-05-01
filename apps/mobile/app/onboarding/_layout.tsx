@@ -5,11 +5,9 @@ import { ensureAnonymousSession } from '../../lib/session'
 
 export default function OnboardingLayout() {
   // `ensureAnonymousSession` also runs at root `_layout` mount, but only once
-  // per app launch. If the user signs out and re-enters the onboarding flow
-  // (via "Create one" on /login), the root effect doesn't fire again and
-  // `account.tsx` would call `updateUser` with no active session, producing
-  // "Auth session missing". Gate the whole onboarding stack on a session
-  // being available so every screen has a valid user_id to work with.
+  // per app launch. If the user signs out and re-enters onboarding, the root
+  // effect may not run again — gate the stack on a session so every screen
+  // has a valid user_id (needed for paywall / save-account).
   const [sessionReady, setSessionReady] = useState(false)
 
   useEffect(() => {

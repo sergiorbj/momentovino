@@ -71,7 +71,7 @@ export default function AtlasScreen() {
     }
   }
 
-  const cont = () => router.push('/onboarding/account')
+  const cont = () => router.push('/onboarding/paywall')
 
   if (phase === 'processing') {
     return (

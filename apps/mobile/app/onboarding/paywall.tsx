@@ -133,7 +133,7 @@ export default function PaywallScreen() {
     <View style={styles.container}>
       <StatusBar style="dark" />
       <SafeAreaView style={styles.safe}>
-        <ProgressBar step={6} total={6} />
+        <ProgressBar step={5} total={6} />
 
         <ScrollView
           contentContainerStyle={styles.scroll}

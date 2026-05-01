@@ -2,7 +2,11 @@ import * as Linking from 'expo-linking'
 
 import { supabase } from '../supabase'
 import { configurePurchases } from '../purchases'
-import { isAccountAlreadyExistsAuthError } from './registrationErrors'
+import {
+  friendlySignUpError,
+  isAccountAlreadyExistsAuthError,
+  isSamePasswordAsCurrentAuthError,
+} from './registrationErrors'
 
 async function rebindRevenueCat(): Promise<void> {
   const { data } = await supabase.auth.getUser()
@@ -54,7 +58,15 @@ export async function signUpWithEmail(input: EmailSignUpInput): Promise<EmailAut
         password,
         data: fullName ? { full_name: fullName } : undefined,
       })
-      if (error) throw error
+      if (error) {
+        // Happens when the user already called `updateUser` with this password earlier in the
+        // same session (e.g. old onboarding step + save-account). Credentials are already set.
+        if (isSamePasswordAsCurrentAuthError(error)) {
+          await rebindRevenueCat()
+          return { kind: 'success' }
+        }
+        throw error
+      }
       // updateUser triggers a confirmation email if Confirm Email is enabled.
       // The session stays anonymous until the link is opened.
       if (data.user?.is_anonymous) return { kind: 'needs_email_confirmation' }
@@ -73,7 +85,7 @@ export async function signUpWithEmail(input: EmailSignUpInput): Promise<EmailAut
     return { kind: 'success' }
   } catch (err) {
     if (isAccountAlreadyExistsAuthError(err)) return { kind: 'already_exists' }
-    return { kind: 'error', message: err instanceof Error ? err.message : 'Could not create account' }
+    return { kind: 'error', message: friendlySignUpError(err) }
   }
 }
 
