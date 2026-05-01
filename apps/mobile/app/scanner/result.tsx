@@ -12,10 +12,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { attachWineLabelPhoto } from '../../features/scanner/api'
 import { useCreateWineViaApi } from '../../features/scanner/hooks'
 import { takeLabelPhotoForResult, type PendingLabelPhoto } from '../../features/scanner/pending-label-photo'
+import { queryKeys } from '../../lib/query-keys'
 import { emitScannerReset } from '../../lib/scanner-reset'
 
 const WINE = '#722F37'
@@ -25,6 +27,7 @@ const BG = '#F5EBE0'
 const BROWN = '#5C4033'
 
 export default function ScanResultScreen() {
+  const qc = useQueryClient()
   const params = useLocalSearchParams<{
     name: string
     producer: string
@@ -71,20 +74,19 @@ export default function ScanResultScreen() {
         }
       }
 
+      // Wait until wine queries refetch (including inactive tabs) so the UI never paints the new row without `label_photo_url`.
+      await qc.invalidateQueries({ queryKey: ['wines'], refetchType: 'all' })
+      await qc.invalidateQueries({ queryKey: queryKeys.winesCount, refetchType: 'all' })
+      await qc.invalidateQueries({ queryKey: queryKeys.profile, refetchType: 'all' })
+      await qc.invalidateQueries({ queryKey: queryKeys.momentStats, refetchType: 'all' })
+
       if (andCreateMoment) {
         router.replace({
           pathname: '/moments/new',
           params: { wineId: wine.id, wineName: wine.name },
         })
       } else {
-        const reused = Boolean(wine.reusedExisting)
-        Alert.alert(
-          reused ? 'Already in your wines' : 'Wine added',
-          reused
-            ? `${wine.name} was already in your list. We added another bottle to your quantity.`
-            : `${wine.name} has been saved to your collection.`,
-          [{ text: 'OK', onPress: () => router.replace('/(tabs)/wines') }]
-        )
+        router.replace('/(tabs)/wines')
       }
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Could not save wine')

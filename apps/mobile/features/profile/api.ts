@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from '../../lib/api-base'
+import type { Database } from '../../lib/database.types'
 import { supabase } from '../../lib/supabase'
 
 async function getAccessToken(): Promise<string> {
@@ -123,19 +124,47 @@ export type UpdateSettingsInput = {
   notifications_enabled?: boolean
 }
 
+const SETTINGS_LANGUAGES: ReadonlySet<NonNullable<UpdateSettingsInput['language']>> = new Set([
+  'en',
+  'pt-BR',
+])
+
+/**
+ * Updates `profiles.language` and/or `profiles.notifications_enabled` via Supabase
+ * (RLS), not the Python `/api/profile/settings` route — avoids 404 when the
+ * app points `EXPO_PUBLIC_API_URL` at Next (`:3000`) instead of the Flask shim
+ * (`:5328`), and when hosted routing does not expose that subpath.
+ */
 export async function updateSettings(input: UpdateSettingsInput): Promise<{ profile: ProfileRow }> {
-  const token = await getAccessToken()
-  const res = await fetch(`${getApiBaseUrl()}/profile/settings`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(input),
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Could not update settings (${res.status})`)
+  const { data: userData, error: userErr } = await supabase.auth.getUser()
+  if (userErr || !userData.user) throw new Error('No authenticated user')
+
+  const uid = userData.user.id
+  const patch: Database['public']['Tables']['profiles']['Update'] = {}
+
+  if (input.language !== undefined) {
+    if (!SETTINGS_LANGUAGES.has(input.language)) {
+      throw new Error('Language must be en or pt-BR')
+    }
+    patch.language = input.language
   }
-  return res.json() as Promise<{ profile: ProfileRow }>
+  if (input.notifications_enabled !== undefined) {
+    patch.notifications_enabled = input.notifications_enabled
+  }
+
+  if (Object.keys(patch).length === 0) {
+    throw new Error('No settings to update')
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(patch)
+    .eq('id', uid)
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message || 'Could not update settings')
+  if (!data) throw new Error('Profile not found')
+
+  return { profile: data as unknown as ProfileRow }
 }

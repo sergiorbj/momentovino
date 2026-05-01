@@ -1,16 +1,10 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 
-import { queryKeys } from '../../lib/query-keys'
 import { createWineViaApi } from './api'
 
+/** Cache refresh runs in `scanner/result` after label upload so lists never refetch without `label_photo_url`. */
 export function useCreateWineViaApi() {
-  const qc = useQueryClient()
   return useMutation({
     mutationFn: createWineViaApi,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['wines'] })
-      qc.invalidateQueries({ queryKey: queryKeys.profile })
-      qc.invalidateQueries({ queryKey: queryKeys.momentStats })
-    },
   })
 }

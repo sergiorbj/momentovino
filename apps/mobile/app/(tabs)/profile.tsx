@@ -234,18 +234,20 @@ export default function ProfileScreen() {
                     )}
                   </View>
                 </View>
-                <TouchableOpacity
-                  style={[styles.restoreBtn, restoring && styles.restoreBtnDisabled]}
-                  onPress={onRestorePurchases}
-                  disabled={restoring}
-                  activeOpacity={0.85}
-                >
-                  {restoring ? (
-                    <ActivityIndicator color={WINE} />
-                  ) : (
-                    <Text style={styles.restoreBtnText}>Restore purchases</Text>
-                  )}
-                </TouchableOpacity>
+                {!entLoading && !entData?.isPro ? (
+                  <TouchableOpacity
+                    style={[styles.restoreBtn, restoring && styles.restoreBtnDisabled]}
+                    onPress={onRestorePurchases}
+                    disabled={restoring}
+                    activeOpacity={0.85}
+                  >
+                    {restoring ? (
+                      <ActivityIndicator color={WINE} />
+                    ) : (
+                      <Text style={styles.restoreBtnText}>Restore purchases</Text>
+                    )}
+                  </TouchableOpacity>
+                ) : null}
               </View>
             ) : null}
 
