@@ -23,6 +23,21 @@ type GoogleSigninModule = {
 let nativeModule: GoogleSigninModule | null = null
 let configured = false
 
+/** Display name from the native Google Sign-In result (not always mirrored in Supabase metadata). */
+function displayNameFromGoogleSignInResult(result: unknown): string | null {
+  const r = result as Record<string, unknown>
+  const data = r.data as Record<string, unknown> | undefined
+  const user = (data?.user ?? r.user) as Record<string, unknown> | undefined
+  if (!user) return null
+  const name = user.name
+  if (typeof name === 'string' && name.trim()) return name.trim()
+  const given = user.givenName
+  const family = user.familyName
+  const parts = [given, family].filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+  if (parts.length > 0) return parts.join(' ')
+  return null
+}
+
 function loadNative(): GoogleSigninModule | null {
   if (nativeModule) return nativeModule
   if (isExpoGo) return null
@@ -121,6 +136,15 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
         }
       }
       return { kind: 'error', message: msg }
+    }
+
+    const googleName = displayNameFromGoogleSignInResult(result)
+    if (googleName && data.user?.id) {
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .update({ display_name: googleName })
+        .eq('id', data.user.id)
+      if (profileErr) console.warn('[auth/google] profile name update:', profileErr.message)
     }
 
     // Re-bind RevenueCat to the (possibly new) user_id so the entitlement

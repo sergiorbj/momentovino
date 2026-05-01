@@ -22,12 +22,7 @@ import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import { signInWithApple } from '../../lib/auth/apple'
 import { signInWithGoogle } from '../../lib/auth/google'
 import { signUpWithEmail } from '../../lib/auth/email'
-import { supabase } from '../../lib/supabase'
-import { markOnboardingCompleted } from '../../features/onboarding/state'
-import { getSelections, resetSelections } from '../../features/onboarding/selections'
-import { seedStarterJournal } from '../../features/onboarding/seed'
-import { claimUsername } from '../../features/profile/api'
-import { queryKeys } from '../../lib/query-keys'
+import { finalizeAccount } from '../../features/onboarding/finalize-account'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -51,49 +46,20 @@ export default function SaveAccountScreen() {
       /.+@.+\..+/.test(email) &&
       password.length >= 8 &&
       !busy,
-    [displayName, email, password, busy]
+    [displayName, email, password, busy],
   )
 
-  /**
-   * After any successful auth path (Apple / Google / Email):
-   * - Seed the starter journal for any wines the user picked in onboarding.
-   * - Claim a username on profiles so the @handle is set.
-   * - Mark onboarding completed and route to the tabs.
-   *
-   * RevenueCat is already re-bound to the new user_id inside each auth lib,
-   * so the webhook receives a TRANSFER and the Pro flag follows the new id.
-   */
-  const finalize = async () => {
-    await qc.invalidateQueries({ queryKey: queryKeys.entitlement })
-    const { pickedWineKeys } = getSelections()
-    if (pickedWineKeys.length > 0) {
-      try {
-        await seedStarterJournal(pickedWineKeys)
-      } catch (err) {
-        console.warn('[save-account] seed failed', err)
-      }
-    }
-
+  const finalizeAndEnterApp = async (name: string) => {
     try {
-      const { data: userData } = await supabase.auth.getUser()
-      const user = userData.user
-      if (user) {
-        const meta = user.user_metadata ?? {}
-        const emailPrefix = user.email ? user.email.split('@')[0] : ''
-        const desired =
-          (typeof meta.full_name === 'string' && meta.full_name) ||
-          (typeof meta.name === 'string' && meta.name) ||
-          emailPrefix ||
-          'user'
-        await claimUsername(desired)
-      }
+      await finalizeAccount({ qc, displayName: name })
+      router.replace('/(tabs)/moments')
     } catch (err) {
-      console.warn('[save-account] claimUsername failed (will retry on profile open)', err)
+      console.warn('[save-account] finalize failed', err)
+      Alert.alert(
+        'Could not finish setup',
+        err instanceof Error ? err.message : 'Try again in a moment.',
+      )
     }
-
-    await markOnboardingCompleted()
-    resetSelections()
-    router.replace('/(tabs)/moments')
   }
 
   const onApple = async () => {
@@ -110,7 +76,7 @@ export default function SaveAccountScreen() {
         Alert.alert('Could not sign in', outcome.message)
         return
       }
-      await finalize()
+      router.push('/onboarding/complete-profile')
     } finally {
       setBusy(false)
     }
@@ -130,7 +96,7 @@ export default function SaveAccountScreen() {
         Alert.alert('Google sign-in failed', outcome.message)
         return
       }
-      await finalize()
+      router.push('/onboarding/complete-profile')
     } finally {
       setBusy(false)
     }
@@ -140,13 +106,14 @@ export default function SaveAccountScreen() {
     if (!canSubmitEmail) return
     setBusy(true)
     try {
+      const trimmedName = displayName.trim()
       const outcome = await signUpWithEmail({
         email,
         password,
-        fullName: displayName,
+        fullName: trimmedName,
       })
       if (outcome.kind === 'success') {
-        await finalize()
+        await finalizeAndEnterApp(trimmedName)
         return
       }
       if (outcome.kind === 'needs_email_confirmation') {
@@ -157,7 +124,7 @@ export default function SaveAccountScreen() {
             {
               text: 'Continue',
               onPress: () => {
-                void finalize()
+                void finalizeAndEnterApp(trimmedName)
               },
             },
           ]
