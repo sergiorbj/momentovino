@@ -1,6 +1,7 @@
 import Constants from 'expo-constants'
 
 import { supabase } from '../supabase'
+import { configurePurchases } from '../purchases'
 
 const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
 const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
@@ -107,7 +108,7 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
     // in the Supabase dashboard (Auth → Providers → Google). A future option is
     // a custom OAuth path where you set nonce digest in Google and pass the raw
     // nonce to signInWithIdToken (e.g. Universal Sign-In, or AuthSession).
-    const { error } = await supabase.auth.signInWithIdToken({
+    const { data, error } = await supabase.auth.signInWithIdToken({
       provider: 'google',
       token: idToken,
     })
@@ -120,6 +121,16 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
         }
       }
       return { kind: 'error', message: msg }
+    }
+
+    // Re-bind RevenueCat to the (possibly new) user_id so the entitlement
+    // tracks the correct app account. Webhook handles TRANSFER on the server.
+    if (data.user?.id) {
+      try {
+        await configurePurchases(data.user.id)
+      } catch (rcErr) {
+        console.warn('[auth/google] RevenueCat re-bind failed', rcErr)
+      }
     }
 
     return { kind: 'success' }

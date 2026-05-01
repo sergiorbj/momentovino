@@ -9,17 +9,31 @@ import {
 import { DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display'
 import * as SplashScreen from 'expo-splash-screen'
 import { useEffect, useState } from 'react'
-import { QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { ensureAnonymousSession } from '../lib/session'
 import { configureGoogleSignIn } from '../lib/auth/google'
 import { hasCompletedOnboarding } from '../features/onboarding/state'
 import { queryClient } from '../lib/query-client'
 import { prefetchCoreData } from '../lib/prefetch'
 import { configurePurchases } from '../lib/purchases'
+import { supabase } from '../lib/supabase'
+import { queryKeys } from '../lib/query-keys'
 
 SplashScreen.preventAutoHideAsync()
 
 configureGoogleSignIn()
+
+function AuthCacheSync() {
+  const qc = useQueryClient()
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange(() => {
+      void qc.invalidateQueries({ queryKey: queryKeys.entitlement })
+      void qc.invalidateQueries({ queryKey: queryKeys.profile })
+    })
+    return () => data.subscription.unsubscribe()
+  }, [qc])
+  return null
+}
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -68,10 +82,13 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthCacheSync />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="login" />
+        <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="reset-password" />
         <Stack.Screen name="moments" />
         <Stack.Screen name="scanner" />
         <Stack.Screen name="family" />

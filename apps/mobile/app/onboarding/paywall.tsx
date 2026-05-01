@@ -11,21 +11,18 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useQueryClient } from '@tanstack/react-query'
 import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases'
 
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
-import { markOnboardingCompleted } from '../../features/onboarding/state'
-import { getSelections, resetSelections } from '../../features/onboarding/selections'
-import { seedStarterJournal } from '../../features/onboarding/seed'
-import { claimUsername } from '../../features/profile/api'
-import { getExistingMomentCount } from '../../lib/auth/returningUser'
-import { supabase } from '../../lib/supabase'
 import {
   getCurrentOffering,
   hasProEntitlement,
+  PRO_ENTITLEMENT_ID,
   purchasePackage,
   restorePurchases,
 } from '../../lib/purchases'
+import { queryKeys } from '../../lib/query-keys'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -41,38 +38,8 @@ const BENEFITS: { icon: string; text: string }[] = [
 
 type PlanId = 'yearly' | 'monthly'
 
-async function finishOnboarding() {
-  const { pickedWineKeys } = getSelections()
-  if (pickedWineKeys.length > 0) {
-    const existing = await getExistingMomentCount()
-    if (existing === 0) {
-      await seedStarterJournal(pickedWineKeys)
-    }
-  }
-
-  try {
-    const { data: userData } = await supabase.auth.getUser()
-    const user = userData.user
-    if (user && !user.is_anonymous) {
-      const meta = user.user_metadata ?? {}
-      const emailPrefix = user.email ? user.email.split('@')[0] : ''
-      const desired =
-        (typeof meta.full_name === 'string' && meta.full_name) ||
-        (typeof meta.name === 'string' && meta.name) ||
-        emailPrefix ||
-        'user'
-      await claimUsername(desired)
-    }
-  } catch (e) {
-    console.warn('Failed to claim username (will retry on profile open)', e)
-  }
-
-  await markOnboardingCompleted()
-  resetSelections()
-  router.replace('/(tabs)/moments')
-}
-
 export default function PaywallScreen() {
+  const qc = useQueryClient()
   const [purchasing, setPurchasing] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('yearly')
   const [offering, setOffering] = useState<PurchasesOffering | null>(null)
@@ -107,9 +74,17 @@ export default function PaywallScreen() {
     try {
       const customerInfo = await purchasePackage(pkg)
       if (!hasProEntitlement(customerInfo)) {
-        throw new Error('Subscription was not activated')
+        const allEntitlements = Object.keys(customerInfo.entitlements?.all ?? {})
+        const activeSubs = customerInfo.activeSubscriptions ?? []
+        throw new Error(
+          `Entitlement '${PRO_ENTITLEMENT_ID}' not active. ` +
+            `Active subs: [${activeSubs.join(', ') || 'none'}]. ` +
+            `Configured entitlements: [${allEntitlements.join(', ') || 'none'}]. ` +
+            `appUserID: ${customerInfo.originalAppUserId ?? 'unknown'}`,
+        )
       }
-      await finishOnboarding()
+      await qc.invalidateQueries({ queryKey: queryKeys.entitlement })
+      router.replace('/onboarding/save-account')
     } catch (err: unknown) {
       // RC sets `userCancelled: true` when user dismisses the Apple sheet.
       if (err && typeof err === 'object' && 'userCancelled' in err && err.userCancelled) {
@@ -133,7 +108,8 @@ export default function PaywallScreen() {
         )
         return
       }
-      await finishOnboarding()
+      await qc.invalidateQueries({ queryKey: queryKeys.entitlement })
+      router.replace('/onboarding/save-account')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Could not restore purchases'
       Alert.alert('Restore failed', msg)

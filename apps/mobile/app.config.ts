@@ -2,8 +2,8 @@ import type { ExpoConfig } from 'expo/config'
 
 const googleIosUrlScheme = process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME
 
-const googleSignInPlugin = googleIosUrlScheme
-  ? (['@react-native-google-signin/google-signin', { iosUrlScheme: googleIosUrlScheme }] as const)
+const googleSignInPlugin: [string, Record<string, string>] | null = googleIosUrlScheme
+  ? ['@react-native-google-signin/google-signin', { iosUrlScheme: googleIosUrlScheme }]
   : null
 
 const config: ExpoConfig = {
@@ -28,6 +28,8 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.momentovino.app',
+    // Adds the "Sign In with Apple" capability + entitlement on prebuild.
+    usesAppleSignIn: true,
     config: {
       usesNonExemptEncryption: false,
     },
@@ -45,6 +47,7 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-font',
+    'expo-apple-authentication',
     '@react-native-community/datetimepicker',
     [
       'expo-camera',
@@ -53,11 +56,8 @@ const config: ExpoConfig = {
         recordAudioAndroid: false,
       },
     ],
-    // Registers Google's reverse-client-id URL scheme in Info.plist so the iOS SDK
-    // can return to the app after the user finishes the Google auth flow. Skipped
-    // when the env var is missing so builds don't crash on `Missing iosUrlScheme`.
-    googleSignInPlugin,
-  ].filter(Boolean) as ExpoConfig['plugins'],
+    ...(googleSignInPlugin ? [googleSignInPlugin] : []),
+  ],
   scheme: 'momentovino',
 }
 

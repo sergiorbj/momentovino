@@ -53,7 +53,6 @@ export default function ScannerScreen() {
   useEffect(() => {
     return subscribeScannerReset(() => {
       setImage(null)
-      setCameraReady(false)
       setScanning(false)
     })
   }, [])
@@ -83,7 +82,6 @@ export default function ScannerScreen() {
 
   const clearImage = useCallback(() => {
     setImage(null)
-    setCameraReady(false)
   }, [])
 
   const takePhoto = useCallback(async () => {

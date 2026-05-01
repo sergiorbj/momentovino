@@ -6,7 +6,9 @@ import Purchases, {
   LOG_LEVEL,
 } from 'react-native-purchases'
 
-export const PRO_ENTITLEMENT_ID = 'pro'
+import { fetchEntitlement } from '../features/entitlement/api'
+
+export const PRO_ENTITLEMENT_ID = 'momentovino_pro'
 
 const IOS_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY
 
@@ -52,12 +54,19 @@ export function hasProEntitlement(info: CustomerInfo | null | undefined): boolea
   return info.entitlements.active[PRO_ENTITLEMENT_ID] !== undefined
 }
 
-// Boot-time gate. Treats unconfigured environments (non-iOS, missing API key)
-// as "active" so dev/Android builds aren't blocked by the paywall.
+/**
+ * Boot-time gate: prefers server-mirrored entitlement (`profiles` via
+ * `user_entitlement`), falls back to RevenueCat while the webhook catches up
+ * or when migration isn't applied yet.
+ *
+ * Non‑iOS / missing API key → treat as Pro so dev/Android aren't blocked.
+ */
 export async function isProActive(): Promise<boolean> {
   if (Platform.OS !== 'ios') return true
   if (!IOS_API_KEY) return true
   try {
+    const server = await fetchEntitlement()
+    if (server.isPro) return true
     const info = await getCustomerInfo()
     return hasProEntitlement(info)
   } catch (err) {

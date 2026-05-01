@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   View,
   Text,
@@ -8,27 +9,66 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native'
+import type { ComponentProps } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
+import { useQueryClient } from '@tanstack/react-query'
 
+import { useEntitlement } from '../../features/entitlement/hooks'
 import { useProfile, useUpdateSettings } from '../../features/profile/hooks'
+import {
+  hasProEntitlement,
+  restorePurchases,
+} from '../../lib/purchases'
+import { queryKeys } from '../../lib/query-keys'
 import { supabase } from '../../lib/supabase'
 
-type IoniconsName = React.ComponentProps<typeof Ionicons>['name']
+type IoniconsName = ComponentProps<typeof Ionicons>['name']
 
 const WINE = '#722F37'
 const BG = '#F5EBE0'
 
 export default function ProfileScreen() {
+  const qc = useQueryClient()
+  const { data: entData, isLoading: entLoading } = useEntitlement()
+  const [restoring, setRestoring] = useState(false)
   const { data, isLoading } = useProfile()
   const profile = data?.profile ?? null
   const stats = data?.stats ?? { moments: 0, wines: 0, family: 0 }
   const loading = isLoading && !data
 
   const updateSettingsMutation = useUpdateSettings()
+
+  const onRestorePurchases = async () => {
+    if (Platform.OS !== 'ios') {
+      Alert.alert(
+        'Restore purchases',
+        'In-app subscriptions are managed on the MomentoVino iOS app.',
+      )
+      return
+    }
+    setRestoring(true)
+    try {
+      const info = await restorePurchases()
+      await qc.invalidateQueries({ queryKey: queryKeys.entitlement })
+      await qc.invalidateQueries({ queryKey: queryKeys.profile })
+      const ok = hasProEntitlement(info)
+      Alert.alert(
+        ok ? 'Purchases restored' : 'Nothing to restore',
+        ok
+          ? 'Your subscription is linked to this account.'
+          : 'No active App Store subscription found for this Apple ID.',
+      )
+    } catch (e) {
+      Alert.alert('Restore failed', e instanceof Error ? e.message : 'Try again later.')
+    } finally {
+      setRestoring(false)
+    }
+  }
 
   const toggleNotifications = (value: boolean) => {
     updateSettingsMutation.mutate(
@@ -54,7 +94,7 @@ export default function ProfileScreen() {
             try {
               const { error } = await supabase.auth.signOut()
               if (error) throw error
-              router.replace('/login')
+              router.replace('/onboarding')
             } catch (e) {
               Alert.alert('Error', e instanceof Error ? e.message : 'Could not sign out')
             }
@@ -157,6 +197,57 @@ export default function ProfileScreen() {
                 </View>
               </View>
             </View>
+
+            {Platform.OS === 'ios' ? (
+              <View style={styles.subscriptionCard}>
+                <View style={styles.subscriptionHeader}>
+                  <View
+                    style={[styles.settingsIconWrapper, { backgroundColor: '#722F3718' }]}
+                  >
+                    <Ionicons name="sparkles-outline" size={18} color={WINE} />
+                  </View>
+                  <View style={styles.subscriptionCopy}>
+                    <Text style={styles.subscriptionTitle}>Subscription</Text>
+                    {entLoading ? (
+                      <Text style={styles.subscriptionMeta}>Checking status…</Text>
+                    ) : entData?.isPro ? (
+                      <>
+                        <Text style={styles.subscriptionStatus}>MomentoVino Pro</Text>
+                        {entData.expiresAt ? (
+                          <Text style={styles.subscriptionMeta}>
+                            Renews or expires{' '}
+                            {new Date(entData.expiresAt).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </Text>
+                        ) : null}
+                        {entData.inBillingRetry ? (
+                          <Text style={styles.subscriptionWarn}>
+                            Billing issue — update payment in Settings ▸ Subscriptions.
+                          </Text>
+                        ) : null}
+                      </>
+                    ) : (
+                      <Text style={styles.subscriptionMeta}>Free plan</Text>
+                    )}
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={[styles.restoreBtn, restoring && styles.restoreBtnDisabled]}
+                  onPress={onRestorePurchases}
+                  disabled={restoring}
+                  activeOpacity={0.85}
+                >
+                  {restoring ? (
+                    <ActivityIndicator color={WINE} />
+                  ) : (
+                    <Text style={styles.restoreBtnText}>Restore purchases</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : null}
 
             {/* Settings list */}
             <View style={styles.settingsList}>
@@ -298,6 +389,65 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   statDivider: { width: 1, height: 36, backgroundColor: '#F0E8E0' },
+
+  subscriptionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+    gap: 14,
+  },
+  subscriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+  },
+  subscriptionCopy: { flex: 1, gap: 4 },
+  subscriptionTitle: {
+    fontSize: 13,
+    fontFamily: 'DMSans_600SemiBold',
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  subscriptionStatus: {
+    fontSize: 17,
+    fontFamily: 'DMSans_600SemiBold',
+    color: '#1C1C1E',
+  },
+  subscriptionMeta: {
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    color: '#5C4033',
+    lineHeight: 20,
+  },
+  subscriptionWarn: {
+    fontSize: 13,
+    fontFamily: 'DMSans_500Medium',
+    color: '#C2703E',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  restoreBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8DDD4',
+    backgroundColor: '#F5EBE0',
+    minHeight: 44,
+  },
+  restoreBtnDisabled: { opacity: 0.6 },
+  restoreBtnText: {
+    fontSize: 15,
+    fontFamily: 'DMSans_600SemiBold',
+    color: WINE,
+  },
 
   // Settings list
   settingsList: {

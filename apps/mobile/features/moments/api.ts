@@ -152,12 +152,21 @@ export async function createMoment(values: MomentFormValues): Promise<MomentRow>
     })
     .select()
     .single()
-  if (insertErr || !moment) throw insertErr ?? new Error('Failed to create moment')
+  if (insertErr || !moment) {
+    const detail = insertErr?.message ?? 'unknown'
+    throw new Error(`[moments.insert] ${detail} (uid=${userId.slice(0, 8)} wine=${values.wineId.slice(0, 8)})`)
+  }
 
   let coverUrl: string | null = null
   for (let i = 0; i < values.photos.length; i++) {
     const photo = values.photos[i]
-    const url = await uploadPhoto(userId, moment.id, i, photo.uri)
+    let url: string
+    try {
+      url = await uploadPhoto(userId, moment.id, i, photo.uri)
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : 'unknown'
+      throw new Error(`[storage.upload #${i}] ${detail}`)
+    }
     if (photo.isCover) coverUrl = url
 
     const { error: photoErr } = await supabase.from('moment_photos').insert({
@@ -166,7 +175,9 @@ export async function createMoment(values: MomentFormValues): Promise<MomentRow>
       position: i,
       is_cover: photo.isCover,
     })
-    if (photoErr) throw photoErr
+    if (photoErr) {
+      throw new Error(`[moment_photos.insert #${i}] ${photoErr.message}`)
+    }
   }
 
   if (coverUrl) {
@@ -176,7 +187,10 @@ export async function createMoment(values: MomentFormValues): Promise<MomentRow>
       .eq('id', moment.id)
       .select()
       .single()
-    if (updateErr || !updated) throw updateErr ?? new Error('Failed to set cover photo')
+    if (updateErr || !updated) {
+      const detail = updateErr?.message ?? 'unknown'
+      throw new Error(`[moments.update cover] ${detail}`)
+    }
     return updated
   }
 

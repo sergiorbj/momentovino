@@ -6,4 +6,5 @@ export const queryKeys = {
   wines: (query: string) => ['wines', 'search', query] as const,
   winesCount: ['wines', 'count'] as const,
   family: ['family', 'dashboard'] as const,
+  entitlement: ['entitlement'] as const,
 }

@@ -217,6 +217,17 @@ export type Database = {
           id: string
           language: string
           notifications_enabled: boolean
+          pro_active: boolean
+          pro_environment: string | null
+          pro_event_at: string | null
+          pro_expires_at: string | null
+          pro_in_billing_retry: boolean
+          pro_in_grace_period: boolean
+          pro_original_transaction_id: string | null
+          pro_period_type: string | null
+          pro_product_id: string | null
+          pro_store: string | null
+          pro_will_renew: boolean
           updated_at: string
           username: string
         }
@@ -228,6 +239,17 @@ export type Database = {
           id: string
           language?: string
           notifications_enabled?: boolean
+          pro_active?: boolean
+          pro_environment?: string | null
+          pro_event_at?: string | null
+          pro_expires_at?: string | null
+          pro_in_billing_retry?: boolean
+          pro_in_grace_period?: boolean
+          pro_original_transaction_id?: string | null
+          pro_period_type?: string | null
+          pro_product_id?: string | null
+          pro_store?: string | null
+          pro_will_renew?: boolean
           updated_at?: string
           username: string
         }
@@ -239,6 +261,17 @@ export type Database = {
           id?: string
           language?: string
           notifications_enabled?: boolean
+          pro_active?: boolean
+          pro_environment?: string | null
+          pro_event_at?: string | null
+          pro_expires_at?: string | null
+          pro_in_billing_retry?: boolean
+          pro_in_grace_period?: boolean
+          pro_original_transaction_id?: string | null
+          pro_period_type?: string | null
+          pro_product_id?: string | null
+          pro_store?: string | null
+          pro_will_renew?: boolean
           updated_at?: string
           username?: string
         }
@@ -285,7 +318,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_entitlement: {
+        Row: {
+          is_pro: boolean
+          pro_event_at: string | null
+          pro_expires_at: string | null
+          pro_in_billing_retry: boolean
+          pro_in_grace_period: boolean
+          pro_period_type: string | null
+          pro_product_id: string | null
+          pro_store: string | null
+          pro_will_renew: boolean
+          user_id: string
+        }
+        Relationships: []
+      }
     }
     Functions: {
       claim_username: { Args: { desired: string }; Returns: string }

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -17,12 +18,16 @@ import { Ionicons } from '@expo/vector-icons'
 import * as AppleAuthentication from 'expo-apple-authentication'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { signInWithApple } from '../lib/auth/apple'
-import { signInWithGoogle } from '../lib/auth/google'
-import { signInWithEmail } from '../lib/auth/email'
-import { markOnboardingCompleted } from '../features/onboarding/state'
-import { resetSelections } from '../features/onboarding/selections'
-import { queryKeys } from '../lib/query-keys'
+import { ProgressBar } from '../../components/onboarding/ProgressBar'
+import { signInWithApple } from '../../lib/auth/apple'
+import { signInWithGoogle } from '../../lib/auth/google'
+import { signUpWithEmail } from '../../lib/auth/email'
+import { supabase } from '../../lib/supabase'
+import { markOnboardingCompleted } from '../../features/onboarding/state'
+import { getSelections, resetSelections } from '../../features/onboarding/selections'
+import { seedStarterJournal } from '../../features/onboarding/seed'
+import { claimUsername } from '../../features/profile/api'
+import { queryKeys } from '../../lib/query-keys'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -32,32 +37,68 @@ const BORDER = '#E8DDD4'
 
 type Mode = 'buttons' | 'email'
 
-export default function LoginScreen() {
+export default function SaveAccountScreen() {
   const qc = useQueryClient()
+  const [busy, setBusy] = useState(false)
   const [mode, setMode] = useState<Mode>('buttons')
+  const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [submitting, setSubmitting] = useState(false)
 
-  const canSubmit = useMemo(
-    () => /.+@.+\..+/.test(email) && password.length >= 8 && !submitting,
-    [email, password, submitting]
+  const canSubmitEmail = useMemo(
+    () =>
+      displayName.trim().length >= 2 &&
+      /.+@.+\..+/.test(email) &&
+      password.length >= 8 &&
+      !busy,
+    [displayName, email, password, busy]
   )
 
-  // After any successful sign-in: discard local onboarding selections, mark
-  // onboarding done so the root layout doesn't bounce back, and route home.
-  // RC.logIn(userId) was already called inside the auth lib so the entitlement
-  // (if any) is now bound to the new user_id; the webhook handles TRANSFER.
-  const afterSignIn = async () => {
+  /**
+   * After any successful auth path (Apple / Google / Email):
+   * - Seed the starter journal for any wines the user picked in onboarding.
+   * - Claim a username on profiles so the @handle is set.
+   * - Mark onboarding completed and route to the tabs.
+   *
+   * RevenueCat is already re-bound to the new user_id inside each auth lib,
+   * so the webhook receives a TRANSFER and the Pro flag follows the new id.
+   */
+  const finalize = async () => {
     await qc.invalidateQueries({ queryKey: queryKeys.entitlement })
-    resetSelections()
+    const { pickedWineKeys } = getSelections()
+    if (pickedWineKeys.length > 0) {
+      try {
+        await seedStarterJournal(pickedWineKeys)
+      } catch (err) {
+        console.warn('[save-account] seed failed', err)
+      }
+    }
+
+    try {
+      const { data: userData } = await supabase.auth.getUser()
+      const user = userData.user
+      if (user) {
+        const meta = user.user_metadata ?? {}
+        const emailPrefix = user.email ? user.email.split('@')[0] : ''
+        const desired =
+          (typeof meta.full_name === 'string' && meta.full_name) ||
+          (typeof meta.name === 'string' && meta.name) ||
+          emailPrefix ||
+          'user'
+        await claimUsername(desired)
+      }
+    } catch (err) {
+      console.warn('[save-account] claimUsername failed (will retry on profile open)', err)
+    }
+
     await markOnboardingCompleted()
+    resetSelections()
     router.replace('/(tabs)/moments')
   }
 
   const onApple = async () => {
-    if (submitting) return
-    setSubmitting(true)
+    if (busy) return
+    setBusy(true)
     try {
       const outcome = await signInWithApple()
       if (outcome.kind === 'cancelled') return
@@ -69,15 +110,15 @@ export default function LoginScreen() {
         Alert.alert('Could not sign in', outcome.message)
         return
       }
-      await afterSignIn()
+      await finalize()
     } finally {
-      setSubmitting(false)
+      setBusy(false)
     }
   }
 
   const onGoogle = async () => {
-    if (submitting) return
-    setSubmitting(true)
+    if (busy) return
+    setBusy(true)
     try {
       const outcome = await signInWithGoogle()
       if (outcome.kind === 'cancelled') return
@@ -89,49 +130,65 @@ export default function LoginScreen() {
         Alert.alert('Google sign-in failed', outcome.message)
         return
       }
-      await afterSignIn()
+      await finalize()
     } finally {
-      setSubmitting(false)
+      setBusy(false)
     }
   }
 
-  const signIn = async () => {
-    if (!canSubmit) return
-    setSubmitting(true)
+  const onEmailSubmit = async () => {
+    if (!canSubmitEmail) return
+    setBusy(true)
     try {
-      const outcome = await signInWithEmail(email, password)
+      const outcome = await signUpWithEmail({
+        email,
+        password,
+        fullName: displayName,
+      })
       if (outcome.kind === 'success') {
-        await afterSignIn()
+        await finalize()
         return
       }
-      if (outcome.kind === 'invalid_credentials') {
-        Alert.alert('Wrong email or password', 'Double-check and try again, or reset your password.')
+      if (outcome.kind === 'needs_email_confirmation') {
+        Alert.alert(
+          'Check your inbox',
+          `We sent a confirmation link to ${email.trim().toLowerCase()}. Tap it to verify your email — your subscription is already saved on this account.`,
+          [
+            {
+              text: 'Continue',
+              onPress: () => {
+                void finalize()
+              },
+            },
+          ]
+        )
         return
       }
-      if (outcome.kind === 'error') {
-        Alert.alert('Sign-in failed', outcome.message)
+      if (outcome.kind === 'already_exists') {
+        Alert.alert(
+          'You already have an account',
+          'This email is already registered. Sign in instead — your purchase will be transferred to that account on this Apple ID.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Sign in', onPress: () => router.replace('/login') },
+          ]
+        )
+        return
       }
+      Alert.alert(
+        'Could not create account',
+        outcome.kind === 'error' ? outcome.message : 'Something went wrong.',
+      )
     } finally {
-      setSubmitting(false)
+      setBusy(false)
     }
-  }
-
-  const goForgot = () => router.push('/forgot-password')
-  const goSignUp = () => router.replace('/onboarding')
-  const goBack = () => {
-    if (router.canGoBack()) router.back()
-    else router.replace('/onboarding')
   }
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
       <SafeAreaView style={styles.safe}>
-        <View style={styles.topBar}>
-          <TouchableOpacity onPress={goBack} style={styles.backBtn} activeOpacity={0.7}>
-            <Ionicons name="chevron-back" size={26} color={WINE} />
-          </TouchableOpacity>
-        </View>
+        <ProgressBar step={6} total={6} />
 
         <KeyboardAvoidingView
           style={styles.kav}
@@ -143,10 +200,9 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.copy}>
-              <Text style={styles.headline}>Welcome back.</Text>
+              <Text style={styles.headline}>Save your wine journal.</Text>
               <Text style={styles.sub}>
-                Sign in to pick up your journal — wines, moments, and places, right where
-                you left them.
+                Your subscription is yours — pick how you want to sign in so we can keep your moments safe across every device.
               </Text>
             </View>
 
@@ -154,7 +210,7 @@ export default function LoginScreen() {
               <View style={styles.buttons}>
                 {Platform.OS === 'ios' ? (
                   <AppleAuthentication.AppleAuthenticationButton
-                    buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                    buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
                     buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
                     cornerRadius={28}
                     style={styles.appleBtn}
@@ -165,7 +221,7 @@ export default function LoginScreen() {
                 <TouchableOpacity
                   style={[styles.authBtn, styles.authGoogle]}
                   onPress={onGoogle}
-                  disabled={submitting}
+                  disabled={busy}
                   activeOpacity={0.85}
                 >
                   <Ionicons name="logo-google" size={18} color={INK} />
@@ -175,14 +231,34 @@ export default function LoginScreen() {
                 <TouchableOpacity
                   style={[styles.authBtn, styles.authEmail]}
                   onPress={() => setMode('email')}
+                  disabled={busy}
                   activeOpacity={0.85}
                 >
                   <Ionicons name="mail-outline" size={18} color="#FFFFFF" />
                   <Text style={styles.authEmailText}>Continue with email</Text>
                 </TouchableOpacity>
+
+                {busy ? (
+                  <View style={styles.busyRow}>
+                    <ActivityIndicator color={WINE} />
+                  </View>
+                ) : null}
               </View>
             ) : (
               <View style={styles.form}>
+                <Text style={styles.inputLabel}>Display name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={displayName}
+                  onChangeText={(t) => setDisplayName(t.slice(0, 50))}
+                  placeholder="How should we call you?"
+                  placeholderTextColor="#B5A6A8"
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  autoComplete="name"
+                  textContentType="name"
+                  maxLength={50}
+                />
                 <Text style={styles.inputLabel}>Email</Text>
                 <TextInput
                   style={styles.input}
@@ -201,15 +277,12 @@ export default function LoginScreen() {
                   style={styles.input}
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="Your password"
+                  placeholder="At least 8 characters"
                   placeholderTextColor="#B5A6A8"
                   secureTextEntry
-                  autoComplete="password"
-                  textContentType="password"
+                  autoComplete="new-password"
+                  textContentType="newPassword"
                 />
-                <TouchableOpacity onPress={goForgot} activeOpacity={0.7} style={styles.forgotLink}>
-                  <Text style={styles.forgotLinkText}>Forgot password?</Text>
-                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setMode('buttons')}
                   activeOpacity={0.7}
@@ -219,26 +292,29 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </View>
             )}
-
-            <TouchableOpacity onPress={goSignUp} activeOpacity={0.7} style={styles.signUpLink}>
-              <Text style={styles.signUpLinkText}>
-                Don't have an account? <Text style={styles.signUpLinkStrong}>Create one</Text>
-              </Text>
-            </TouchableOpacity>
           </ScrollView>
 
           {mode === 'email' ? (
             <View style={styles.footer}>
               <TouchableOpacity
-                style={[styles.cta, !canSubmit && styles.ctaDisabled]}
-                onPress={signIn}
-                disabled={!canSubmit}
+                style={[styles.cta, !canSubmitEmail && styles.ctaDisabled]}
+                onPress={onEmailSubmit}
+                disabled={!canSubmitEmail}
                 activeOpacity={0.85}
               >
-                <Text style={styles.ctaText}>{submitting ? 'Signing in…' : 'Sign in'}</Text>
+                <Text style={styles.ctaText}>{busy ? 'Saving…' : 'Save my journal'}</Text>
               </TouchableOpacity>
+              <Text style={styles.legal}>
+                By creating an account you agree to our Terms and Privacy Policy.
+              </Text>
             </View>
-          ) : null}
+          ) : (
+            <View style={styles.footer}>
+              <Text style={styles.legal}>
+                By continuing you agree to our Terms and Privacy Policy. Your subscription is already active on this Apple ID — sign in to attach it to your account.
+              </Text>
+            </View>
+          )}
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -249,15 +325,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   safe: { flex: 1 },
   kav: { flex: 1 },
-  topBar: { flexDirection: 'row', paddingHorizontal: 8, paddingTop: 4 },
-  backBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scroll: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 24 },
-  copy: { gap: 8, marginBottom: 28 },
+  scroll: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 24 },
+  copy: { gap: 10, marginBottom: 24 },
   headline: {
     fontSize: 30,
     lineHeight: 36,
@@ -265,8 +334,8 @@ const styles = StyleSheet.create({
     color: WINE,
   },
   sub: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
     fontFamily: 'DMSans_400Regular',
     color: INK,
   },
@@ -299,6 +368,10 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
   },
+  busyRow: {
+    paddingTop: 12,
+    alignItems: 'center',
+  },
   form: { gap: 10 },
   inputLabel: {
     fontSize: 12,
@@ -319,29 +392,18 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     color: INK,
   },
-  forgotLink: { alignSelf: 'flex-end', paddingVertical: 4 },
-  forgotLinkText: {
-    fontSize: 13,
-    fontFamily: 'DMSans_600SemiBold',
-    color: '#C2703E',
-  },
   backLink: { alignSelf: 'flex-start', paddingVertical: 8 },
   backLinkText: {
     fontSize: 13,
     fontFamily: 'DMSans_600SemiBold',
     color: WINE,
   },
-  signUpLink: { alignItems: 'center', paddingVertical: 18, marginTop: 12 },
-  signUpLinkText: {
-    fontSize: 14,
-    fontFamily: 'DMSans_500Medium',
-    color: INK,
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+    paddingTop: 8,
+    gap: 12,
   },
-  signUpLinkStrong: {
-    fontFamily: 'DMSans_600SemiBold',
-    color: WINE,
-  },
-  footer: { paddingHorizontal: 24, paddingBottom: 16, paddingTop: 8 },
   cta: {
     backgroundColor: WINE,
     borderRadius: 50,
@@ -354,5 +416,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'DMSans_600SemiBold',
+  },
+  legal: {
+    fontSize: 11,
+    fontFamily: 'DMSans_400Regular',
+    color: SUBTLE,
+    textAlign: 'center',
+    paddingHorizontal: 4,
   },
 })
