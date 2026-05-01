@@ -107,12 +107,6 @@ export default function WinePickerScreen() {
                     resizeMode="contain"
                   />
                   <Text style={styles.emptyText}>{emptyLabel}</Text>
-                  <TouchableOpacity
-                    style={styles.emptyBtn}
-                    onPress={() => router.push('/(tabs)/scanner')}
-                  >
-                    <Text style={styles.emptyBtnText}>Scan a bottle</Text>
-                  </TouchableOpacity>
                 </View>
               )
             }
