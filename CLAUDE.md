@@ -118,6 +118,44 @@ NativeWind / Tailwind is **not** used on mobile (removed). Use `StyleSheet.creat
 
 `app/onboarding/` is a separate stack with a fixed screen order (`index → goal → pain → demo → atlas → paywall → save-account`). The completion flag is stored via `features/onboarding/state.ts` and checked by the root layout; `features/onboarding/seed.ts` and `starter-deck.ts` seed initial data after account creation.
 
+### Transactional emails
+
+There are **two** delivery paths for transactional email — same brand, different mechanics:
+
+**1. Supabase Auth emails** ([supabase/templates/auth/](supabase/templates/auth/))
+
+HTML pasted manually into the Supabase dashboard (Authentication ▸ Email Templates). Sent by Supabase's own infra (configured to use Resend SMTP). Only 2 are kept:
+
+- `confirmation.html` → "Confirm signup" — fires on `supabase.auth.signUp()`
+- `reset-password.html` → "Reset password" — fires on `supabase.auth.resetPasswordForEmail()` (Supabase's internal name for this is `recovery`; file is named after the user-facing action)
+
+Magic link, invite, change-email, and reauthentication templates are **not** maintained — those flows aren't used. Sign-in is Apple, Google, or email + password only.
+
+**2. App-side emails via Resend** ([apps/web/api/templates/](apps/web/api/templates/))
+
+HTML files read from disk by the Python API and POSTed directly to the Resend API. Used when the trigger is business logic (not Supabase Auth). Currently:
+
+- `family-invite.html` — sent by [apps/web/api/family.py](apps/web/api/family.py) `_send_resend_invite()` when someone is invited to a family by email and doesn't have an account yet.
+
+The Python helper `_render_template(filename, replacements)` reads from [apps/web/api/templates/](apps/web/api/templates/) and substitutes `{{TOKEN}}` placeholders via `str.replace` (not `.format`, because templates contain CSS curly braces). Always `html.escape(value, quote=True)` user-supplied values before substitution.
+
+**Every new email template (either path) MUST follow the MomentoVino design system.** Email clients don't support CSS vars or external stylesheets, so paste hex codes inline:
+
+| Token | Hex | Use |
+|---|---|---|
+| WINE | `#722F37` | Headlines, primary CTA background, brand wordmark |
+| INK | `#3F2A2E` | Body copy |
+| SUBTLE | `#6E5A5E` | Secondary copy, footer, fine print |
+| BG | `#F5EBE0` | Email body background |
+| BORDER | `#E8DDD4` | Card border, dividers |
+| Card surface | `#FFFFFF` | Inner content card |
+
+Same palette used throughout the mobile app — see the screen-level `const` declarations (e.g. [apps/mobile/app/(tabs)/profile.tsx:32-33](apps/mobile/app/(tabs)/profile.tsx#L32-L33), [apps/mobile/app/onboarding/save-account.tsx:27-31](apps/mobile/app/onboarding/save-account.tsx#L27-L31)). Formal tokens live in [packages/design-tokens/tokens.json](packages/design-tokens/tokens.json) and [packages/design-tokens/mobile.ts](packages/design-tokens/mobile.ts) (`colors.primary[500]` = WINE), but the email-specific shades (INK/SUBTLE/BG/BORDER) only exist as the inline mobile palette today.
+
+Typography in emails: serif headlines via `'DM Serif Display','Playfair Display',Georgia,serif`; body via `'DM Sans','Helvetica Neue',Arial,sans-serif`. Don't `<link>` Google Fonts — most clients strip it; rely on the system fallbacks.
+
+Layout rules: single-column 560px max-width, table-based markup (Outlook), CTA as `<table>` row with rounded `border-radius:50px`, mobile breakpoint `@media (max-width: 600px)`. Mirror the structure of [supabase/templates/auth/reset-password.html](supabase/templates/auth/reset-password.html) (or any existing template) for new ones.
+
 ## Conventions
 
 - Imports from workspace packages use the `@momentovino/*` prefix (see `pnpm-workspace.yaml`).

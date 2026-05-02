@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html as html_lib
 import json
 import os
 import re
@@ -325,6 +326,20 @@ def _is_admin(url: str, key: str, user_id: str, family_id: str) -> bool:
     return False
 
 
+_TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+
+
+def _render_template(filename: str, replacements: dict[str, str]) -> str:
+    """Read an HTML template from the api/templates folder and substitute
+    `{{TOKEN}}` placeholders. We use `str.replace` (not `.format`) because
+    the templates contain CSS curly braces that would otherwise need escaping."""
+    with open(os.path.join(_TEMPLATES_DIR, filename), "r", encoding="utf-8") as f:
+        out = f.read()
+    for token, value in replacements.items():
+        out = out.replace("{{" + token + "}}", value)
+    return out
+
+
 def _send_resend_invite(
     to_email: str,
     family_name: str,
@@ -337,16 +352,17 @@ def _send_resend_invite(
     if skip or not api_key or not from_email:
         print(f"[family invite] RESEND_SKIP or missing key — link for {to_email}: {invite_link}")
         return True, None
+    safe_family = html_lib.escape(family_name, quote=True)
+    safe_link = html_lib.escape(invite_link, quote=True)
+    body_html = _render_template(
+        "family-invite.html",
+        {"FAMILY_NAME": safe_family, "INVITE_LINK": safe_link},
+    )
     payload = {
         "from": from_email,
         "to": [to_email],
-        "subject": f"Invitation: join the {family_name} family on MomentoVino",
-        "html": (
-            f"<p>You have been invited to join the <strong>{family_name}</strong> family on MomentoVino.</p>"
-            f'<p><a href="{invite_link}">Accept invitation</a></p>'
-            "<p>If the button does not work, copy this link into your browser or app:</p>"
-            f"<p>{invite_link}</p>"
-        ),
+        "subject": f"You're invited to {family_name} on MomentoVino",
+        "html": body_html,
     }
     r = requests.post(
         "https://api.resend.com/emails",
