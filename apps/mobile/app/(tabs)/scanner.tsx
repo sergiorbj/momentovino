@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { StatusBar } from 'expo-status-bar'
-import { router, useFocusEffect } from 'expo-router'
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import * as ImagePicker from 'expo-image-picker'
 import * as FileSystem from 'expo-file-system/legacy'
@@ -35,6 +35,7 @@ export default function ScannerScreen() {
   const { width: winW, height: winH } = useWindowDimensions()
   const dimMaskId = useId().replace(/:/g, '')
   const cameraRef = useRef<CameraView>(null)
+  const { forMoment } = useLocalSearchParams<{ forMoment?: string }>()
 
   const [permission, requestPermission] = useCameraPermissions()
   const [tabFocused, setTabFocused] = useState(true)
@@ -130,6 +131,7 @@ export default function ScannerScreen() {
           country: result.country,
           type: result.type,
           description: result.description,
+          ...(forMoment ? { forMoment } : {}),
         },
       })
     } catch (err) {
@@ -137,7 +139,7 @@ export default function ScannerScreen() {
     } finally {
       setScanning(false)
     }
-  }, [image, clearImage])
+  }, [image, clearImage, forMoment])
 
   const showLiveCamera = !image && permission?.granted
 

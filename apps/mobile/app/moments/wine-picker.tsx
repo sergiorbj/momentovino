@@ -73,7 +73,7 @@ export default function WinePickerScreen() {
         <View style={styles.body}>
           <TouchableOpacity
             style={styles.scanCta}
-            onPress={() => router.push('/(tabs)/scanner')}
+            onPress={() => router.push({ pathname: '/(tabs)/scanner', params: { forMoment: '1' } })}
             activeOpacity={0.85}
           >
             <Ionicons name="scan-outline" size={18} color="#FFFFFF" />

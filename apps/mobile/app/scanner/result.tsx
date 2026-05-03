@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { attachWineLabelPhoto } from '../../features/scanner/api'
 import { useCreateWineViaApi } from '../../features/scanner/hooks'
 import { takeLabelPhotoForResult, type PendingLabelPhoto } from '../../features/scanner/pending-label-photo'
+import { setPendingWinePick } from '../../features/moments/wine-picker-handoff'
 import { queryKeys } from '../../lib/query-keys'
 import { emitScannerReset } from '../../lib/scanner-reset'
 
@@ -35,7 +36,9 @@ export default function ScanResultScreen() {
     country: string
     type: string
     description: string
+    forMoment?: string
   }>()
+  const forMoment = params.forMoment === '1'
 
   const [labelPhoto] = useState<PendingLabelPhoto | null>(() => takeLabelPhotoForResult())
   const [saving, setSaving] = useState(false)
@@ -48,7 +51,7 @@ export default function ScanResultScreen() {
     }
   }, [])
 
-  const saveWine = async (andCreateMoment: boolean) => {
+  const saveWine = async (target: 'wines' | 'newMoment' | 'existingMoment') => {
     try {
       setSaving(true)
 
@@ -80,7 +83,10 @@ export default function ScanResultScreen() {
       await qc.invalidateQueries({ queryKey: queryKeys.profile, refetchType: 'all' })
       await qc.invalidateQueries({ queryKey: queryKeys.momentStats, refetchType: 'all' })
 
-      if (andCreateMoment) {
+      if (target === 'existingMoment') {
+        setPendingWinePick({ wineId: wine.id, wineName: wine.name })
+        router.dismissTo('/moments/new')
+      } else if (target === 'newMoment') {
         router.replace({
           pathname: '/moments/new',
           params: { wineId: wine.id, wineName: wine.name },
@@ -135,31 +141,51 @@ export default function ScanResultScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.btnPrimary}
-            onPress={() => saveWine(false)}
-            disabled={saving}
-            activeOpacity={0.85}
-          >
-            {saving ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <>
-                <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
-                <Text style={styles.btnPrimaryText}>Add to my wines</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          {forMoment ? (
+            <TouchableOpacity
+              style={styles.btnPrimary}
+              onPress={() => saveWine('existingMoment')}
+              disabled={saving}
+              activeOpacity={0.85}
+            >
+              {saving ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <>
+                  <Ionicons name="sparkles-outline" size={20} color="#FFFFFF" />
+                  <Text style={styles.btnPrimaryText}>Add wine to moment</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={styles.btnPrimary}
+                onPress={() => saveWine('wines')}
+                disabled={saving}
+                activeOpacity={0.85}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+                    <Text style={styles.btnPrimaryText}>Add to my wines</Text>
+                  </>
+                )}
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.btnSecondary}
-            onPress={() => saveWine(true)}
-            disabled={saving}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="sparkles-outline" size={20} color={WINE} />
-            <Text style={styles.btnSecondaryText}>Add wine + create moment</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.btnSecondary}
+                onPress={() => saveWine('newMoment')}
+                disabled={saving}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="sparkles-outline" size={20} color={WINE} />
+                <Text style={styles.btnSecondaryText}>Add wine + create moment</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </SafeAreaView>
     </View>
