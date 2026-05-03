@@ -973,7 +973,6 @@ const styles = StyleSheet.create({
   pendingRow: { padding: 14 },
   noFamilyScrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
     paddingTop: 8,
     paddingBottom: 32,
   },
