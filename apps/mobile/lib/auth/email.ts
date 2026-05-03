@@ -1,5 +1,4 @@
-import * as Linking from 'expo-linking'
-
+import { marketingSiteOrigin } from '../marketing-urls'
 import { supabase } from '../supabase'
 import { configurePurchases } from '../purchases'
 import {
@@ -112,14 +111,18 @@ export async function signInWithEmail(
 }
 
 /**
- * Send a password-reset email. The link redirects into the app via the
- * `momentovino://reset-password` deep link, which the in-app
- * `app/reset-password.tsx` route handles.
+ * Send a password-reset email. Uses an **https** redirect on the Next.js site
+ * (`/auth/reset-callback`) so the link works in the system browser; that page
+ * forwards tokens to `momentovino://reset-password` for the in-app screen.
+ *
+ * Add the callback URL(s) to Supabase → Authentication → URL Configuration →
+ * Redirect URLs, e.g. `http://localhost:3000/auth/reset-callback` and your
+ * production origin + `/auth/reset-callback`.
  */
 export async function sendPasswordResetEmail(email: string): Promise<EmailAuthOutcome> {
   try {
     const target = email.trim().toLowerCase()
-    const redirectTo = Linking.createURL('reset-password')
+    const redirectTo = `${marketingSiteOrigin()}/auth/reset-callback`
     const { error } = await supabase.auth.resetPasswordForEmail(target, { redirectTo })
     if (error) throw error
     return { kind: 'success' }
