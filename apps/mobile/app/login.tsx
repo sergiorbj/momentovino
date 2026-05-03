@@ -14,9 +14,9 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import * as AppleAuthentication from 'expo-apple-authentication'
 import { useQueryClient } from '@tanstack/react-query'
 
+import { AUTH_PROVIDER, createProviderAuthStyles } from '../components/auth/providerAuthStyles'
 import { signInWithApple } from '../lib/auth/apple'
 import { signInWithGoogle } from '../lib/auth/google'
 import { signInWithEmail } from '../lib/auth/email'
@@ -62,7 +62,7 @@ export default function LoginScreen() {
       const outcome = await signInWithApple()
       if (outcome.kind === 'cancelled') return
       if (outcome.kind === 'unavailable') {
-        Alert.alert('Sign in with Apple unavailable', outcome.message)
+        Alert.alert('Continue with Apple unavailable', outcome.message)
         return
       }
       if (outcome.kind === 'error') {
@@ -152,14 +152,25 @@ export default function LoginScreen() {
 
             {mode === 'buttons' ? (
               <View style={styles.buttons}>
+                <TouchableOpacity
+                  style={[styles.authBtn, styles.authEmail]}
+                  onPress={() => setMode('email')}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="mail-outline" size={AUTH_PROVIDER.iconSize} color="#FFFFFF" />
+                  <Text style={styles.authEmailText}>Continue with email</Text>
+                </TouchableOpacity>
+
                 {Platform.OS === 'ios' ? (
-                  <AppleAuthentication.AppleAuthenticationButton
-                    buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-                    buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-                    cornerRadius={28}
-                    style={styles.appleBtn}
+                  <TouchableOpacity
+                    style={[styles.authBtn, styles.authApple]}
                     onPress={onApple}
-                  />
+                    disabled={submitting}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="logo-apple" size={AUTH_PROVIDER.iconSize} color="#FFFFFF" />
+                    <Text style={styles.authAppleText}>Continue with Apple</Text>
+                  </TouchableOpacity>
                 ) : null}
 
                 <TouchableOpacity
@@ -168,17 +179,8 @@ export default function LoginScreen() {
                   disabled={submitting}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name="logo-google" size={18} color={INK} />
+                  <Ionicons name="logo-google" size={AUTH_PROVIDER.iconSize} color={INK} />
                   <Text style={styles.authGoogleText}>Continue with Google</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.authBtn, styles.authEmail]}
-                  onPress={() => setMode('email')}
-                  activeOpacity={0.85}
-                >
-                  <Ionicons name="mail-outline" size={18} color="#FFFFFF" />
-                  <Text style={styles.authEmailText}>Continue with email</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -270,35 +272,7 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     color: INK,
   },
-  buttons: { gap: 10 },
-  appleBtn: {
-    height: 52,
-    width: '100%',
-  },
-  authBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    borderRadius: 50,
-    height: 52,
-  },
-  authGoogle: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: BORDER,
-  },
-  authGoogleText: {
-    color: INK,
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 15,
-  },
-  authEmail: { backgroundColor: WINE },
-  authEmailText: {
-    color: '#FFFFFF',
-    fontFamily: 'DMSans_600SemiBold',
-    fontSize: 15,
-  },
+  ...createProviderAuthStyles({ wine: WINE, ink: INK, border: BORDER }),
   form: { gap: 10 },
   inputLabel: {
     fontSize: 12,
