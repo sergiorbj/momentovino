@@ -93,58 +93,6 @@ def _ensure_profile(url: str, key: str, uid: str) -> Optional[dict[str, Any]]:
     return _get_profile(url, key, uid)
 
 
-def _count_rows(url: str, key: str, table: str, filter_col: str, uid: str) -> int:
-    r = requests.get(
-        f"{url}/rest/v1/{table}?{filter_col}=eq.{uid}&select=id",
-        headers={
-            "Authorization": f"Bearer {key}",
-            "apikey": key,
-            "Prefer": "count=exact",
-            "Range-Unit": "items",
-            "Range": "0-0",
-        },
-        timeout=30,
-    )
-    if r.status_code in (200, 206):
-        content_range = r.headers.get("Content-Range", "")
-        # Format: "0-0/42" or "*/0"
-        if "/" in content_range:
-            total = content_range.split("/")[-1]
-            if total != "*":
-                try:
-                    return int(total)
-                except ValueError:
-                    pass
-    return 0
-
-
-def _has_family(url: str, key: str, uid: str) -> bool:
-    # Check if owner
-    r = requests.get(
-        f"{url}/rest/v1/families?owner_id=eq.{uid}&select=id&limit=1",
-        headers={"Authorization": f"Bearer {key}", "apikey": key},
-        timeout=30,
-    )
-    if r.status_code == 200 and isinstance(r.json(), list) and r.json():
-        return True
-    # Check if member
-    r2 = requests.get(
-        f"{url}/rest/v1/family_members?user_id=eq.{uid}&select=id&limit=1",
-        headers={"Authorization": f"Bearer {key}", "apikey": key},
-        timeout=30,
-    )
-    if r2.status_code == 200 and isinstance(r2.json(), list) and r2.json():
-        return True
-    return False
-
-
-def _get_stats(url: str, key: str, uid: str) -> dict[str, int]:
-    moments = _count_rows(url, key, "moments", "user_id", uid)
-    wines = _count_rows(url, key, "wines", "created_by", uid)
-    family = 1 if _has_family(url, key, uid) else 0
-    return {"moments": moments, "wines": wines, "family": family}
-
-
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         path = _norm_path(self)
@@ -163,8 +111,7 @@ class handler(BaseHTTPRequestHandler):
             send_json(self, 500, {"error": "Failed to load profile"})
             return
 
-        stats = _get_stats(url, key, uid)
-        send_json(self, 200, {"profile": profile, "stats": stats})
+        send_json(self, 200, {"profile": profile})
 
     def do_PATCH(self):
         path = _norm_path(self)

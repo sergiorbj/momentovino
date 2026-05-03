@@ -38,7 +38,6 @@ export default function ProfileScreen() {
   const [restoring, setRestoring] = useState(false)
   const { data, isLoading } = useProfile()
   const profile = data?.profile ?? null
-  const stats = data?.stats ?? { moments: 0, wines: 0, family: 0 }
   const loading = isLoading && !data
 
   const updateSettingsMutation = useUpdateSettings()
@@ -177,25 +176,6 @@ export default function ProfileScreen() {
               <Text style={styles.name}>{displayName}</Text>
               {profile?.username ? <Text style={styles.handle}>@{profile.username}</Text> : null}
               {profile?.bio ? <Text style={styles.bio}>{profile.bio}</Text> : null}
-
-              <View style={styles.divider} />
-
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{stats.moments}</Text>
-                  <Text style={styles.statLabel}>Moments</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{stats.wines}</Text>
-                  <Text style={styles.statLabel}>Wines</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{stats.family}</Text>
-                  <Text style={styles.statLabel}>Family</Text>
-                </View>
-              </View>
             </View>
 
             {Platform.OS === 'ios' ? (
@@ -366,31 +346,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 4,
   },
-  divider: {
-    width: '100%',
-    height: 1,
-    backgroundColor: '#F0E8E0',
-    marginVertical: 16,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  statItem: { alignItems: 'center' },
-  statNumber: {
-    fontSize: 22,
-    fontFamily: 'DMSerifDisplay_400Regular',
-    color: '#1C1C1E',
-  },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: 'DMSans_400Regular',
-    color: '#9CA3AF',
-    marginTop: 2,
-  },
-  statDivider: { width: 1, height: 36, backgroundColor: '#F0E8E0' },
 
   subscriptionCard: {
     backgroundColor: '#FFFFFF',

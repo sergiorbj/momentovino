@@ -69,15 +69,8 @@ export async function setUsername(newUsername: string): Promise<string> {
   return String(data)
 }
 
-export type ProfileStats = {
-  moments: number
-  wines: number
-  family: number
-}
-
 export type ProfileDashboard = {
   profile: ProfileRow
-  stats: ProfileStats
 }
 
 export async function getProfile(): Promise<ProfileDashboard> {
