@@ -22,7 +22,7 @@ import { signInWithGoogle } from '../lib/auth/google'
 import { signInWithEmail } from '../lib/auth/email'
 import { markOnboardingCompleted } from '../features/onboarding/state'
 import { resetSelections } from '../features/onboarding/selections'
-import { queryKeys } from '../lib/query-keys'
+import { invalidateTabCachesAndPrefetch } from '../lib/prefetch'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -49,9 +49,9 @@ export default function LoginScreen() {
   // RC.logIn(userId) was already called inside the auth lib so the entitlement
   // (if any) is now bound to the new user_id; the webhook handles TRANSFER.
   const afterSignIn = async () => {
-    await qc.invalidateQueries({ queryKey: queryKeys.entitlement })
     resetSelections()
     await markOnboardingCompleted()
+    await invalidateTabCachesAndPrefetch(qc)
     router.replace('/(tabs)/moments')
   }
 

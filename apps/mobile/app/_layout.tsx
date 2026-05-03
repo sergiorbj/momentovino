@@ -14,7 +14,7 @@ import { ensureAnonymousSession } from '../lib/session'
 import { configureGoogleSignIn } from '../lib/auth/google'
 import { hasCompletedOnboarding } from '../features/onboarding/state'
 import { queryClient } from '../lib/query-client'
-import { prefetchCoreData } from '../lib/prefetch'
+import { prefetchCoreDataAsync } from '../lib/prefetch'
 import { configurePurchases } from '../lib/purchases'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/query-keys'
@@ -50,12 +50,15 @@ export default function RootLayout() {
   useEffect(() => {
     ensureAnonymousSession()
       .then(async (userId) => {
-        prefetchCoreData(queryClient)
         try {
           await configurePurchases(userId)
         } catch (err) {
           console.warn('Failed to configure RevenueCat', err)
         }
+        // Keep splash until profile, moments, wines, family, invitations, and
+        // entitlement are in the QueryClient cache so tabs render without a
+        // second loading pass (same queries the tab screens use).
+        await prefetchCoreDataAsync(queryClient)
         setSessionReady(true)
       })
       .catch((err) => {

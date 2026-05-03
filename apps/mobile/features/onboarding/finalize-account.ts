@@ -4,6 +4,7 @@ import { claimUsername } from '../profile/api'
 import { markOnboardingCompleted } from './state'
 import { getSelections, resetSelections } from './selections'
 import { seedStarterJournal } from './seed'
+import { prefetchCoreDataAsync } from '../../lib/prefetch'
 import { queryKeys } from '../../lib/query-keys'
 import { supabase } from '../../lib/supabase'
 
@@ -74,6 +75,9 @@ export async function finalizeAccount({ qc, displayName }: FinalizeAccountInput)
   await qc.invalidateQueries({ queryKey: queryKeys.profile })
   await qc.invalidateQueries({ queryKey: queryKeys.momentStats })
   await qc.invalidateQueries({ queryKey: queryKeys.winesCount })
+  await qc.invalidateQueries({ queryKey: queryKeys.family })
+  await qc.invalidateQueries({ queryKey: queryKeys.myInvitations })
+  await prefetchCoreDataAsync(qc)
 
   await markOnboardingCompleted()
   resetSelections()

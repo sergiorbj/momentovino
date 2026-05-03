@@ -11,13 +11,8 @@ import {
 import { getProfile } from '../features/profile/api'
 import { queryKeys } from './query-keys'
 
-/**
- * Warm the React Query cache for the top-level tabs right after the session is
- * established so that navigating into a tab doesn't trigger a visible load.
- * Runs in parallel; failures are swallowed so a bad endpoint never blocks the app.
- */
-export function prefetchCoreData(queryClient: QueryClient): void {
-  const tasks: Array<Promise<unknown>> = [
+function corePrefetchTasks(queryClient: QueryClient): Array<Promise<unknown>> {
+  return [
     queryClient.prefetchQuery({
       queryKey: queryKeys.entitlement,
       queryFn: fetchEntitlement,
@@ -30,6 +25,37 @@ export function prefetchCoreData(queryClient: QueryClient): void {
     queryClient.prefetchQuery({ queryKey: queryKeys.family, queryFn: getFamilyDashboard }),
     queryClient.prefetchQuery({ queryKey: queryKeys.myInvitations, queryFn: listMyInvitations }),
   ]
+}
 
-  void Promise.allSettled(tasks)
+/**
+ * Warm the React Query cache for the top-level tabs right after the session is
+ * established so that navigating into a tab doesn't trigger a visible load.
+ * Runs in parallel; failures are swallowed so a bad endpoint never blocks the app.
+ */
+export function prefetchCoreData(queryClient: QueryClient): void {
+  void Promise.allSettled(corePrefetchTasks(queryClient))
+}
+
+/**
+ * Same as {@link prefetchCoreData} but waits for prefetch work to finish. Use
+ * after session changes (new account, returning login) before routing to tabs.
+ */
+export async function prefetchCoreDataAsync(queryClient: QueryClient): Promise<void> {
+  await Promise.allSettled(corePrefetchTasks(queryClient))
+}
+
+/**
+ * Invalidate every query scope bound to the current Supabase user, then warm
+ * tab caches. Clears anonymous (or prior user) data after login.
+ */
+export async function invalidateTabCachesAndPrefetch(queryClient: QueryClient): Promise<void> {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.entitlement }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.profile }),
+    queryClient.invalidateQueries({ queryKey: ['moments'] }),
+    queryClient.invalidateQueries({ queryKey: ['wines'] }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.family }),
+    queryClient.invalidateQueries({ queryKey: queryKeys.myInvitations }),
+  ])
+  await prefetchCoreDataAsync(queryClient)
 }
