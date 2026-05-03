@@ -21,7 +21,7 @@ Supabase Dashboard → **Authentication → Email Templates**:
 > templating engine — that's why this folder previously had `recovery.html`.
 > The file is now named after the user-facing action.
 
-Paste each file's HTML into the matching template editor and save.
+Paste each file's HTML into the matching template editor and save. **Whenever you change a file here, open the Supabase dashboard again and paste the updated HTML** — the dashboard does not sync from Git automatically.
 
 ## Subjects (set in the same screen)
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -16,8 +16,12 @@ import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import * as Linking from 'expo-linking'
 
-import { supabase } from '../lib/supabase'
 import { updatePassword } from '../lib/auth/email'
+import { queryClient } from '../lib/query-client'
+import { ensureAnonymousSession } from '../lib/session'
+import { supabase } from '../lib/supabase'
+
+import type { Session } from '@supabase/supabase-js'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -43,12 +47,40 @@ function parseHash(hash: string): Record<string, string> {
   return out
 }
 
+function decodeJwtPayload(accessToken: string): Record<string, unknown> | null {
+  try {
+    const body = accessToken.split('.')[1]
+    if (!body) return null
+    const padded = body.replace(/-/g, '+').replace(/_/g, '/')
+    const padLen = (4 - (padded.length % 4)) % 4
+    const json = atob(padded + '='.repeat(padLen))
+    return JSON.parse(json) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+/** Recovery sessions include `amr` with `{ method: 'recovery' }` (GoTrue). */
+function sessionLooksLikePasswordRecovery(session: Session): boolean {
+  const payload = decodeJwtPayload(session.access_token)
+  if (!payload) return false
+  const amr = payload.amr
+  if (!Array.isArray(amr)) return false
+  return amr.some((entry: unknown) => {
+    if (typeof entry === 'string') return entry === 'recovery'
+    if (entry && typeof entry === 'object' && 'method' in entry) {
+      return (entry as { method?: string }).method === 'recovery'
+    }
+    return false
+  })
+}
+
 export default function ResetPasswordScreen() {
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('pending')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [done, setDone] = useState(false)
+  const appliedRecoveryFromUrlRef = useRef(false)
 
   const canSubmit = useMemo(
     () =>
@@ -65,6 +97,11 @@ export default function ResetPasswordScreen() {
     async function consumeDeepLink(url: string | null) {
       if (!url) return
       try {
+        // Drop any session (full account or anonymous) so recovery tokens are
+        // not merged with an existing user — then wipe tab cache from the old user.
+        await supabase.auth.signOut()
+        queryClient.clear()
+
         const parsed = Linking.parse(url)
         const code =
           (parsed.queryParams?.code as string | undefined) ?? null
@@ -74,15 +111,14 @@ export default function ResetPasswordScreen() {
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code)
           if (error) throw error
+          appliedRecoveryFromUrlRef.current = true
         } else if (hash.access_token && hash.refresh_token) {
           const { error } = await supabase.auth.setSession({
             access_token: hash.access_token,
             refresh_token: hash.refresh_token,
           })
           if (error) throw error
-        } else {
-          // No tokens in this URL — maybe the user already has a recovery
-          // session active (e.g. they navigated back). Probe it below.
+          appliedRecoveryFromUrlRef.current = true
         }
       } catch (err) {
         if (!cancelled) {
@@ -92,22 +128,45 @@ export default function ResetPasswordScreen() {
       }
     }
 
-    async function init() {
-      const initial = await Linking.getInitialURL()
-      await consumeDeepLink(initial)
-
+    async function applyRecoverySessionGate() {
+      if (cancelled) return
       const { data } = await supabase.auth.getSession()
       if (cancelled) return
-      setSessionStatus(data.session ? 'ready' : 'failed')
+      const sess = data.session
+      if (!sess) {
+        if (!cancelled) setSessionStatus('failed')
+        return
+      }
+      if (appliedRecoveryFromUrlRef.current || sessionLooksLikePasswordRecovery(sess)) {
+        if (!cancelled) setSessionStatus('ready')
+        return
+      }
+      // Opened reset screen while logged in without a recovery link — clear and block.
+      await supabase.auth.signOut()
+      queryClient.clear()
+      try {
+        await ensureAnonymousSession()
+      } catch {
+        // ignore
+      }
+      if (!cancelled) setSessionStatus('failed')
+    }
+
+    async function init() {
+      appliedRecoveryFromUrlRef.current = false
+      const initial = await Linking.getInitialURL()
+      await consumeDeepLink(initial)
+      await applyRecoverySessionGate()
     }
 
     void init()
 
     const sub = Linking.addEventListener('url', (ev) => {
-      void consumeDeepLink(ev.url).then(async () => {
-        const { data } = await supabase.auth.getSession()
-        if (!cancelled) setSessionStatus(data.session ? 'ready' : 'failed')
-      })
+      void (async () => {
+        appliedRecoveryFromUrlRef.current = false
+        await consumeDeepLink(ev.url)
+        await applyRecoverySessionGate()
+      })()
     })
 
     return () => {
@@ -122,10 +181,14 @@ export default function ResetPasswordScreen() {
     try {
       const outcome = await updatePassword(password)
       if (outcome.kind === 'success') {
-        // End the recovery session so the user signs in fresh with the
-        // new password — leaves no door open if the device is shared.
         await supabase.auth.signOut()
-        setDone(true)
+        queryClient.clear()
+        try {
+          await ensureAnonymousSession()
+        } catch {
+          // Guest bootstrap is best-effort; login still works without it until next cold start.
+        }
+        router.replace('/login')
         return
       }
       Alert.alert(
@@ -167,33 +230,6 @@ export default function ResetPasswordScreen() {
               activeOpacity={0.85}
             >
               <Text style={styles.ctaText}>Send a new link</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </View>
-    )
-  }
-
-  if (done) {
-    return (
-      <View style={styles.container}>
-        <StatusBar style="dark" />
-        <SafeAreaView style={styles.safe}>
-          <ScrollView contentContainerStyle={styles.scroll}>
-            <View style={styles.copy}>
-              <Text style={styles.headline}>Password updated.</Text>
-              <Text style={styles.sub}>
-                Sign in with your new password to keep going.
-              </Text>
-            </View>
-          </ScrollView>
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.cta}
-              onPress={() => router.replace('/login')}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.ctaText}>Sign in</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
