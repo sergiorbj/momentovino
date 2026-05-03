@@ -15,7 +15,7 @@ import { router } from 'expo-router'
 
 import type { FamilyInviteUserMatch } from '../../features/family/api'
 import { searchFamilyInviteTargets } from '../../features/family/api'
-import { useInviteMember } from '../../features/family/hooks'
+import { useInviteMemberByEmail, useInviteMemberByUsername } from '../../features/family/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -74,7 +74,8 @@ export default function FamilyInviteMemberScreen() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [searchFormatError, setSearchFormatError] = useState<string | null>(null)
-  const inviteMemberMutation = useInviteMember()
+  const inviteByEmailMutation = useInviteMemberByEmail()
+  const inviteByUsernameMutation = useInviteMemberByUsername()
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -144,16 +145,44 @@ export default function FamilyInviteMemberScreen() {
     }
     try {
       setSaving(true)
-      const out = await inviteMemberMutation.mutateAsync(e)
-      if ('addedMember' in out && out.addedMember) {
-        Alert.alert('Member added', 'They already had an account and were added to your family.', [
-          { text: 'OK', onPress: () => router.back() },
-        ])
-      } else {
-        Alert.alert('Invitation sent', 'We emailed them a link to join your family.', [
-          { text: 'OK', onPress: () => router.back() },
-        ])
+      const out = await inviteByEmailMutation.mutateAsync(e)
+      if ('existingUser' in out && out.existingUser) {
+        Alert.alert('Already on MomentoVino', out.message)
+        return
       }
+      Alert.alert(
+        'Invitation sent',
+        "We emailed them a link to download MomentoVino. Once they sign up, ask them for their username and invite them from here.",
+        [{ text: 'OK', onPress: () => router.back() }],
+      )
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Invite failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const sendUsernameInvite = async (user: FamilyInviteUserMatch) => {
+    try {
+      setSaving(true)
+      const out = await inviteByUsernameMutation.mutateAsync(user.user_id)
+      if ('alreadyInvited' in out && out.alreadyInvited) {
+        Alert.alert('Already invited', out.message)
+        return
+      }
+      if ('targetAlreadyInFamily' in out && out.targetAlreadyInFamily) {
+        Alert.alert('Cannot invite', out.message)
+        return
+      }
+      if ('alreadyMember' in out && out.alreadyMember) {
+        Alert.alert('Already a member', out.message)
+        return
+      }
+      Alert.alert(
+        'Invitation sent',
+        `${user.display_name} will see your invitation in their family screen.`,
+        [{ text: 'OK', onPress: () => router.back() }],
+      )
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Invite failed')
     } finally {
@@ -163,13 +192,13 @@ export default function FamilyInviteMemberScreen() {
 
   const confirmAddExistingUser = (user: FamilyInviteUserMatch) => {
     Alert.alert(
-      'Add to family?',
+      'Send invitation?',
       `${user.display_name}\n${user.email}`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Add',
-          onPress: () => void runInviteByEmail(user.email),
+          text: 'Send invite',
+          onPress: () => void sendUsernameInvite(user),
         },
       ],
     )

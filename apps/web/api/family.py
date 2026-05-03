@@ -20,6 +20,11 @@ from _api_common import auth_bearer_user, auth_bearer_user_id, load_env, send_js
 INVITE_VALID_DAYS = 7
 FAMILY_DESCRIPTION_MAX_LEN = 80
 
+# App Store / Play Store URLs derived from apps/mobile/eas.json (ascAppId)
+# and apps/mobile/app.config.ts (android.package).
+APP_STORE_URL_IOS = "https://apps.apple.com/app/id6763680512"
+APP_STORE_URL_ANDROID = "https://play.google.com/store/apps/details?id=com.momentovino.app"
+
 
 def _norm_description(body: dict[str, Any]) -> tuple[Optional[str], Optional[str]]:
     """Returns (description_or_none, error_message)."""
@@ -290,18 +295,112 @@ def _list_members(url: str, key: str, family_id: str) -> list[dict[str, Any]]:
 
 
 def _list_pending_invites(url: str, key: str, family_id: str) -> list[dict[str, Any]]:
+    """Pending non-expired invitations for the admin dashboard. Includes both
+    legacy email-token rows AND new username invites; for the latter we
+    resolve the target user's email/display_name so the UI can render a
+    person, not a uuid."""
+    now_iso = datetime.now(timezone.utc).isoformat()
     r = requests.get(
-        (
-            f"{url}/rest/v1/family_invitations?family_id=eq.{family_id}"
-            "&status=eq.pending&select=id,email,expires_at,created_at&order=created_at.desc"
-        ),
+        f"{url}/rest/v1/family_invitations",
+        params={
+            "family_id": f"eq.{family_id}",
+            "status": "eq.pending",
+            "expires_at": f"gt.{now_iso}",
+            "select": "id,email,invited_user_id,expires_at,created_at",
+            "order": "created_at.desc",
+        },
         headers={"Authorization": f"Bearer {key}", "apikey": key},
         timeout=30,
     )
     if r.status_code != 200:
         return []
     rows = r.json()
-    return rows if isinstance(rows, list) else []
+    if not isinstance(rows, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        invited_uid = row.get("invited_user_id")
+        if invited_uid:
+            u = _admin_user_by_id(url, key, str(invited_uid))
+            if u:
+                em = (u.get("email") or "").strip().lower()
+                row["email"] = em or row.get("email")
+                row["display_name"] = _display_name_from_auth_user(u, em)
+        out.append(row)
+    return out
+
+
+def _admin_user_by_id(url: str, key: str, user_id: str) -> Optional[dict[str, Any]]:
+    r = requests.get(
+        f"{url}/auth/v1/admin/users/{user_id}",
+        headers={"Authorization": f"Bearer {key}", "apikey": key},
+        timeout=30,
+    )
+    if r.status_code != 200:
+        return None
+    data = r.json()
+    return data if isinstance(data, dict) else None
+
+
+def _user_current_family(url: str, key: str, user_id: str) -> Optional[dict[str, Any]]:
+    """Returns the family the user currently belongs to (owner or member),
+    or None. Used to enforce 'one family per user' at the API level — note
+    this is intentionally NOT a DB constraint so we can lift it later."""
+    fam, _ = _resolve_family(url, key, user_id)
+    return fam
+
+
+def _expire_stale_pending(url: str, key: str, family_id: str, invited_user_id: str) -> None:
+    """Flip any expired pending invites for (family, user) to status='expired'
+    so the duplicate-invite validation resets and a new invite can be created."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    requests.patch(
+        f"{url}/rest/v1/family_invitations",
+        params={
+            "family_id": f"eq.{family_id}",
+            "invited_user_id": f"eq.{invited_user_id}",
+            "status": "eq.pending",
+            "expires_at": f"lt.{now_iso}",
+        },
+        headers=_sb_headers_json(url, key),
+        json={"status": "expired"},
+        timeout=30,
+    )
+
+
+def _active_pending_invite_for_user(
+    url: str, key: str, family_id: str, invited_user_id: str
+) -> Optional[dict[str, Any]]:
+    now_iso = datetime.now(timezone.utc).isoformat()
+    r = requests.get(
+        f"{url}/rest/v1/family_invitations",
+        params={
+            "family_id": f"eq.{family_id}",
+            "invited_user_id": f"eq.{invited_user_id}",
+            "status": "eq.pending",
+            "expires_at": f"gt.{now_iso}",
+            "select": "id,expires_at,created_at",
+            "limit": "1",
+        },
+        headers={"Authorization": f"Bearer {key}", "apikey": key},
+        timeout=30,
+    )
+    if r.status_code != 200:
+        return None
+    rows = r.json()
+    if isinstance(rows, list) and rows:
+        return rows[0]
+    return None
+
+
+def _inviter_display_name(url: str, key: str, user_id: str) -> str:
+    u = _admin_user_by_id(url, key, user_id)
+    if not u:
+        return "A friend"
+    em = (u.get("email") or "").strip().lower()
+    return _display_name_from_auth_user(u, em)
 
 
 def _is_admin(url: str, key: str, user_id: str, family_id: str) -> bool:
@@ -340,28 +439,37 @@ def _render_template(filename: str, replacements: dict[str, str]) -> str:
     return out
 
 
-def _send_resend_invite(
+def _send_resend_app_store_email(
     to_email: str,
     family_name: str,
-    invite_link: str,
+    inviter_name: str,
 ) -> tuple[bool, Optional[str]]:
+    """Marketing-style nudge: 'X invited you to MomentoVino — download the app'.
+    The email no longer carries a token / accept link; the actual invitation
+    happens once the recipient signs up and the inviter sends a username
+    invite from inside the app."""
     load_env()
     api_key = os.environ.get("RESEND_API_KEY")
     from_email = os.environ.get("RESEND_FROM_EMAIL")
     skip = os.environ.get("RESEND_SKIP_SEND", "").lower() in ("1", "true", "yes")
     if skip or not api_key or not from_email:
-        print(f"[family invite] RESEND_SKIP or missing key — link for {to_email}: {invite_link}")
+        print(f"[family invite] RESEND_SKIP or missing key — would email {to_email} for {family_name}")
         return True, None
     safe_family = html_lib.escape(family_name, quote=True)
-    safe_link = html_lib.escape(invite_link, quote=True)
+    safe_inviter = html_lib.escape(inviter_name, quote=True)
     body_html = _render_template(
         "family-invite.html",
-        {"FAMILY_NAME": safe_family, "INVITE_LINK": safe_link},
+        {
+            "FAMILY_NAME": safe_family,
+            "INVITER_NAME": safe_inviter,
+            "IOS_LINK": APP_STORE_URL_IOS,
+            "ANDROID_LINK": APP_STORE_URL_ANDROID,
+        },
     )
     payload = {
         "from": from_email,
         "to": [to_email],
-        "subject": f"You're invited to {family_name} on MomentoVino",
+        "subject": f"{inviter_name} invited you to MomentoVino",
         "html": body_html,
     }
     r = requests.post(
@@ -393,6 +501,57 @@ class handler(BaseHTTPRequestHandler):
             send_json(self, err[0], err[1])
             return
         url, key = supabase_config()
+
+        if path_only == "/api/family/my-invitations":
+            now_iso = datetime.now(timezone.utc).isoformat()
+            r = requests.get(
+                f"{url}/rest/v1/family_invitations",
+                params={
+                    "invited_user_id": f"eq.{uid}",
+                    "status": "eq.pending",
+                    "expires_at": f"gt.{now_iso}",
+                    "select": "id,family_id,invited_by,expires_at,created_at",
+                    "order": "created_at.desc",
+                },
+                headers={"Authorization": f"Bearer {key}", "apikey": key},
+                timeout=30,
+            )
+            if r.status_code != 200:
+                send_json(self, 500, {"error": "Failed to load invitations"})
+                return
+            rows = r.json() if isinstance(r.json(), list) else []
+            out: list[dict[str, Any]] = []
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                fid = row.get("family_id")
+                fam_row: Optional[dict[str, Any]] = None
+                if fid:
+                    fr = requests.get(
+                        f"{url}/rest/v1/families",
+                        params={"id": f"eq.{fid}", "select": "id,name,description,photo_url", "limit": "1"},
+                        headers={"Authorization": f"Bearer {key}", "apikey": key},
+                        timeout=30,
+                    )
+                    if fr.status_code == 200:
+                        body = fr.json()
+                        if isinstance(body, list) and body:
+                            fam_row = body[0]
+                inviter_uid = row.get("invited_by")
+                inviter_name = (
+                    _inviter_display_name(url, key, str(inviter_uid)) if inviter_uid else "A friend"
+                )
+                out.append(
+                    {
+                        "id": row["id"],
+                        "family": fam_row,
+                        "inviter_name": inviter_name,
+                        "expires_at": row["expires_at"],
+                        "created_at": row["created_at"],
+                    }
+                )
+            send_json(self, 200, {"invitations": out})
+            return
 
         if path_only == "/api/family/members/search":
             q = (parse_qs(parsed.query).get("q") or [""])[0].strip()
@@ -454,12 +613,20 @@ class handler(BaseHTTPRequestHandler):
 
         if path == "/api/family/invitations/accept":
             body = _read_json(self)
+            inv_id = (body.get("id") or "").strip()
             token = (body.get("token") or "").strip()
-            if not token:
-                send_json(self, 400, {"error": "Missing token"})
+            if not inv_id and not token:
+                send_json(self, 400, {"error": "Missing invitation id"})
                 return
+            params = (
+                {"id": f"eq.{inv_id}"}
+                if inv_id
+                else {"token": f"eq.{token}"}
+            )
+            params.update({"status": "eq.pending", "select": "*"})
             r = requests.get(
-                f"{url}/rest/v1/family_invitations?token=eq.{token}&status=eq.pending&select=*",
+                f"{url}/rest/v1/family_invitations",
+                params=params,
                 headers={"Authorization": f"Bearer {key}", "apikey": key},
                 timeout=30,
             )
@@ -476,30 +643,47 @@ class handler(BaseHTTPRequestHandler):
                 try:
                     exp_dt = datetime.fromisoformat(exp.replace("Z", "+00:00"))
                     if exp_dt < datetime.now(timezone.utc):
+                        requests.patch(
+                            f"{url}/rest/v1/family_invitations?id=eq.{inv['id']}",
+                            headers=_sb_headers_json(url, key),
+                            json={"status": "expired"},
+                            timeout=30,
+                        )
                         send_json(self, 400, {"error": "Invitation expired"})
                         return
                 except ValueError:
                     pass
-            inv_email = (inv.get("email") or "").strip().lower()
-            if not email or inv_email != email:
-                send_json(self, 403, {"error": "Signed-in email must match the invitation"})
+
+            invited_uid = inv.get("invited_user_id")
+            if invited_uid:
+                if str(invited_uid) != str(uid):
+                    send_json(self, 403, {"error": "This invitation is for a different account"})
+                    return
+            else:
+                inv_email = (inv.get("email") or "").strip().lower()
+                if not email or inv_email != email:
+                    send_json(self, 403, {"error": "Signed-in email must match the invitation"})
+                    return
+
+            existing_fam = _user_current_family(url, key, uid)
+            if existing_fam and str(existing_fam.get("id")) == str(inv["family_id"]):
+                send_json(self, 200, {"ok": True, "alreadyMember": True, "familyId": inv["family_id"]})
                 return
-            fid = inv["family_id"]
-            dup = requests.get(
-                (
-                    f"{url}/rest/v1/family_members?family_id=eq.{fid}"
-                    f"&user_id=eq.{uid}&select=id&limit=1"
-                ),
-                headers={"Authorization": f"Bearer {key}", "apikey": key},
-                timeout=30,
-            )
-            if dup.status_code == 200 and isinstance(dup.json(), list) and dup.json():
-                send_json(self, 200, {"ok": True, "alreadyMember": True})
+            if existing_fam:
+                send_json(
+                    self,
+                    409,
+                    {
+                        "error": "You're already in a family. Leave it first to accept a new invitation.",
+                        "code": "already_in_family",
+                    },
+                )
                 return
+
             ins = requests.post(
                 f"{url}/rest/v1/family_members",
                 headers={**_sb_headers_json(url, key), "Prefer": "return=representation"},
-                json={"family_id": fid, "user_id": uid, "role": "member"},
+                json={"family_id": inv["family_id"], "user_id": uid, "role": "member"},
                 timeout=30,
             )
             if ins.status_code not in (200, 201):
@@ -511,7 +695,137 @@ class handler(BaseHTTPRequestHandler):
                 json={"status": "accepted"},
                 timeout=30,
             )
-            send_json(self, 200, {"ok": True, "familyId": fid})
+            send_json(self, 200, {"ok": True, "familyId": inv["family_id"]})
+            return
+
+        if path == "/api/family/invitations/decline":
+            body = _read_json(self)
+            inv_id = (body.get("id") or "").strip()
+            if not inv_id:
+                send_json(self, 400, {"error": "Missing invitation id"})
+                return
+            r = requests.get(
+                f"{url}/rest/v1/family_invitations",
+                params={"id": f"eq.{inv_id}", "select": "id,invited_user_id,status"},
+                headers={"Authorization": f"Bearer {key}", "apikey": key},
+                timeout=30,
+            )
+            if r.status_code != 200:
+                send_json(self, 500, {"error": "Failed to load invitation"})
+                return
+            rows = r.json()
+            if not isinstance(rows, list) or not rows:
+                send_json(self, 404, {"error": "Invitation not found"})
+                return
+            inv = rows[0]
+            if str(inv.get("invited_user_id") or "") != str(uid):
+                send_json(self, 403, {"error": "This invitation is for a different account"})
+                return
+            if inv.get("status") != "pending":
+                send_json(self, 409, {"error": "Invitation is no longer pending"})
+                return
+            upd = requests.patch(
+                f"{url}/rest/v1/family_invitations?id=eq.{inv_id}",
+                headers=_sb_headers_json(url, key),
+                json={"status": "declined"},
+                timeout=30,
+            )
+            if upd.status_code not in (200, 204):
+                send_json(self, 500, {"error": upd.text or "Failed to decline invitation"})
+                return
+            send_json(self, 200, {"ok": True})
+            return
+
+        if path == "/api/family/invitations/by-username":
+            body = _read_json(self)
+            target_uid = (body.get("user_id") or "").strip()
+            if not target_uid:
+                send_json(self, 400, {"error": "user_id is required"})
+                return
+            if target_uid == uid:
+                send_json(self, 400, {"error": "You can't invite yourself"})
+                return
+
+            fam, _ = _resolve_family(url, key, uid)
+            if not fam:
+                send_json(self, 404, {"error": "No family found — create a family first"})
+                return
+            fid = fam["id"]
+            if not _is_admin(url, key, uid, fid):
+                send_json(self, 403, {"error": "Only family admins can invite members"})
+                return
+
+            target_user = _admin_user_by_id(url, key, target_uid)
+            if not target_user:
+                send_json(self, 404, {"error": "User not found"})
+                return
+
+            already_member = requests.get(
+                (
+                    f"{url}/rest/v1/family_members?family_id=eq.{fid}"
+                    f"&user_id=eq.{target_uid}&select=id&limit=1"
+                ),
+                headers={"Authorization": f"Bearer {key}", "apikey": key},
+                timeout=30,
+            )
+            if (
+                already_member.status_code == 200
+                and isinstance(already_member.json(), list)
+                and already_member.json()
+            ):
+                send_json(
+                    self,
+                    409,
+                    {"error": "This user is already a member of your family", "code": "already_member"},
+                )
+                return
+
+            target_fam = _user_current_family(url, key, target_uid)
+            if target_fam:
+                send_json(
+                    self,
+                    409,
+                    {
+                        "error": "This user already belongs to another family.",
+                        "code": "target_already_in_family",
+                    },
+                )
+                return
+
+            _expire_stale_pending(url, key, fid, target_uid)
+            existing = _active_pending_invite_for_user(url, key, fid, target_uid)
+            if existing:
+                send_json(
+                    self,
+                    409,
+                    {
+                        "error": "You've already invited this user. Waiting for their response.",
+                        "code": "already_invited",
+                        "invitation": existing,
+                    },
+                )
+                return
+
+            token = str(uuid.uuid4())
+            expires = (datetime.now(timezone.utc) + timedelta(days=INVITE_VALID_DAYS)).isoformat()
+            ins_inv = requests.post(
+                f"{url}/rest/v1/family_invitations",
+                headers={**_sb_headers_json(url, key), "Prefer": "return=representation"},
+                json={
+                    "family_id": fid,
+                    "invited_user_id": target_uid,
+                    "invited_by": uid,
+                    "token": token,
+                    "expires_at": expires,
+                    "status": "pending",
+                },
+                timeout=30,
+            )
+            if ins_inv.status_code not in (200, 201):
+                send_json(self, 500, {"error": ins_inv.text or "Failed to create invitation"})
+                return
+            inv_row = ins_inv.json()[0] if isinstance(ins_inv.json(), list) else ins_inv.json()
+            send_json(self, 201, {"invited": True, "invitation": inv_row})
             return
 
         if path == "/api/family/members":
@@ -534,81 +848,35 @@ class handler(BaseHTTPRequestHandler):
                 send_json(self, 403, {"error": "Only family admins can invite members"})
                 return
 
+            # Email invites are now an App Store nudge only — they don't add
+            # the recipient to the family and they aren't persisted. If the
+            # email already belongs to a MomentoVino account, we redirect the
+            # admin to the username search so the recipient can consent.
             target_uid = _resolve_auth_user_id_by_email(url, key, email_norm)
             if target_uid:
-                if target_uid == uid:
-                    send_json(self, 400, {"error": "You are already in this family"})
-                    return
-                ex = requests.get(
-                    (
-                        f"{url}/rest/v1/family_members?family_id=eq.{fid}"
-                        f"&user_id=eq.{target_uid}&select=id&limit=1"
-                    ),
-                    headers={"Authorization": f"Bearer {key}", "apikey": key},
-                    timeout=30,
+                send_json(
+                    self,
+                    409,
+                    {
+                        "error": (
+                            "This email already has a MomentoVino account. Ask them for their "
+                            "username and invite them through the username search."
+                        ),
+                        "code": "email_already_registered",
+                    },
                 )
-                if ex.status_code == 200 and isinstance(ex.json(), list) and ex.json():
-                    send_json(self, 409, {"error": "This user is already a member"})
-                    return
-                ins = requests.post(
-                    f"{url}/rest/v1/family_members",
-                    headers={**_sb_headers_json(url, key), "Prefer": "return=representation"},
-                    json={"family_id": fid, "user_id": target_uid, "role": "member"},
-                    timeout=30,
-                )
-                if ins.status_code not in (200, 201):
-                    send_json(self, 500, {"error": ins.text or "Failed to add member"})
-                    return
-                row = ins.json()[0] if isinstance(ins.json(), list) else ins.json()
-                send_json(self, 201, {"addedMember": True, "member": row})
                 return
 
-            pend = requests.get(
-                f"{url}/rest/v1/family_invitations",
-                params={
-                    "family_id": f"eq.{fid}",
-                    "email": f"eq.{email_norm}",
-                    "status": "eq.pending",
-                    "select": "id",
-                    "limit": "1",
-                },
-                headers={"Authorization": f"Bearer {key}", "apikey": key},
-                timeout=30,
+            inviter_name = _inviter_display_name(url, key, uid)
+            ok, err_msg = _send_resend_app_store_email(
+                email_norm,
+                fam.get("name") or "MomentoVino",
+                inviter_name,
             )
-            if pend.status_code == 200 and isinstance(pend.json(), list) and pend.json():
-                send_json(self, 409, {"error": "An invitation is already pending for this email"})
-                return
-
-            token = str(uuid.uuid4())
-            expires = (datetime.now(timezone.utc) + timedelta(days=INVITE_VALID_DAYS)).isoformat()
-            ins_inv = requests.post(
-                f"{url}/rest/v1/family_invitations",
-                headers={**_sb_headers_json(url, key), "Prefer": "return=representation"},
-                json={
-                    "family_id": fid,
-                    "email": email_norm,
-                    "invited_by": uid,
-                    "token": token,
-                    "expires_at": expires,
-                    "status": "pending",
-                },
-                timeout=30,
-            )
-            if ins_inv.status_code not in (200, 201):
-                send_json(self, 500, {"error": ins_inv.text or "Failed to create invitation"})
-                return
-            inv_row = ins_inv.json()[0] if isinstance(ins_inv.json(), list) else ins_inv.json()
-            load_env()
-            base = (os.environ.get("PUBLIC_APP_URL") or os.environ.get("NEXT_PUBLIC_APP_URL") or "").rstrip("/")
-            if base:
-                invite_link = f"{base}/family/invite?token={token}"
-            else:
-                invite_link = f"momentovino://family/invite?token={token}"
-            ok, err_msg = _send_resend_invite(email_norm, fam.get("name") or "MomentoVino", invite_link)
             if not ok:
-                send_json(self, 502, {"error": f"Invitation saved but email failed: {err_msg}"})
+                send_json(self, 502, {"error": f"Email failed to send: {err_msg}"})
                 return
-            send_json(self, 201, {"invited": True, "invitation": inv_row})
+            send_json(self, 200, {"emailed": True, "email": email_norm})
             return
 
         if path == "/api/family":
@@ -626,8 +894,8 @@ class handler(BaseHTTPRequestHandler):
             if photo_url is not None:
                 ps = str(photo_url).strip()
                 photo_out = ps if ps else None
-            if _owned_family(url, key, uid):
-                send_json(self, 409, {"error": "You already have a family"})
+            if _user_current_family(url, key, uid):
+                send_json(self, 409, {"error": "You already belong to a family"})
                 return
             row: dict[str, Any] = {"name": name, "owner_id": uid}
             if desc is not None:

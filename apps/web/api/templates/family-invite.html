@@ -6,7 +6,7 @@
     <meta name="x-apple-disable-message-reformatting" />
     <meta name="color-scheme" content="light only" />
     <meta name="supported-color-schemes" content="light only" />
-    <title>You're invited to {{FAMILY_NAME}} — MomentoVino</title>
+    <title>{{INVITER_NAME}} invited you to MomentoVino</title>
     <style>
       @media (prefers-color-scheme: dark) {
         body, table, td { background-color: #F5EBE0 !important; color: #3F2A2E !important; }
@@ -23,6 +23,7 @@
       @media (max-width: 600px) {
         .card { padding: 28px 22px !important; border-radius: 18px !important; }
         .h1 { font-size: 26px !important; line-height: 32px !important; }
+        .store-row td { display: block !important; width: 100% !important; padding: 6px 0 !important; }
       }
     </style>
   </head>
@@ -41,33 +42,42 @@
             <tr>
               <td class="card" style="background-color:#FFFFFF;border-radius:22px;padding:36px 32px;border:1px solid #E8DDD4;">
                 <h1 class="h1" style="margin:0 0 12px 0;font-family:'DM Serif Display','Playfair Display',Georgia,serif;font-weight:400;font-size:30px;line-height:36px;color:#722F37;">
-                  You're invited to {{FAMILY_NAME}}.
+                  {{INVITER_NAME}} wants to share wine moments with you.
                 </h1>
                 <p style="margin:0 0 20px 0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:15px;line-height:22px;color:#3F2A2E;">
-                  Someone you know wants to share their wine moments with you on MomentoVino. Accept the invite to join the <strong style="color:#722F37;">{{FAMILY_NAME}}</strong> family — taste, remember, and travel through wine together.
+                  They're building <strong style="color:#722F37;">{{FAMILY_NAME}}</strong> on MomentoVino — a private space to taste, remember, and travel through wine together. Download the app to create your account, then ask {{INVITER_NAME}} to invite you by your username so you can join the family.
                 </p>
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px 0;">
-                  <tr>
-                    <td align="center" bgcolor="#722F37" style="border-radius:50px;">
-                      <a class="btn" href="{{INVITE_LINK}}"
-                         style="display:inline-block;padding:16px 28px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;border-radius:50px;background-color:#722F37;">
-                        Accept invitation
-                      </a>
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 20px 0;width:100%;">
+                  <tr class="store-row">
+                    <td align="center" style="padding-right:8px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td align="center" bgcolor="#722F37" style="border-radius:50px;">
+                            <a class="btn" href="{{IOS_LINK}}"
+                               style="display:inline-block;padding:14px 24px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;border-radius:50px;background-color:#722F37;">
+                              Download for iPhone
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td align="center" style="padding-left:8px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td align="center" bgcolor="#FFFFFF" style="border-radius:50px;border:1.5px solid #722F37;">
+                            <a class="btn" href="{{ANDROID_LINK}}"
+                               style="display:inline-block;padding:14px 24px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:600;color:#722F37;border-radius:50px;">
+                              Get it on Android
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
                     </td>
                   </tr>
                 </table>
-                <p style="margin:0 0 6px 0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:20px;color:#6E5A5E;">
-                  Or paste this link into your browser:
-                </p>
-                <p style="margin:0 0 24px 0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:20px;word-break:break-all;">
-                  <a href="{{INVITE_LINK}}" style="color:#722F37;">{{INVITE_LINK}}</a>
-                </p>
                 <hr style="border:none;border-top:1px solid #E8DDD4;margin:24px 0;" />
-                <p style="margin:0 0 6px 0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:12px;line-height:18px;color:#6E5A5E;">
-                  This invitation expires in 7 days.
-                </p>
                 <p style="margin:0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:12px;line-height:18px;color:#6E5A5E;">
-                  If you didn't expect this invite, you can safely ignore this email — nothing will happen.
+                  If you weren't expecting this, you can safely ignore this email — nothing happens unless you sign up and {{INVITER_NAME}} invites you again from inside the app.
                 </p>
               </td>
             </tr>

@@ -47,31 +47,34 @@ export type Database = {
       family_invitations: {
         Row: {
           created_at: string
-          email: string
+          email: string | null
           expires_at: string
           family_id: string
           id: string
           invited_by: string
+          invited_user_id: string | null
           status: string
           token: string
         }
         Insert: {
           created_at?: string
-          email: string
+          email?: string | null
           expires_at: string
           family_id: string
           id?: string
           invited_by: string
+          invited_user_id?: string | null
           status?: string
           token: string
         }
         Update: {
           created_at?: string
-          email?: string
+          email?: string | null
           expires_at?: string
           family_id?: string
           id?: string
           invited_by?: string
+          invited_user_id?: string | null
           status?: string
           token?: string
         }
@@ -320,24 +323,73 @@ export type Database = {
     Views: {
       user_entitlement: {
         Row: {
-          is_pro: boolean
+          is_pro: boolean | null
           pro_event_at: string | null
           pro_expires_at: string | null
-          pro_in_billing_retry: boolean
-          pro_in_grace_period: boolean
+          pro_in_billing_retry: boolean | null
+          pro_in_grace_period: boolean | null
           pro_period_type: string | null
           pro_product_id: string | null
           pro_store: string | null
-          pro_will_renew: boolean
-          user_id: string
+          pro_will_renew: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          is_pro?: never
+          pro_event_at?: string | null
+          pro_expires_at?: string | null
+          pro_in_billing_retry?: boolean | null
+          pro_in_grace_period?: boolean | null
+          pro_period_type?: string | null
+          pro_product_id?: string | null
+          pro_store?: string | null
+          pro_will_renew?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          is_pro?: never
+          pro_event_at?: string | null
+          pro_expires_at?: string | null
+          pro_in_billing_retry?: boolean | null
+          pro_in_grace_period?: boolean | null
+          pro_period_type?: string | null
+          pro_product_id?: string | null
+          pro_store?: string | null
+          pro_will_renew?: boolean | null
+          user_id?: string | null
         }
         Relationships: []
       }
     }
     Functions: {
+      apply_revenuecat_event: {
+        Args: {
+          p_active: boolean
+          p_billing_retry: boolean
+          p_environment: string
+          p_event_at: string
+          p_expires_at: string
+          p_grace: boolean
+          p_original_tx_id: string
+          p_period_type: string
+          p_product_id: string
+          p_store: string
+          p_user_id: string
+          p_will_renew: boolean
+        }
+        Returns: undefined
+      }
       claim_username: { Args: { desired: string }; Returns: string }
       find_user_id_by_email: { Args: { lookup_email: string }; Returns: string }
       set_username: { Args: { new_username: string }; Returns: string }
+      transfer_revenuecat_entitlement: {
+        Args: {
+          p_event_at: string
+          p_from_user_id: string
+          p_to_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

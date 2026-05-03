@@ -27,9 +27,14 @@ export type FamilyMemberRow = {
   email?: string | null
 }
 
+/** Pending invitations as the admin sees them on the family dashboard.
+ * `email` is filled both for legacy email-token rows and (resolved) for
+ * username-invite rows; `display_name` is only present for username invites. */
 export type FamilyInvitationRow = {
   id: string
-  email: string
+  email: string | null
+  invited_user_id?: string | null
+  display_name?: string | null
   expires_at: string
   created_at: string
 }
@@ -39,6 +44,20 @@ export type FamilyDashboard = {
   members: FamilyMemberRow[]
   pendingInvitations: FamilyInvitationRow[]
   isOwner: boolean
+}
+
+/** Pending invitation as the recipient sees it on their own family screen. */
+export type IncomingInvitation = {
+  id: string
+  family: {
+    id: string
+    name: string
+    description: string | null
+    photo_url: string | null
+  } | null
+  inviter_name: string
+  expires_at: string
+  created_at: string
 }
 
 /** Match from GET /family/members/search (profile-style card on invite screen). */
@@ -128,10 +147,14 @@ export async function searchFamilyInviteTargets(query: string): Promise<{ matche
   return res.json() as Promise<{ matches: FamilyInviteUserMatch[] }>
 }
 
-export async function inviteMemberByEmail(email: string): Promise<
-  | { addedMember: true; member: FamilyMemberRow }
-  | { invited: true; invitation: { id: string; email: string; expires_at: string; created_at: string } }
-> {
+/** Email path: an App Store nudge — does NOT add the recipient to the family
+ * and does NOT persist a row. If the email is already a MomentoVino account,
+ * the API returns 409 with `code: 'email_already_registered'`, which we
+ * surface as `{ existingUser: true; message }` so the caller can show a
+ * friendly "ask for their username" dialog instead of throwing. */
+export async function inviteMemberByEmail(
+  email: string,
+): Promise<{ emailed: true; email: string } | { existingUser: true; message: string }> {
   const token = await getAccessToken()
   const res = await fetch(`${getApiBaseUrl()}/family/members`, {
     method: 'POST',
@@ -141,17 +164,113 @@ export async function inviteMemberByEmail(email: string): Promise<
     },
     body: JSON.stringify({ email }),
   })
+  if (res.status === 409) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string; code?: string }
+    if (body.code === 'email_already_registered') {
+      return {
+        existingUser: true,
+        message:
+          body.error ??
+          'This email already has a MomentoVino account. Ask them for their username and invite them through the username search.',
+      }
+    }
+    throw new Error(body.error ?? `Invite failed (${res.status})`)
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new Error((body as { error?: string }).error ?? `Invite failed (${res.status})`)
   }
-  return res.json() as Promise<
-    | { addedMember: true; member: FamilyMemberRow }
-    | { invited: true; invitation: { id: string; email: string; expires_at: string; created_at: string } }
-  >
+  return res.json() as Promise<{ emailed: true; email: string }>
 }
 
-export async function acceptFamilyInvitation(token: string): Promise<{ ok: boolean; familyId?: string }> {
+/** Username path: persists a real invitation that the recipient can
+ * accept/decline from inside the app. Surfaces friendly results for
+ * "already invited" and "user already in another family". */
+export type InviteByUsernameResult =
+  | {
+      invited: true
+      invitation: {
+        id: string
+        family_id: string
+        invited_user_id: string
+        expires_at: string
+        created_at: string
+      }
+    }
+  | { alreadyInvited: true; message: string; expires_at?: string }
+  | { targetAlreadyInFamily: true; message: string }
+  | { alreadyMember: true; message: string }
+
+export async function inviteFamilyMemberByUsername(userId: string): Promise<InviteByUsernameResult> {
+  const access = await getAccessToken()
+  const res = await fetch(`${getApiBaseUrl()}/family/invitations/by-username`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${access}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ user_id: userId }),
+  })
+  if (res.status === 409) {
+    const body = (await res.json().catch(() => ({}))) as {
+      error?: string
+      code?: string
+      invitation?: { expires_at?: string }
+    }
+    if (body.code === 'already_invited') {
+      return {
+        alreadyInvited: true,
+        message: body.error ?? "You've already invited this user. Waiting for their response.",
+        expires_at: body.invitation?.expires_at,
+      }
+    }
+    if (body.code === 'target_already_in_family') {
+      return {
+        targetAlreadyInFamily: true,
+        message: body.error ?? 'This user already belongs to another family.',
+      }
+    }
+    if (body.code === 'already_member') {
+      return {
+        alreadyMember: true,
+        message: body.error ?? 'This user is already a member of your family.',
+      }
+    }
+    throw new Error(body.error ?? `Invite failed (${res.status})`)
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error((body as { error?: string }).error ?? `Invite failed (${res.status})`)
+  }
+  return res.json() as Promise<{
+    invited: true
+    invitation: {
+      id: string
+      family_id: string
+      invited_user_id: string
+      expires_at: string
+      created_at: string
+    }
+  }>
+}
+
+export async function listMyInvitations(): Promise<{ invitations: IncomingInvitation[] }> {
+  const access = await getAccessToken()
+  const res = await fetch(`${getApiBaseUrl()}/family/my-invitations`, {
+    headers: { Authorization: `Bearer ${access}` },
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error((body as { error?: string }).error ?? `Failed to load invitations (${res.status})`)
+  }
+  return res.json() as Promise<{ invitations: IncomingInvitation[] }>
+}
+
+export type AcceptInvitationResult =
+  | { ok: true; familyId: string; alreadyMember?: boolean }
+  | { alreadyInOtherFamily: true; message: string }
+
+export async function acceptFamilyInvitation(invitationId: string): Promise<AcceptInvitationResult> {
   const access = await getAccessToken()
   const res = await fetch(`${getApiBaseUrl()}/family/invitations/accept`, {
     method: 'POST',
@@ -159,11 +278,44 @@ export async function acceptFamilyInvitation(token: string): Promise<{ ok: boole
       Authorization: `Bearer ${access}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ id: invitationId }),
   })
+  if (res.status === 409) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string; code?: string }
+    if (body.code === 'already_in_family') {
+      return {
+        alreadyInOtherFamily: true,
+        message:
+          body.error ?? "You're already in a family. Leave it first to accept a new invitation.",
+      }
+    }
+    throw new Error(body.error ?? `Could not accept invite (${res.status})`)
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new Error((body as { error?: string }).error ?? `Could not accept invite (${res.status})`)
   }
-  return res.json() as Promise<{ ok: boolean; familyId?: string; alreadyMember?: boolean }>
+  const body = (await res.json()) as { ok: true; familyId?: string; alreadyMember?: boolean }
+  return {
+    ok: true,
+    familyId: body.familyId ?? '',
+    alreadyMember: body.alreadyMember,
+  }
+}
+
+export async function declineFamilyInvitation(invitationId: string): Promise<{ ok: true }> {
+  const access = await getAccessToken()
+  const res = await fetch(`${getApiBaseUrl()}/family/invitations/decline`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${access}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id: invitationId }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error((body as { error?: string }).error ?? `Could not decline invite (${res.status})`)
+  }
+  return { ok: true }
 }

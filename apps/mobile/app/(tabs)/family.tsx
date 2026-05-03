@@ -24,8 +24,14 @@ import * as ImagePicker from 'expo-image-picker'
 import { StatusBar } from 'expo-status-bar'
 import { router, useFocusEffect } from 'expo-router'
 
-import type { FamilyMemberRow } from '../../features/family/api'
-import { useFamily, useUpdateFamily } from '../../features/family/hooks'
+import type { FamilyMemberRow, IncomingInvitation } from '../../features/family/api'
+import {
+  useAcceptInvitation,
+  useDeclineInvitation,
+  useFamily,
+  useMyInvitations,
+  useUpdateFamily,
+} from '../../features/family/hooks'
 import { uploadFamilyCoverPhoto } from '../../features/family/cover-upload'
 import { supabase } from '../../lib/supabase'
 
@@ -37,6 +43,56 @@ const CTA_BG = '#5C4033'
 const DESC_MAX = 80
 /** Letterboxing inside the preview card: black with readable opacity. */
 const COVER_PREVIEW_LETTERBOX = 'rgba(0,0,0,0.5)'
+
+function IncomingInvitationCard({
+  invitation,
+  onAccept,
+  onDecline,
+  busy,
+}: {
+  invitation: IncomingInvitation
+  onAccept: () => void
+  onDecline: () => void
+  busy: boolean
+}) {
+  const familyName = invitation.family?.name ?? 'a family'
+  return (
+    <View style={styles.invitationCard}>
+      <View style={styles.invitationIconWrap}>
+        <Ionicons name="mail-open-outline" size={22} color={WINE} />
+      </View>
+      <Text style={styles.invitationTitle}>You're invited to {familyName}</Text>
+      <Text style={styles.invitationSubtitle}>
+        {invitation.inviter_name} invited you to join their family on MomentoVino.
+      </Text>
+      {invitation.family?.description ? (
+        <Text style={styles.invitationDescription}>"{invitation.family.description}"</Text>
+      ) : null}
+      <View style={styles.invitationActions}>
+        <TouchableOpacity
+          style={[styles.invitationBtn, styles.invitationDeclineBtn, busy && styles.invitationBtnDisabled]}
+          onPress={onDecline}
+          disabled={busy}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.invitationDeclineText}>Decline</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.invitationBtn, styles.invitationAcceptBtn, busy && styles.invitationBtnDisabled]}
+          onPress={onAccept}
+          disabled={busy}
+          activeOpacity={0.85}
+        >
+          {busy ? (
+            <ActivityIndicator color="#FFFFFF" size="small" />
+          ) : (
+            <Text style={styles.invitationAcceptText}>Accept</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  )
+}
 
 function EmptyNoFamily({ onCreate }: { onCreate: () => void }) {
   return (
@@ -95,11 +151,16 @@ export default function FamilyScreen() {
     error: familyError,
   } = useFamily()
   const updateFamilyMutation = useUpdateFamily()
+  const { data: incomingData, refetch: refetchIncoming } = useMyInvitations()
+  const acceptInvitationMutation = useAcceptInvitation()
+  const declineInvitationMutation = useDeclineInvitation()
+  const incomingInvitations = incomingData?.invitations ?? []
   const loading = isLoading && !dash
   const refreshing = isFetching && !isLoading
   const loadError =
     familyError instanceof Error ? familyError.message : null
   const [selfId, setSelfId] = useState<string | null>(null)
+  const [pendingInvitationId, setPendingInvitationId] = useState<string | null>(null)
   const [editingDetails, setEditingDetails] = useState(false)
   const [draftName, setDraftName] = useState('')
   const [draftDescription, setDraftDescription] = useState('')
@@ -273,11 +334,57 @@ export default function FamilyScreen() {
     resetCoverPreviewAnims()
     Keyboard.dismiss()
     try {
-      await refetch()
+      await Promise.all([refetch(), refetchIncoming()])
     } catch (e) {
       console.error(e)
     }
-  }, [refetch, resetCoverPreviewAnims])
+  }, [refetch, refetchIncoming, resetCoverPreviewAnims])
+
+  const handleAcceptInvitation = useCallback(
+    async (invitationId: string) => {
+      setPendingInvitationId(invitationId)
+      try {
+        const result = await acceptInvitationMutation.mutateAsync(invitationId)
+        if ('alreadyInOtherFamily' in result && result.alreadyInOtherFamily) {
+          Alert.alert('Already in a family', result.message)
+          return
+        }
+        Alert.alert('Welcome', "You've joined the family.")
+      } catch (e) {
+        Alert.alert('Error', e instanceof Error ? e.message : 'Could not accept invitation')
+      } finally {
+        setPendingInvitationId(null)
+      }
+    },
+    [acceptInvitationMutation],
+  )
+
+  const handleDeclineInvitation = useCallback(
+    (invitationId: string) => {
+      Alert.alert(
+        'Decline invitation?',
+        "You can ask the inviter to send a new one later.",
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Decline',
+            style: 'destructive',
+            onPress: async () => {
+              setPendingInvitationId(invitationId)
+              try {
+                await declineInvitationMutation.mutateAsync(invitationId)
+              } catch (e) {
+                Alert.alert('Error', e instanceof Error ? e.message : 'Could not decline invitation')
+              } finally {
+                setPendingInvitationId(null)
+              }
+            },
+          },
+        ],
+      )
+    },
+    [declineInvitationMutation],
+  )
 
   const hasFamily = Boolean(dash?.family)
   const soloAdmin = hasFamily && Boolean(dash?.isOwner) && (dash?.members.length ?? 0) === 1
@@ -368,7 +475,34 @@ export default function FamilyScreen() {
             <ActivityIndicator size="large" color={WINE} />
           </View>
         ) : !hasFamily ? (
-          <EmptyNoFamily onCreate={() => router.push('/family/create')} />
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.noFamilyScrollContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={WINE} />
+            }
+          >
+            {incomingInvitations.length > 0 ? (
+              <View style={styles.invitationsSection}>
+                <Text style={styles.invitationsHeader}>
+                  {incomingInvitations.length === 1
+                    ? 'You have an invitation'
+                    : `You have ${incomingInvitations.length} invitations`}
+                </Text>
+                {incomingInvitations.map((inv) => (
+                  <IncomingInvitationCard
+                    key={inv.id}
+                    invitation={inv}
+                    onAccept={() => void handleAcceptInvitation(inv.id)}
+                    onDecline={() => handleDeclineInvitation(inv.id)}
+                    busy={pendingInvitationId === inv.id}
+                  />
+                ))}
+              </View>
+            ) : null}
+            <EmptyNoFamily onCreate={() => router.push('/family/create')} />
+          </ScrollView>
         ) : (
           <ScrollView
             style={styles.scrollView}
@@ -519,7 +653,7 @@ export default function FamilyScreen() {
                 <View style={styles.membersList}>
                   {dash!.pendingInvitations.map((inv) => (
                     <View key={inv.id} style={styles.pendingRow}>
-                      <Text style={styles.memberName}>{inv.email}</Text>
+                      <Text style={styles.memberName}>{inv.display_name ?? inv.email ?? '—'}</Text>
                       <Text style={styles.memberMeta}>Expires {new Date(inv.expires_at).toLocaleDateString()}</Text>
                     </View>
                   ))}
@@ -837,6 +971,94 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   pendingRow: { padding: 14 },
+  noFamilyScrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 32,
+  },
+  invitationsSection: {
+    marginBottom: 24,
+  },
+  invitationsHeader: {
+    fontSize: 17,
+    fontFamily: 'DMSans_600SemiBold',
+    color: WINE,
+    marginBottom: 12,
+  },
+  invitationCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  invitationIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F5EBE0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  invitationTitle: {
+    fontSize: 19,
+    fontFamily: 'DMSerifDisplay_400Regular',
+    color: WINE,
+    marginBottom: 6,
+  },
+  invitationSubtitle: {
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    color: INK,
+    lineHeight: 20,
+    marginBottom: 6,
+  },
+  invitationDescription: {
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    color: SUBTLE,
+    fontStyle: 'italic',
+    lineHeight: 20,
+    marginBottom: 6,
+  },
+  invitationActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  invitationBtn: {
+    flex: 1,
+    height: 46,
+    borderRadius: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  invitationAcceptBtn: {
+    backgroundColor: WINE,
+  },
+  invitationAcceptText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontFamily: 'DMSans_600SemiBold',
+  },
+  invitationDeclineBtn: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#D4C4B8',
+  },
+  invitationDeclineText: {
+    color: INK,
+    fontSize: 15,
+    fontFamily: 'DMSans_600SemiBold',
+  },
+  invitationBtnDisabled: {
+    opacity: 0.6,
+  },
   inviteCta: {
     flexDirection: 'row',
     alignItems: 'center',

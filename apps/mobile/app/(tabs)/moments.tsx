@@ -93,7 +93,6 @@ export default function MomentsScreen() {
   const sway = useSharedValue(0)
   const bob = useSharedValue(0)
   const hasAnimatedInRef = useRef(false)
-  const [firstLoadDone, setFirstLoadDone] = useState(false)
   const [dataReady, setDataReady] = useState(false)
   const [globeReady, setGlobeReady] = useState(false)
   const [valuesVisible, setValuesVisible] = useState(false)
@@ -149,13 +148,8 @@ export default function MomentsScreen() {
     })
 
     const revealT = setTimeout(() => setValuesVisible(true), ENTER_DURATION)
-    const doneT = setTimeout(
-      () => setFirstLoadDone(true),
-      ENTER_DURATION + COUNT_DURATION + 100,
-    )
     return () => {
       clearTimeout(revealT)
-      clearTimeout(doneT)
     }
   }, [
     dataReady,
@@ -210,7 +204,6 @@ export default function MomentsScreen() {
     ],
   }))
 
-  const countersAnimate = !firstLoadDone
   const displayCount = (n: number) => (valuesVisible ? n : 0)
 
   return (
@@ -239,7 +232,7 @@ export default function MomentsScreen() {
             <View style={styles.statItem}>
               <AnimatedCounter
                 value={displayCount(stats.momentsCount)}
-                animate={countersAnimate}
+                animate
                 style={styles.statNumber}
               />
               <Text style={styles.statLabel}>Moments</Text>
@@ -248,7 +241,7 @@ export default function MomentsScreen() {
             <View style={styles.statItem}>
               <AnimatedCounter
                 value={displayCount(stats.countriesCount)}
-                animate={countersAnimate}
+                animate
                 style={styles.statNumber}
               />
               <Text style={styles.statLabel}>Countries</Text>
@@ -257,7 +250,7 @@ export default function MomentsScreen() {
             <View style={styles.statItem}>
               <AnimatedCounter
                 value={displayCount(stats.winesCount)}
-                animate={countersAnimate}
+                animate
                 style={styles.statNumber}
               />
               <Text style={styles.statLabel}>Wines</Text>

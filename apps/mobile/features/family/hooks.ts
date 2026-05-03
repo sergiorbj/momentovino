@@ -2,9 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { queryKeys } from '../../lib/query-keys'
 import {
+  acceptFamilyInvitation,
   createFamily,
+  declineFamilyInvitation,
   getFamilyDashboard,
+  inviteFamilyMemberByUsername,
   inviteMemberByEmail,
+  listMyInvitations,
   updateFamily,
   type CreateFamilyInput,
   type UpdateFamilyInput,
@@ -15,6 +19,14 @@ export function useFamily() {
     queryKey: queryKeys.family,
     queryFn: getFamilyDashboard,
     staleTime: 60_000,
+  })
+}
+
+export function useMyInvitations() {
+  return useQuery({
+    queryKey: queryKeys.myInvitations,
+    queryFn: listMyInvitations,
+    staleTime: 30_000,
   })
 }
 
@@ -39,12 +51,44 @@ export function useUpdateFamily() {
   })
 }
 
-export function useInviteMember() {
+export function useInviteMemberByEmail() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (email: string) => inviteMemberByEmail(email),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.family })
+    },
+  })
+}
+
+export function useInviteMemberByUsername() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => inviteFamilyMemberByUsername(userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.family })
+    },
+  })
+}
+
+export function useAcceptInvitation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (invitationId: string) => acceptFamilyInvitation(invitationId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.family })
+      qc.invalidateQueries({ queryKey: queryKeys.myInvitations })
+      qc.invalidateQueries({ queryKey: queryKeys.profile })
+    },
+  })
+}
+
+export function useDeclineInvitation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (invitationId: string) => declineFamilyInvitation(invitationId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.myInvitations })
     },
   })
 }

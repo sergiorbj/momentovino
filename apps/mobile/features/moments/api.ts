@@ -203,6 +203,7 @@ export async function fetchMoments(): Promise<MomentWithWine[]> {
     .from('moments')
     .select('*, wines(name)')
     .order('happened_at', { ascending: false })
+    .order('created_at', { ascending: false })
 
   if (error) throw error
 

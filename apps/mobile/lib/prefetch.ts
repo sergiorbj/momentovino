@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query'
 
 import { fetchEntitlement } from '../features/entitlement/api'
-import { getFamilyDashboard } from '../features/family/api'
+import { getFamilyDashboard, listMyInvitations } from '../features/family/api'
 import {
   countUserWines,
   fetchMomentStats,
@@ -28,6 +28,7 @@ export function prefetchCoreData(queryClient: QueryClient): void {
     queryClient.prefetchQuery({ queryKey: queryKeys.wines(''), queryFn: () => searchWines('') }),
     queryClient.prefetchQuery({ queryKey: queryKeys.winesCount, queryFn: countUserWines }),
     queryClient.prefetchQuery({ queryKey: queryKeys.family, queryFn: getFamilyDashboard }),
+    queryClient.prefetchQuery({ queryKey: queryKeys.myInvitations, queryFn: listMyInvitations }),
   ]
 
   void Promise.allSettled(tasks)

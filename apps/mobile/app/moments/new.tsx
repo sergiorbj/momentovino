@@ -20,8 +20,10 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as ImagePicker from 'expo-image-picker'
 import DateTimePickerModal from 'react-native-modal-datetime-picker'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { createMoment } from '../../features/moments/api'
+import { queryKeys } from '../../lib/query-keys'
 import { takePendingWinePick } from '../../features/moments/wine-picker-handoff'
 import { momentFormSchema, type MomentFormValues, type PhotoInput } from '../../features/moments/schema'
 import { searchLocations, type LocationResult } from '../../features/moments/location-api'
@@ -37,6 +39,7 @@ function todayIso(): string {
 
 export default function NewMomentScreen() {
   const params = useLocalSearchParams<{ wineId?: string; wineName?: string }>()
+  const qc = useQueryClient()
   const [submitting, setSubmitting] = useState(false)
   const [wineLabel, setWineLabel] = useState<string | null>(params.wineName ?? null)
 
@@ -178,6 +181,9 @@ export default function NewMomentScreen() {
     try {
       setSubmitting(true)
       await createMoment(values)
+      qc.invalidateQueries({ queryKey: ['moments'] })
+      qc.invalidateQueries({ queryKey: ['wines'] })
+      qc.invalidateQueries({ queryKey: queryKeys.profile })
       router.back()
     } catch (err) {
       console.error(err)
