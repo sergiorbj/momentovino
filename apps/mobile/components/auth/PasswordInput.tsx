@@ -64,12 +64,13 @@ const styles = StyleSheet.create({
   },
   field: {
     flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingLeft: 14,
     paddingRight: 8,
+    paddingVertical: 14,
     fontSize: 15,
     fontFamily: 'DMSans_500Medium',
     color: INK,
+    letterSpacing: 0,
   },
   eyeHit: {
     paddingHorizontal: 8,

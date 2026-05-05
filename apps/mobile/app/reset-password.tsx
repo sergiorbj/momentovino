@@ -1,31 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { router, useLocalSearchParams } from 'expo-router'
-import * as Linking from 'expo-linking'
+import { Ionicons } from '@expo/vector-icons'
 
 import { PasswordInput } from '../components/auth/PasswordInput'
-import { updatePassword } from '../lib/auth/email'
-import { queryClient } from '../lib/query-client'
 import {
-  getCachedRecoveryUrl,
-  initialLaunchUrlPromise,
-} from '../lib/recovery-url-capture'
+  sendPasswordResetEmail,
+  updatePassword,
+  verifyRecoveryOtp,
+} from '../lib/auth/email'
+import { queryClient } from '../lib/query-client'
 import { ensureAnonymousSession } from '../lib/session'
 import { supabase } from '../lib/supabase'
-
-import type { Session } from '@supabase/supabase-js'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -33,209 +31,102 @@ const SUBTLE = '#6E5A5E'
 const BG = '#F5EBE0'
 const BORDER = '#E8DDD4'
 
-type SessionStatus = 'pending' | 'ready' | 'failed'
+const CODE_LENGTH = 6
 
-/**
- * The recovery email opens this screen via deep link. Supabase appends auth
- * tokens either as a `?code=...` PKCE query param or as a `#access_token=...
- * &refresh_token=...&type=recovery` hash fragment depending on flow type.
- * We support both.
- */
-function parseHash(hash: string): Record<string, string> {
-  const out: Record<string, string> = {}
-  for (const pair of hash.replace(/^#/, '').split('&')) {
-    if (!pair) continue
-    const [k, v = ''] = pair.split('=')
-    out[decodeURIComponent(k)] = decodeURIComponent(v)
-  }
-  return out
-}
-
-function decodeJwtPayload(accessToken: string): Record<string, unknown> | null {
-  try {
-    const body = accessToken.split('.')[1]
-    if (!body) return null
-    const padded = body.replace(/-/g, '+').replace(/_/g, '/')
-    const padLen = (4 - (padded.length % 4)) % 4
-    const json = atob(padded + '='.repeat(padLen))
-    return JSON.parse(json) as Record<string, unknown>
-  } catch {
-    return null
-  }
-}
-
-type RecoveryParams = {
-  code?: string
-  access_token?: string
-  refresh_token?: string
-  type?: string
-}
-
-/**
- * Build a URL the existing `consumeDeepLink` parser can handle from route
- * params (tokens flattened into the path by `recoveryHref` / `<Redirect>`).
- */
-function synthesizeUrlFromParams(p: RecoveryParams): string | null {
-  if (p.code) {
-    return `momentovino://reset-password?code=${encodeURIComponent(p.code)}`
-  }
-  if (p.access_token && p.refresh_token) {
-    const parts = [
-      `access_token=${encodeURIComponent(p.access_token)}`,
-      `refresh_token=${encodeURIComponent(p.refresh_token)}`,
-    ]
-    if (p.type) parts.push(`type=${encodeURIComponent(p.type)}`)
-    return `momentovino://reset-password#${parts.join('&')}`
-  }
-  return null
-}
-
-/** Recovery sessions include `amr` with `{ method: 'recovery' }` (GoTrue). */
-function sessionLooksLikePasswordRecovery(session: Session): boolean {
-  const payload = decodeJwtPayload(session.access_token)
-  if (!payload) return false
-  const amr = payload.amr
-  if (!Array.isArray(amr)) return false
-  return amr.some((entry: unknown) => {
-    if (typeof entry === 'string') return entry === 'recovery'
-    if (entry && typeof entry === 'object' && 'method' in entry) {
-      return (entry as { method?: string }).method === 'recovery'
-    }
-    return false
-  })
-}
+type Step = 'code' | 'password'
 
 function pickParam(v: string | string[] | undefined): string | undefined {
   if (Array.isArray(v)) return v[0]
   return v
 }
 
+/**
+ * Two-step password recovery flow:
+ *  1. user enters the 6-digit OTP from the email -> `verifyRecoveryOtp`
+ *  2. user picks a new password -> `updatePassword`
+ *
+ * No deep links / URL schemes involved. Email previewers and link scanners
+ * cannot consume an OTP, so the code stays valid until expiry.
+ */
 export default function ResetPasswordScreen() {
-  const params = useLocalSearchParams<{
-    code?: string
-    access_token?: string
-    refresh_token?: string
-    type?: string
-  }>()
+  const params = useLocalSearchParams<{ email?: string }>()
+  const initialEmail = pickParam(params.email)?.trim().toLowerCase() ?? ''
 
-  const routeRecovery = useMemo<RecoveryParams>(
-    () => ({
-      code: pickParam(params.code),
-      access_token: pickParam(params.access_token),
-      refresh_token: pickParam(params.refresh_token),
-      type: pickParam(params.type),
-    }),
-    [params.code, params.access_token, params.refresh_token, params.type],
-  )
-  const [sessionStatus, setSessionStatus] = useState<SessionStatus>('pending')
+  const [step, setStep] = useState<Step>('code')
+  const [email, setEmail] = useState(initialEmail)
+  const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const appliedRecoveryFromUrlRef = useRef(false)
+  const [resending, setResending] = useState(false)
 
-  const canSubmit = useMemo(
+  const codeInputRef = useRef<TextInput>(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => codeInputRef.current?.focus(), 200)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const canSubmitCode = useMemo(
+    () => /.+@.+\..+/.test(email) && code.length === CODE_LENGTH && !submitting,
+    [email, code, submitting],
+  )
+
+  const canSubmitPassword = useMemo(
     () =>
       password.length >= 8 &&
       password === confirm &&
-      sessionStatus === 'ready' &&
       !submitting,
-    [password, confirm, sessionStatus, submitting]
+    [password, confirm, submitting],
   )
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function consumeDeepLink(url: string | null) {
-      if (!url) return
-      try {
-        // Drop any session (full account or anonymous) so recovery tokens are
-        // not merged with an existing user — then wipe tab cache from the old user.
-        await supabase.auth.signOut()
-        queryClient.clear()
-
-        const parsed = Linking.parse(url)
-        const code =
-          (parsed.queryParams?.code as string | undefined) ?? null
-        const fragment = url.includes('#') ? url.slice(url.indexOf('#')) : ''
-        const hash = parseHash(fragment)
-
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code)
-          if (error) throw error
-          appliedRecoveryFromUrlRef.current = true
-        } else if (hash.access_token && hash.refresh_token) {
-          const { error } = await supabase.auth.setSession({
-            access_token: hash.access_token,
-            refresh_token: hash.refresh_token,
-          })
-          if (error) throw error
-          appliedRecoveryFromUrlRef.current = true
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setSessionStatus('failed')
-          console.warn('[reset-password] could not establish recovery session', err)
-        }
-      }
-    }
-
-    async function applyRecoverySessionGate() {
-      if (cancelled) return
-      const { data } = await supabase.auth.getSession()
-      if (cancelled) return
-      const sess = data.session
-      if (!sess) {
-        if (!cancelled) setSessionStatus('failed')
+  const onSubmitCode = async () => {
+    if (!canSubmitCode) return
+    setSubmitting(true)
+    try {
+      const outcome = await verifyRecoveryOtp(email, code)
+      if (outcome.kind === 'success') {
+        setStep('password')
         return
       }
-      if (appliedRecoveryFromUrlRef.current || sessionLooksLikePasswordRecovery(sess)) {
-        if (!cancelled) setSessionStatus('ready')
+      if (outcome.kind === 'invalid_code') {
+        Alert.alert(
+          'Invalid or expired code',
+          'Double-check the 6-digit code from the email or request a new one.',
+        )
         return
       }
-      // Opened reset screen while logged in without a recovery link — clear and block.
-      await supabase.auth.signOut()
-      queryClient.clear()
-      try {
-        await ensureAnonymousSession()
-      } catch {
-        // ignore
+      Alert.alert(
+        'Could not verify code',
+        outcome.kind === 'error' ? outcome.message : 'Try again later.',
+      )
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const onResendCode = async () => {
+    if (!/.+@.+\..+/.test(email) || resending) return
+    setResending(true)
+    try {
+      const outcome = await sendPasswordResetEmail(email)
+      if (outcome.kind === 'success') {
+        Alert.alert('New code sent', `Check ${email} for a fresh 6-digit code.`)
+        setCode('')
+        codeInputRef.current?.focus()
+        return
       }
-      if (!cancelled) setSessionStatus('failed')
+      Alert.alert(
+        'Could not resend',
+        outcome.kind === 'error' ? outcome.message : 'Try again in a moment.',
+      )
+    } finally {
+      setResending(false)
     }
+  }
 
-    async function init() {
-      appliedRecoveryFromUrlRef.current = false
-      // Align with the single app-wide cold-start URL (see recovery-url-capture).
-      await initialLaunchUrlPromise
-      const urlForExchange =
-        synthesizeUrlFromParams(routeRecovery) ?? getCachedRecoveryUrl()
-      await consumeDeepLink(urlForExchange)
-      await applyRecoverySessionGate()
-    }
-
-    void init()
-
-    const sub = Linking.addEventListener('url', (ev) => {
-      void (async () => {
-        appliedRecoveryFromUrlRef.current = false
-        await consumeDeepLink(ev.url)
-        await applyRecoverySessionGate()
-      })()
-    })
-
-    return () => {
-      cancelled = true
-      sub.remove()
-    }
-    // The recovery payload is captured at mount via getCachedRecoveryUrl /
-    // route params; further URL events are handled by the addEventListener
-    // above. Re-running the effect when params change would redo signOut +
-    // exchange unnecessarily.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const submit = async () => {
-    if (!canSubmit) return
+  const onSubmitPassword = async () => {
+    if (!canSubmitPassword) return
     setSubmitting(true)
     try {
       const outcome = await updatePassword(password)
@@ -245,9 +136,11 @@ export default function ResetPasswordScreen() {
         try {
           await ensureAnonymousSession()
         } catch {
-          // Guest bootstrap is best-effort; login still works without it until next cold start.
+          // Best-effort guest bootstrap; login will still work without it.
         }
-        router.replace('/login')
+        Alert.alert('Password updated', 'Sign in with your new password.', [
+          { text: 'OK', onPress: () => router.replace('/login') },
+        ])
         return
       }
       Alert.alert(
@@ -259,47 +152,25 @@ export default function ResetPasswordScreen() {
     }
   }
 
-  if (sessionStatus === 'pending') {
-    return (
-      <View style={[styles.container, styles.center]}>
-        <StatusBar style="dark" />
-        <ActivityIndicator color={WINE} />
-      </View>
-    )
-  }
-
-  if (sessionStatus === 'failed') {
-    return (
-      <View style={styles.container}>
-        <StatusBar style="dark" />
-        <SafeAreaView style={styles.safe}>
-          <ScrollView contentContainerStyle={styles.scroll}>
-            <View style={styles.copy}>
-              <Text style={styles.headline}>This link has expired.</Text>
-              <Text style={styles.sub}>
-                Reset links are valid for one hour. Request a new one and we'll send a fresh link
-                to your inbox.
-              </Text>
-            </View>
-          </ScrollView>
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.cta}
-              onPress={() => router.replace('/forgot-password')}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.ctaText}>Send a new link</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
-      </View>
-    )
+  const goBack = () => {
+    if (step === 'password') {
+      setStep('code')
+      return
+    }
+    if (router.canGoBack()) router.back()
+    else router.replace('/login')
   }
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
       <SafeAreaView style={styles.safe}>
+        <View style={styles.topBar}>
+          <TouchableOpacity onPress={goBack} style={styles.backBtn} activeOpacity={0.7}>
+            <Ionicons name="chevron-back" size={26} color={WINE} />
+          </TouchableOpacity>
+        </View>
+
         <KeyboardAvoidingView
           style={styles.kav}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -309,47 +180,118 @@ export default function ResetPasswordScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.copy}>
-              <Text style={styles.headline}>Choose a new password.</Text>
-              <Text style={styles.sub}>
-                At least 8 characters. Use something only you'd remember.
-              </Text>
-            </View>
+            {step === 'code' ? (
+              <>
+                <View style={styles.copy}>
+                  <Text style={styles.headline}>Enter your code.</Text>
+                  <Text style={styles.sub}>
+                    We sent a 6-digit code to{' '}
+                    <Text style={styles.subStrong}>{email || 'your email'}</Text>. It expires shortly.
+                  </Text>
+                </View>
 
-            <View style={styles.form}>
-              <Text style={styles.inputLabel}>New password</Text>
-              <PasswordInput
-                value={password}
-                onChangeText={setPassword}
-                placeholder="At least 8 characters"
-                placeholderTextColor="#B5A6A8"
-                autoComplete="new-password"
-                textContentType="newPassword"
-              />
-              <Text style={styles.inputLabel}>Confirm password</Text>
-              <PasswordInput
-                value={confirm}
-                onChangeText={setConfirm}
-                placeholder="Type it again"
-                placeholderTextColor="#B5A6A8"
-                autoComplete="new-password"
-                textContentType="newPassword"
-              />
-              {confirm.length > 0 && password !== confirm ? (
-                <Text style={styles.errorText}>Passwords don't match.</Text>
-              ) : null}
-            </View>
+                <View style={styles.form}>
+                  {!initialEmail ? (
+                    <>
+                      <Text style={styles.inputLabel}>Email</Text>
+                      <TextInput
+                        style={styles.input}
+                        value={email}
+                        onChangeText={(t) => setEmail(t.trim())}
+                        placeholder="you@example.com"
+                        placeholderTextColor="#B5A6A8"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="email"
+                        textContentType="emailAddress"
+                      />
+                    </>
+                  ) : null}
+
+                  <Text style={styles.inputLabel}>6-digit code</Text>
+                  <TextInput
+                    ref={codeInputRef}
+                    style={[styles.input, styles.codeInput]}
+                    value={code}
+                    onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+                    placeholder="123456"
+                    placeholderTextColor="#B5A6A8"
+                    keyboardType="number-pad"
+                    autoComplete="one-time-code"
+                    textContentType="oneTimeCode"
+                    maxLength={CODE_LENGTH}
+                  />
+
+                  <TouchableOpacity
+                    onPress={onResendCode}
+                    activeOpacity={0.7}
+                    disabled={resending}
+                    style={styles.resendLink}
+                  >
+                    <Text style={styles.resendText}>
+                      {resending ? 'Sending…' : "Didn't get it? Send a new code"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.copy}>
+                  <Text style={styles.headline}>Choose a new password.</Text>
+                  <Text style={styles.sub}>
+                    At least 8 characters. Use something only you'd remember.
+                  </Text>
+                </View>
+
+                <View style={styles.form}>
+                  <Text style={styles.inputLabel}>New password</Text>
+                  <PasswordInput
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="Min. 8 characters"
+                    placeholderTextColor="#B5A6A8"
+                    autoComplete="new-password"
+                    textContentType="password"
+                    passwordRules="minlength: 8;"
+                  />
+                  <Text style={styles.inputLabel}>Confirm password</Text>
+                  <PasswordInput
+                    value={confirm}
+                    onChangeText={setConfirm}
+                    placeholder="Type it again"
+                    placeholderTextColor="#B5A6A8"
+                    autoComplete="off"
+                    textContentType="password"
+                  />
+                  {confirm.length > 0 && password !== confirm ? (
+                    <Text style={styles.errorText}>Passwords don't match.</Text>
+                  ) : null}
+                </View>
+              </>
+            )}
           </ScrollView>
 
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={[styles.cta, !canSubmit && styles.ctaDisabled]}
-              onPress={submit}
-              disabled={!canSubmit}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.ctaText}>{submitting ? 'Updating…' : 'Update password'}</Text>
-            </TouchableOpacity>
+            {step === 'code' ? (
+              <TouchableOpacity
+                style={[styles.cta, !canSubmitCode && styles.ctaDisabled]}
+                onPress={onSubmitCode}
+                disabled={!canSubmitCode}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.ctaText}>{submitting ? 'Verifying…' : 'Continue'}</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.cta, !canSubmitPassword && styles.ctaDisabled]}
+                onPress={onSubmitPassword}
+                disabled={!canSubmitPassword}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.ctaText}>{submitting ? 'Updating…' : 'Update password'}</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -359,10 +301,11 @@ export default function ResetPasswordScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
-  center: { alignItems: 'center', justifyContent: 'center' },
   safe: { flex: 1 },
   kav: { flex: 1 },
-  scroll: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 24 },
+  topBar: { flexDirection: 'row', paddingHorizontal: 8, paddingTop: 4 },
+  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  scroll: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 24 },
   copy: { gap: 10, marginBottom: 28 },
   headline: {
     fontSize: 30,
@@ -371,6 +314,7 @@ const styles = StyleSheet.create({
     color: WINE,
   },
   sub: { fontSize: 15, lineHeight: 22, fontFamily: 'DMSans_400Regular', color: INK },
+  subStrong: { fontFamily: 'DMSans_700Bold', color: WINE },
   form: { gap: 10 },
   inputLabel: {
     fontSize: 12,
@@ -379,6 +323,30 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginTop: 6,
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    fontSize: 15,
+    fontFamily: 'DMSans_500Medium',
+    color: INK,
+  },
+  codeInput: {
+    fontSize: 24,
+    letterSpacing: 8,
+    textAlign: 'center',
+    fontFamily: 'DMSans_700Bold',
+    color: WINE,
+  },
+  resendLink: { alignSelf: 'center', paddingVertical: 14 },
+  resendText: {
+    fontSize: 14,
+    fontFamily: 'DMSans_600SemiBold',
+    color: '#C2703E',
   },
   errorText: {
     fontSize: 13,

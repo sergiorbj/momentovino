@@ -1,4 +1,3 @@
-import { marketingSiteOrigin } from '../marketing-urls'
 import { supabase } from '../supabase'
 import { configurePurchases } from '../purchases'
 import {
@@ -29,6 +28,7 @@ export type EmailAuthOutcome =
   | { kind: 'needs_email_confirmation' }
   | { kind: 'already_exists' }
   | { kind: 'invalid_credentials' }
+  | { kind: 'invalid_code' }
   | { kind: 'error'; message: string }
 
 /**
@@ -111,19 +111,19 @@ export async function signInWithEmail(
 }
 
 /**
- * Send a password-reset email. Uses an **https** redirect on the Next.js site
- * (`/auth/reset-callback`) so the link works in the system browser; that page
- * forwards tokens to `momentovino://reset-password` for the in-app screen.
+ * Send a password-reset email. Sends a 6-digit OTP via the
+ * `auth/reset-password` template — no deep link, no redirect URL.
  *
- * Add the callback URL(s) to Supabase → Authentication → URL Configuration →
- * Redirect URLs, e.g. `http://localhost:3000/auth/reset-callback` and your
- * production origin + `/auth/reset-callback`.
+ * The user enters the code on the reset-password screen, then we call
+ * `verifyRecoveryOtp` to start a recovery session.
+ *
+ * Note: Supabase still appends a `{{ .ConfirmationURL }}` to the email by
+ * default, but our template only renders `{{ .Token }}` so it stays unused.
  */
 export async function sendPasswordResetEmail(email: string): Promise<EmailAuthOutcome> {
   try {
     const target = email.trim().toLowerCase()
-    const redirectTo = `${marketingSiteOrigin()}/auth/reset-callback`
-    const { error } = await supabase.auth.resetPasswordForEmail(target, { redirectTo })
+    const { error } = await supabase.auth.resetPasswordForEmail(target)
     if (error) throw error
     return { kind: 'success' }
   } catch (err) {
@@ -132,8 +132,31 @@ export async function sendPasswordResetEmail(email: string): Promise<EmailAuthOu
 }
 
 /**
- * Set a new password for the currently logged-in user. Used by the
- * reset-password screen after the deep-link recovery session is active.
+ * Verify the 6-digit recovery OTP. On success Supabase establishes a
+ * short-lived recovery session that allows `updatePassword` to succeed.
+ */
+export async function verifyRecoveryOtp(email: string, token: string): Promise<EmailAuthOutcome> {
+  try {
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: token.trim(),
+      type: 'recovery',
+    })
+    if (error) {
+      if (/expired|invalid|otp|token/i.test(error.message)) {
+        return { kind: 'invalid_code' }
+      }
+      throw error
+    }
+    return { kind: 'success' }
+  } catch (err) {
+    return { kind: 'error', message: err instanceof Error ? err.message : 'Could not verify code' }
+  }
+}
+
+/**
+ * Set a new password for the currently logged-in user. Called from the
+ * reset-password screen after `verifyRecoveryOtp` puts us in a recovery session.
  */
 export async function updatePassword(newPassword: string): Promise<EmailAuthOutcome> {
   try {

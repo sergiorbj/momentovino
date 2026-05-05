@@ -1,4 +1,4 @@
-import { Stack, router } from 'expo-router'
+import { Stack } from 'expo-router'
 import { useFonts } from 'expo-font'
 import {
   DMSans_400Regular,
@@ -8,19 +8,13 @@ import {
 } from '@expo-google-fonts/dm-sans'
 import { DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display'
 import * as SplashScreen from 'expo-splash-screen'
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { ensureAnonymousSession } from '../lib/session'
 import { configureGoogleSignIn } from '../lib/auth/google'
 import { queryClient } from '../lib/query-client'
 import { prefetchCoreData } from '../lib/prefetch'
 import { configurePurchases } from '../lib/purchases'
-import {
-  getCachedRecoveryUrl,
-  initialLaunchUrlPromise,
-  recoveryHref,
-  subscribeRecoveryUrl,
-} from '../lib/recovery-url-capture'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/query-keys'
 
@@ -50,11 +44,6 @@ function BackgroundBootstrap() {
   useEffect(() => {
     void (async () => {
       try {
-        await initialLaunchUrlPromise
-        // Recovery launch will sign out + clear cache as soon as the screen
-        // mounts, so don't race it by establishing a session here first.
-        if (getCachedRecoveryUrl()) return
-
         const userId = await ensureAnonymousSession()
         try {
           await configurePurchases(userId)
@@ -66,25 +55,6 @@ function BackgroundBootstrap() {
         console.error('Failed to establish Supabase session', err)
       }
     })()
-  }, [])
-  return null
-}
-
-/**
- * Force navigation to `/reset-password` whenever a recovery URL is captured —
- * either at module load (cold start) or via a later URL event (warm launch).
- * This is the **only** place that redirects to `/reset-password`; `app/index.tsx`
- * intentionally doesn't, to avoid two competing `router.replace` calls that
- * deadlock the native stack navigator.
- */
-function RecoveryDeepLinkGuard() {
-  const lastNavigatedRef = useRef<string | null>(null)
-  useEffect(() => {
-    return subscribeRecoveryUrl((url) => {
-      if (lastNavigatedRef.current === url) return
-      lastNavigatedRef.current = url
-      router.replace(recoveryHref(url))
-    })
   }, [])
   return null
 }
@@ -112,7 +82,6 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <AuthCacheSync />
       <BackgroundBootstrap />
-      <RecoveryDeepLinkGuard />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="onboarding" />

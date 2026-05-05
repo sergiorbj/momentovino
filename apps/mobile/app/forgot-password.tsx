@@ -26,7 +26,6 @@ const BORDER = '#E8DDD4'
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [sent, setSent] = useState(false)
 
   const canSubmit = useMemo(
     () => /.+@.+\..+/.test(email) && !submitting,
@@ -37,9 +36,10 @@ export default function ForgotPasswordScreen() {
     if (!canSubmit) return
     setSubmitting(true)
     try {
-      const outcome = await sendPasswordResetEmail(email)
+      const target = email.trim().toLowerCase()
+      const outcome = await sendPasswordResetEmail(target)
       if (outcome.kind === 'success') {
-        setSent(true)
+        router.replace({ pathname: '/reset-password', params: { email: target } })
         return
       }
       Alert.alert(
@@ -75,66 +75,40 @@ export default function ForgotPasswordScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {sent ? (
-              <View style={styles.copy}>
-                <Text style={styles.headline}>Check your inbox.</Text>
-                <Text style={styles.sub}>
-                  We sent a password reset link to{' '}
-                  <Text style={styles.subStrong}>{email.trim().toLowerCase()}</Text>. Tap the link
-                  on this iPhone to choose a new password.
-                </Text>
-                <Text style={styles.subSmall}>
-                  Don't see it? Check spam, or come back here to send it again.
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.copy}>
-                <Text style={styles.headline}>Reset your password.</Text>
-                <Text style={styles.sub}>
-                  Enter the email tied to your MomentoVino account. We'll send a link to choose a
-                  new password.
-                </Text>
-              </View>
-            )}
+            <View style={styles.copy}>
+              <Text style={styles.headline}>Reset your password.</Text>
+              <Text style={styles.sub}>
+                Enter the email tied to your MomentoVino account. We'll send a 6-digit code to
+                use on the next screen.
+              </Text>
+            </View>
 
-            {!sent ? (
-              <View style={styles.form}>
-                <Text style={styles.inputLabel}>Email</Text>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="you@example.com"
-                  placeholderTextColor="#B5A6A8"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="email"
-                  textContentType="emailAddress"
-                />
-              </View>
-            ) : null}
+            <View style={styles.form}>
+              <Text style={styles.inputLabel}>Email</Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor="#B5A6A8"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                textContentType="emailAddress"
+              />
+            </View>
           </ScrollView>
 
           <View style={styles.footer}>
-            {sent ? (
-              <TouchableOpacity
-                style={styles.cta}
-                onPress={() => router.replace('/login')}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.ctaText}>Back to sign in</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.cta, !canSubmit && styles.ctaDisabled]}
-                onPress={submit}
-                disabled={!canSubmit}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.ctaText}>{submitting ? 'Sending…' : 'Send reset link'}</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={[styles.cta, !canSubmit && styles.ctaDisabled]}
+              onPress={submit}
+              disabled={!canSubmit}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.ctaText}>{submitting ? 'Sending…' : 'Send 6-digit code'}</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -157,14 +131,6 @@ const styles = StyleSheet.create({
     color: WINE,
   },
   sub: { fontSize: 15, lineHeight: 22, fontFamily: 'DMSans_400Regular', color: INK },
-  subStrong: { fontFamily: 'DMSans_700Bold', color: WINE },
-  subSmall: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontFamily: 'DMSans_400Regular',
-    color: SUBTLE,
-    marginTop: 6,
-  },
   form: { gap: 10 },
   inputLabel: {
     fontSize: 12,
