@@ -13,11 +13,15 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import * as Linking from 'expo-linking'
 
 import { updatePassword } from '../lib/auth/email'
 import { queryClient } from '../lib/query-client'
+import {
+  getCachedRecoveryUrl,
+  initialLaunchUrlPromise,
+} from '../lib/recovery-url-capture'
 import { ensureAnonymousSession } from '../lib/session'
 import { supabase } from '../lib/supabase'
 
@@ -60,6 +64,32 @@ function decodeJwtPayload(accessToken: string): Record<string, unknown> | null {
   }
 }
 
+type RecoveryParams = {
+  code?: string
+  access_token?: string
+  refresh_token?: string
+  type?: string
+}
+
+/**
+ * Build a URL the existing `consumeDeepLink` parser can handle from route
+ * params (tokens flattened into the path by `recoveryHref` / `<Redirect>`).
+ */
+function synthesizeUrlFromParams(p: RecoveryParams): string | null {
+  if (p.code) {
+    return `momentovino://reset-password?code=${encodeURIComponent(p.code)}`
+  }
+  if (p.access_token && p.refresh_token) {
+    const parts = [
+      `access_token=${encodeURIComponent(p.access_token)}`,
+      `refresh_token=${encodeURIComponent(p.refresh_token)}`,
+    ]
+    if (p.type) parts.push(`type=${encodeURIComponent(p.type)}`)
+    return `momentovino://reset-password#${parts.join('&')}`
+  }
+  return null
+}
+
 /** Recovery sessions include `amr` with `{ method: 'recovery' }` (GoTrue). */
 function sessionLooksLikePasswordRecovery(session: Session): boolean {
   const payload = decodeJwtPayload(session.access_token)
@@ -75,7 +105,28 @@ function sessionLooksLikePasswordRecovery(session: Session): boolean {
   })
 }
 
+function pickParam(v: string | string[] | undefined): string | undefined {
+  if (Array.isArray(v)) return v[0]
+  return v
+}
+
 export default function ResetPasswordScreen() {
+  const params = useLocalSearchParams<{
+    code?: string
+    access_token?: string
+    refresh_token?: string
+    type?: string
+  }>()
+
+  const routeRecovery = useMemo<RecoveryParams>(
+    () => ({
+      code: pickParam(params.code),
+      access_token: pickParam(params.access_token),
+      refresh_token: pickParam(params.refresh_token),
+      type: pickParam(params.type),
+    }),
+    [params.code, params.access_token, params.refresh_token, params.type],
+  )
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('pending')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -154,8 +205,11 @@ export default function ResetPasswordScreen() {
 
     async function init() {
       appliedRecoveryFromUrlRef.current = false
-      const initial = await Linking.getInitialURL()
-      await consumeDeepLink(initial)
+      // Align with the single app-wide cold-start URL (see recovery-url-capture).
+      await initialLaunchUrlPromise
+      const urlForExchange =
+        synthesizeUrlFromParams(routeRecovery) ?? getCachedRecoveryUrl()
+      await consumeDeepLink(urlForExchange)
       await applyRecoverySessionGate()
     }
 
@@ -173,7 +227,7 @@ export default function ResetPasswordScreen() {
       cancelled = true
       sub.remove()
     }
-  }, [])
+  }, [routeRecovery.code, routeRecovery.access_token, routeRecovery.refresh_token, routeRecovery.type])
 
   const submit = async () => {
     if (!canSubmit) return

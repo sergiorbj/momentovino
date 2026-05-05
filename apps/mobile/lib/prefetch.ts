@@ -39,9 +39,19 @@ export function prefetchCoreData(queryClient: QueryClient): void {
 /**
  * Same as {@link prefetchCoreData} but waits for prefetch work to finish. Use
  * after session changes (new account, returning login) before routing to tabs.
+ *
+ * Bounded by `timeoutMs` so a single hanging request (no fetch timeout in RN)
+ * can never keep the splash screen up forever — outstanding prefetches keep
+ * resolving in the background after the timeout fires.
  */
-export async function prefetchCoreDataAsync(queryClient: QueryClient): Promise<void> {
-  await Promise.allSettled(corePrefetchTasks(queryClient))
+export async function prefetchCoreDataAsync(
+  queryClient: QueryClient,
+  timeoutMs = 4000,
+): Promise<void> {
+  await Promise.race([
+    Promise.allSettled(corePrefetchTasks(queryClient)),
+    new Promise((resolve) => setTimeout(resolve, timeoutMs)),
+  ])
 }
 
 /**
