@@ -8,7 +8,7 @@ import {
 } from '@expo-google-fonts/dm-sans'
 import { DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display'
 import * as SplashScreen from 'expo-splash-screen'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { ensureAnonymousSession } from '../lib/session'
 import { configureGoogleSignIn } from '../lib/auth/google'
@@ -73,12 +73,16 @@ function BackgroundBootstrap() {
 /**
  * Force navigation to `/reset-password` whenever a recovery URL is captured —
  * either at module load (cold start) or via a later URL event (warm launch).
- * Without this, the user can land on `/onboarding` (via `app/index.tsx`)
- * before the URL has a chance to redirect them.
+ * This is the **only** place that redirects to `/reset-password`; `app/index.tsx`
+ * intentionally doesn't, to avoid two competing `router.replace` calls that
+ * deadlock the native stack navigator.
  */
 function RecoveryDeepLinkGuard() {
+  const lastNavigatedRef = useRef<string | null>(null)
   useEffect(() => {
     return subscribeRecoveryUrl((url) => {
+      if (lastNavigatedRef.current === url) return
+      lastNavigatedRef.current = url
       router.replace(recoveryHref(url))
     })
   }, [])

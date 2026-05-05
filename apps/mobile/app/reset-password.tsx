@@ -7,7 +7,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native'
@@ -16,6 +15,7 @@ import { StatusBar } from 'expo-status-bar'
 import { router, useLocalSearchParams } from 'expo-router'
 import * as Linking from 'expo-linking'
 
+import { PasswordInput } from '../components/auth/PasswordInput'
 import { updatePassword } from '../lib/auth/email'
 import { queryClient } from '../lib/query-client'
 import {
@@ -227,7 +227,12 @@ export default function ResetPasswordScreen() {
       cancelled = true
       sub.remove()
     }
-  }, [routeRecovery.code, routeRecovery.access_token, routeRecovery.refresh_token, routeRecovery.type])
+    // The recovery payload is captured at mount via getCachedRecoveryUrl /
+    // route params; further URL events are handled by the addEventListener
+    // above. Re-running the effect when params change would redo signOut +
+    // exchange unnecessarily.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const submit = async () => {
     if (!canSubmit) return
@@ -313,24 +318,20 @@ export default function ResetPasswordScreen() {
 
             <View style={styles.form}>
               <Text style={styles.inputLabel}>New password</Text>
-              <TextInput
-                style={styles.input}
+              <PasswordInput
                 value={password}
                 onChangeText={setPassword}
                 placeholder="At least 8 characters"
                 placeholderTextColor="#B5A6A8"
-                secureTextEntry
                 autoComplete="new-password"
                 textContentType="newPassword"
               />
               <Text style={styles.inputLabel}>Confirm password</Text>
-              <TextInput
-                style={styles.input}
+              <PasswordInput
                 value={confirm}
                 onChangeText={setConfirm}
                 placeholder="Type it again"
                 placeholderTextColor="#B5A6A8"
-                secureTextEntry
                 autoComplete="new-password"
                 textContentType="newPassword"
               />
@@ -378,17 +379,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginTop: 6,
-  },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: BORDER,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    fontSize: 15,
-    fontFamily: 'DMSans_500Medium',
-    color: INK,
   },
   errorText: {
     fontSize: 13,

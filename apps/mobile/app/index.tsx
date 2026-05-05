@@ -3,30 +3,21 @@ import { Redirect } from 'expo-router'
 
 import { hasCompletedOnboarding } from '../features/onboarding/state'
 import { isProActive } from '../lib/purchases'
-import {
-  initialLaunchUrlPromise,
-  isPasswordRecoveryDeepLink,
-  recoveryHref,
-} from '../lib/recovery-url-capture'
+import { getCachedRecoveryUrl } from '../lib/recovery-url-capture'
 
-type RecoveryHref = string | null
-
+/**
+ * Default landing route. Picks the next screen based on onboarding + Pro state.
+ *
+ * Recovery deep links are NOT handled here — `RecoveryDeepLinkGuard` in
+ * `_layout.tsx` is the single authority for `/reset-password` navigation.
+ * Trying to also redirect from here caused two competing `router.replace`
+ * calls that loop the native stack navigator (`Maximum update depth`).
+ */
 export default function Index() {
-  // Wait for the ONE shared `getInitialURL` result before routing — otherwise a
-  // second `getInitialURL` call returns null and we wrongly send recovery users
-  // to onboarding.
-  const [recovery, setRecovery] = useState<RecoveryHref | undefined>(undefined)
   const [done, setDone] = useState<boolean | null>(null)
   const [hasPro, setHasPro] = useState<boolean | null>(null)
 
   useEffect(() => {
-    initialLaunchUrlPromise
-      .then((url) => {
-        if (isPasswordRecoveryDeepLink(url)) setRecovery(recoveryHref(url))
-        else setRecovery(null)
-      })
-      .catch(() => setRecovery(null))
-
     hasCompletedOnboarding()
       .then(setDone)
       .catch(() => setDone(false))
@@ -35,8 +26,8 @@ export default function Index() {
       .catch(() => setHasPro(false))
   }, [])
 
-  if (recovery === undefined) return null
-  if (recovery) return <Redirect href={recovery as never} />
+  // Recovery launch in flight — let the guard handle it; render nothing meanwhile.
+  if (getCachedRecoveryUrl()) return null
 
   if (done === null || hasPro === null) return null
 
