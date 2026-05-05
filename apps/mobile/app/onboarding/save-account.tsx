@@ -17,6 +17,7 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useQueryClient } from '@tanstack/react-query'
 
+import { PasswordInput } from '../../components/auth/PasswordInput'
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import { AUTH_PROVIDER, createProviderAuthStyles } from '../../components/auth/providerAuthStyles'
 import { signInWithApple } from '../../lib/auth/apple'
@@ -242,13 +243,11 @@ export default function SaveAccountScreen() {
                   textContentType="emailAddress"
                 />
                 <Text style={styles.inputLabel}>Password</Text>
-                <TextInput
-                  style={styles.input}
+                <PasswordInput
                   value={password}
                   onChangeText={setPassword}
                   placeholder="At least 8 characters"
                   placeholderTextColor="#B5A6A8"
-                  secureTextEntry
                   autoComplete="new-password"
                   textContentType="newPassword"
                 />

@@ -16,6 +16,7 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useQueryClient } from '@tanstack/react-query'
 
+import { PasswordInput } from '../components/auth/PasswordInput'
 import { AUTH_PROVIDER, createProviderAuthStyles } from '../components/auth/providerAuthStyles'
 import { signInWithApple } from '../lib/auth/apple'
 import { signInWithGoogle } from '../lib/auth/google'
@@ -199,13 +200,11 @@ export default function LoginScreen() {
                   textContentType="emailAddress"
                 />
                 <Text style={styles.inputLabel}>Password</Text>
-                <TextInput
-                  style={styles.input}
+                <PasswordInput
                   value={password}
                   onChangeText={setPassword}
                   placeholder="Your password"
                   placeholderTextColor="#B5A6A8"
-                  secureTextEntry
                   autoComplete="password"
                   textContentType="password"
                 />
