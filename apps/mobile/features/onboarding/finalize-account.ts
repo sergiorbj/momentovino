@@ -1,9 +1,11 @@
 import type { QueryClient } from '@tanstack/react-query'
 
 import { claimUsername } from '../profile/api'
+import { createMoment } from '../moments/api'
+import { attachWineLabelPhoto, createWineViaApi } from '../scanner/api'
 import { markOnboardingCompleted } from './state'
-import { getSelections, resetSelections } from './selections'
-import { seedStarterJournal } from './seed'
+import { resetSelections } from './selections'
+import { getCapture, resetCapture } from './onboarding-capture'
 import { prefetchCoreDataAsync } from '../../lib/prefetch'
 import { queryKeys } from '../../lib/query-keys'
 import { supabase } from '../../lib/supabase'
@@ -25,9 +27,41 @@ function fallbackDesiredFromUser(meta: Record<string, unknown>, email: string | 
 }
 
 /**
- * After auth (email or OAuth): persist display name, seed starter journal,
- * claim @username, invalidate caches, clear onboarding selections.
- * Caller navigates away after await (e.g. `router.replace`).
+ * Persists the wine + moment captured during onboarding under the freshly
+ * authenticated user. Runs post-auth (and post-paywall) so Apple Sign-In's
+ * user_id swap doesn't orphan the rows.
+ */
+async function persistOnboardingCapture(): Promise<void> {
+  const { wine, moment } = getCapture()
+  if (!wine || !moment) return
+
+  const wineRow = await createWineViaApi({
+    name: wine.name,
+    producer: wine.producer || null,
+    region: wine.region || null,
+    country: wine.country || null,
+    type: wine.type || null,
+  })
+
+  if (wine.labelPhoto) {
+    try {
+      await attachWineLabelPhoto(
+        wineRow.id,
+        wine.labelPhoto.uri,
+        wine.labelPhoto.mimeType,
+      )
+    } catch (err) {
+      console.warn('[finalizeAccount] attachWineLabelPhoto failed', err)
+    }
+  }
+
+  await createMoment({ ...moment, wineId: wineRow.id })
+}
+
+/**
+ * After auth (email or OAuth): persist display name, persist onboarding
+ * capture (wine + moment), claim @username, invalidate caches, clear
+ * onboarding state. Caller navigates away after await (e.g. `router.replace`).
  */
 export async function finalizeAccount({ qc, displayName }: FinalizeAccountInput): Promise<void> {
   const { error: refreshErr } = await supabase.auth.refreshSession()
@@ -51,14 +85,11 @@ export async function finalizeAccount({ qc, displayName }: FinalizeAccountInput)
     if (metaErr) console.warn('[finalizeAccount] user metadata full_name', metaErr.message)
   }
 
-  const { pickedWineKeys } = getSelections()
-  if (pickedWineKeys.length > 0) {
-    try {
-      await seedStarterJournal(pickedWineKeys)
-    } catch (err) {
-      console.warn('[finalizeAccount] seedStarterJournal failed', err)
-      throw err instanceof Error ? err : new Error('Could not save your starter journal.')
-    }
+  try {
+    await persistOnboardingCapture()
+  } catch (err) {
+    console.warn('[finalizeAccount] persistOnboardingCapture failed', err)
+    throw err instanceof Error ? err : new Error('Could not save your first moment.')
   }
 
   try {
@@ -81,4 +112,5 @@ export async function finalizeAccount({ qc, displayName }: FinalizeAccountInput)
 
   await markOnboardingCompleted()
   resetSelections()
+  resetCapture()
 }

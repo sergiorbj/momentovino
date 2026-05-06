@@ -38,7 +38,7 @@ export default function PainScreen() {
   const cont = () => {
     if (!canContinue) return
     setPainPoints(Array.from(selected))
-    router.push('/onboarding/demo')
+    router.push('/onboarding/intro-create')
   }
 
   return (

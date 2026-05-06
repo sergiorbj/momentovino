@@ -116,7 +116,7 @@ NativeWind / Tailwind is **not** used on mobile (removed). Use `StyleSheet.creat
 
 ### Onboarding
 
-`app/onboarding/` is a separate stack with a fixed screen order (`index → goal → pain → demo → atlas → paywall → save-account`). The completion flag is stored via `features/onboarding/state.ts` and checked by the root layout; `features/onboarding/seed.ts` and `starter-deck.ts` seed initial data after account creation.
+`app/onboarding/` is a separate stack with a fixed screen order (`index → goal → pain → intro-create → scanner-onb → scan-result-onb → new-moment-onb → atlas → paywall → save-account → complete-profile`). The completion flag is stored via `features/onboarding/state.ts` and checked by the root layout. The user's first wine + moment are captured in `features/onboarding/onboarding-capture.ts` (module-state) during the scanner / new-moment screens, then persisted under the freshly authenticated user inside `finalize-account.ts` after auth — Apple Sign-In swaps `user_id`, so DB writes have to wait until after auth (see [apps/mobile/lib/auth/apple.ts](apps/mobile/lib/auth/apple.ts)).
 
 ### Transactional emails
 

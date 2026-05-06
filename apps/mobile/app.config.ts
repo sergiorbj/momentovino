@@ -10,7 +10,7 @@ const config: ExpoConfig = {
   name: 'MomentoVino',
   slug: 'momentovino',
   owner: 'sergiobernardidev',
-  version: '0.1.0',
+  version: '0.1.1',
   orientation: 'portrait',
   extra: {
     eas: {
@@ -28,11 +28,9 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.momentovino.app',
-    // Adds the "Sign In with Apple" capability + entitlement on prebuild.
+    buildNumber: '7',
     usesAppleSignIn: true,
-    config: {
-      usesNonExemptEncryption: false,
-    },
+    config: { usesNonExemptEncryption: false },
   },
   android: {
     adaptiveIcon: {

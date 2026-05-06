@@ -18,8 +18,11 @@ import { Ionicons } from '@expo/vector-icons'
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import WireframeGlobe from '../../components/globe/WireframeGlobe'
 import type { MomentPin } from '../../components/globe/types'
-import { getSelections } from '../../features/onboarding/selections'
-import { getStarterWine, type StarterWine } from '../../features/onboarding/starter-deck'
+import {
+  getCapture,
+  type CapturedMoment,
+  type CapturedWine,
+} from '../../features/onboarding/onboarding-capture'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -34,32 +37,32 @@ const GLASS_ICON = require('../../assets/glass-vino.png')
 type Phase = 'processing' | 'reveal'
 
 export default function AtlasScreen() {
-  const selections = useRef(getSelections()).current
-  const pickedStarters = useRef(
-    selections.pickedWineKeys
-      .map((k) => getStarterWine(k))
-      .filter((s): s is StarterWine => s != null)
-  ).current
+  // Snapshot once — capture state lives in a module-level singleton, but the
+  // user could in theory tap-back into this screen and we want the same data.
+  const capture = useRef(getCapture()).current
+  const wine = capture.wine
+  const moment = capture.moment
 
   const [phase, setPhase] = useState<Phase>('processing')
 
-  // No DB write here — this screen only previews the user's picks. The
-  // actual `seedStarterJournal` call lives in paywall.startTrial so the
-  // wines/moments are persisted under the authenticated user_id (post auth),
-  // not the pre-auth anonymous session which may or may not survive OAuth.
   useEffect(() => {
+    if (!wine || !moment) {
+      router.replace('/onboarding/intro-create')
+      return
+    }
     const t = setTimeout(() => setPhase('reveal'), 1800)
     return () => clearTimeout(t)
-  }, [])
+  }, [wine, moment])
 
-  const pins: MomentPin[] = pickedStarters.map((s) => ({
-    id: s.key,
-    latitude: s.latitude,
-    longitude: s.longitude,
-    label: s.locationName,
-  }))
+  if (!wine || !moment) return null
 
-  const countries = new Set(pickedStarters.map((s) => s.wine.country)).size
+  const pin: MomentPin = {
+    id: 'onboarding-1',
+    latitude: moment.latitude,
+    longitude: moment.longitude,
+    label: moment.locationName,
+  }
+  const pins: MomentPin[] = [pin]
 
   const share = async () => {
     try {
@@ -86,7 +89,7 @@ export default function AtlasScreen() {
               pinIcon={GLASS_ICON}
               pinIconScale={0.18}
             />
-            <Text style={styles.processingText}>Placing your first pins…</Text>
+            <Text style={styles.processingText}>Pinning your first memory…</Text>
             <ActivityIndicator color={WINE} />
           </View>
         </SafeAreaView>
@@ -118,26 +121,27 @@ export default function AtlasScreen() {
           </View>
 
           <View style={styles.copy}>
-            <Text style={styles.headline}>Meet your wine atlas.</Text>
-            <Text style={styles.sub}>Three moments, three places — ready for your touch.</Text>
+            <Text style={styles.headline}>Your first memory is on your atlas.</Text>
+            <Text style={styles.sub}>One bottle, one place — the start of your journal.</Text>
           </View>
 
           <View style={styles.stats}>
-            <Stat value={pickedStarters.length} label="Moments" />
+            <Stat value={1} label="Moment" />
             <View style={styles.statDivider} />
-            <Stat value={countries} label={countries === 1 ? 'Country' : 'Countries'} />
+            <Stat
+              value={wine.country?.trim() ? 1 : 0}
+              label={wine.country?.trim() ? 'Country' : 'Countries'}
+            />
             <View style={styles.statDivider} />
-            <Stat value={pickedStarters.length} label={pickedStarters.length === 1 ? 'Wine' : 'Wines'} />
+            <Stat value={1} label="Wine" />
           </View>
 
           <View style={styles.feed}>
-            {pickedStarters.map((starter, i) => (
-              <MomentCard key={starter.key} index={i} starter={starter} />
-            ))}
+            <MomentCard moment={moment} wine={wine} />
           </View>
 
           <Text style={styles.hint}>
-            Tap any moment later to rename it, add your own photos, or remove it.
+            Tap your moment later to add photos, edit details, or share it with family.
           </Text>
         </ScrollView>
 
@@ -160,21 +164,27 @@ function Stat({ value, label }: { value: number; label: string }) {
   )
 }
 
-function MomentCard({ index, starter }: { index: number; starter: StarterWine }) {
-  const ordinals = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']
-  const title = `My ${ordinals[index] ?? `${index + 1}th`} wine moment`
+function MomentCard({ moment, wine }: { moment: CapturedMoment; wine: CapturedWine }) {
+  const cover = moment.photos.find((p) => p.isCover) ?? moment.photos[0]
+  const thumbUri = cover?.uri ?? wine.labelPhoto?.uri ?? null
   return (
     <View style={styles.momentCard}>
-      <Image source={starter.image} style={styles.momentThumb} resizeMode="contain" />
+      {thumbUri ? (
+        <Image source={{ uri: thumbUri }} style={styles.momentThumb} resizeMode="cover" />
+      ) : (
+        <View style={[styles.momentThumb, styles.momentThumbPlaceholder]}>
+          <Ionicons name="wine-outline" size={20} color={WINE} />
+        </View>
+      )}
       <View style={styles.momentMeta}>
         <Text style={styles.momentTitle} numberOfLines={1}>
-          {title}
+          {moment.title}
         </Text>
         <Text style={styles.momentWine} numberOfLines={1}>
-          {starter.wine.name}
+          {wine.name}
         </Text>
         <Text style={styles.momentPlace} numberOfLines={1}>
-          {starter.flag}  {starter.locationName}
+          {moment.locationName}
         </Text>
       </View>
     </View>
@@ -207,18 +217,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
-  },
-  errorHead: {
-    fontSize: 22,
-    fontFamily: 'DMSerifDisplay_400Regular',
-    color: WINE,
-    textAlign: 'center',
-  },
-  errorSub: {
-    fontSize: 14,
-    fontFamily: 'DMSans_400Regular',
-    color: INK,
-    textAlign: 'center',
   },
   revealContent: {
     paddingBottom: 24,
@@ -300,6 +298,12 @@ const styles = StyleSheet.create({
   momentThumb: {
     width: 44,
     height: 56,
+    borderRadius: 8,
+    backgroundColor: '#F5EBE0',
+  },
+  momentThumbPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   momentMeta: { flex: 1, gap: 2 },
   momentTitle: {
