@@ -34,6 +34,7 @@ lerna-debug.log*
 .env.development.local
 .env.test.local
 .env.production.local
+apps/mobile/.env.sample.old
 
 # Turborepo
 .turbo/

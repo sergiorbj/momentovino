@@ -124,6 +124,7 @@ const styles = StyleSheet.create({
   scroll: { padding: 24, alignItems: 'center' },
   heroWrap: {
     position: 'relative',
+    alignSelf: 'center',
     marginBottom: 20,
     borderRadius: 16,
     overflow: 'hidden',
@@ -185,7 +186,8 @@ const styles = StyleSheet.create({
     color: INK,
   },
   footer: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 24,
     paddingBottom: 32,
     gap: 12,
   },
@@ -193,6 +195,7 @@ const styles = StyleSheet.create({
     backgroundColor: WINE,
     borderRadius: 50,
     height: 56,
+    marginTop: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
