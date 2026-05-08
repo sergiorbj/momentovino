@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Dimensions,
   Image,
-  ScrollView,
   Share,
   StyleSheet,
   Text,
@@ -110,7 +109,7 @@ export default function AtlasScreen() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.revealContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.revealContent}>
           <View style={styles.globeWrap}>
             <WireframeGlobe
               pins={pins}
@@ -125,17 +124,6 @@ export default function AtlasScreen() {
             <Text style={styles.sub}>One bottle, one place — the start of your journal.</Text>
           </View>
 
-          <View style={styles.stats}>
-            <Stat value={1} label="Moment" />
-            <View style={styles.statDivider} />
-            <Stat
-              value={wine.country?.trim() ? 1 : 0}
-              label={wine.country?.trim() ? 'Country' : 'Countries'}
-            />
-            <View style={styles.statDivider} />
-            <Stat value={1} label="Wine" />
-          </View>
-
           <View style={styles.feed}>
             <MomentCard moment={moment} wine={wine} />
           </View>
@@ -143,7 +131,7 @@ export default function AtlasScreen() {
           <Text style={styles.hint}>
             Tap your moment later to add photos, edit details, or share it with family.
           </Text>
-        </ScrollView>
+        </View>
 
         <View style={styles.footer}>
           <TouchableOpacity style={styles.cta} onPress={cont} activeOpacity={0.85}>
@@ -151,15 +139,6 @@ export default function AtlasScreen() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-    </View>
-  )
-}
-
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <View style={styles.statItem}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
     </View>
   )
 }
@@ -219,19 +198,20 @@ const styles = StyleSheet.create({
     color: WINE,
   },
   revealContent: {
-    paddingBottom: 24,
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 8,
   },
   globeWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 8,
   },
   copy: {
     paddingHorizontal: 24,
     alignItems: 'center',
     gap: 8,
-    marginTop: 8,
+    marginTop: 12,
   },
   headline: {
     fontSize: 26,
@@ -245,39 +225,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     color: INK,
     textAlign: 'center',
-  },
-  stats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: BORDER,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    marginTop: 20,
-    marginHorizontal: 24,
-    gap: 18,
-    alignSelf: 'stretch',
-  },
-  statItem: { flex: 1, alignItems: 'center' },
-  statValue: {
-    fontSize: 22,
-    fontFamily: 'DMSerifDisplay_400Regular',
-    color: WINE,
-  },
-  statLabel: {
-    fontSize: 11,
-    fontFamily: 'DMSans_500Medium',
-    color: SUBTLE,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  statDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: BORDER,
   },
   feed: {
     alignSelf: 'stretch',
@@ -327,7 +274,7 @@ const styles = StyleSheet.create({
     color: SUBTLE,
     textAlign: 'center',
     paddingHorizontal: 32,
-    marginTop: 18,
+    marginTop: 14,
   },
   footer: { paddingHorizontal: 24, paddingBottom: 16, paddingTop: 8 },
   cta: {
