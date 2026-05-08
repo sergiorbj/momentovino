@@ -240,28 +240,25 @@ export default function OnboardingScannerScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        ) : (
-          <>
-            <View style={styles.flex} />
-            {image ? (
-              <View style={styles.previewSection}>
-                <View style={styles.previewWrap}>
-                  <Image source={{ uri: image.uri }} style={styles.preview} />
+        ) : image ? (
+          <View style={styles.previewSection}>
+            <View style={styles.previewWrap}>
+              <Image source={{ uri: image.uri }} style={styles.preview} />
 
-                  {scanning && (
-                    <View style={styles.scanningOverlay}>
-                      <ActivityIndicator size="large" color="#FFFFFF" />
-                      <Text style={styles.scanningText}>Identifying wine...</Text>
-                    </View>
-                  )}
-
-                  <TouchableOpacity style={styles.clearBtn} onPress={clearImage}>
-                    <Ionicons name="close" size={20} color="#FFFFFF" />
-                  </TouchableOpacity>
+              {scanning && (
+                <View style={styles.scanningOverlay}>
+                  <ActivityIndicator size="large" color="#FFFFFF" />
+                  <Text style={styles.scanningText}>Identifying wine...</Text>
                 </View>
-              </View>
-            ) : null}
-          </>
+              )}
+
+              <TouchableOpacity style={styles.clearBtn} onPress={clearImage}>
+                <Ionicons name="close" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.flex} />
         )}
 
         <View style={styles.footer}>
@@ -418,8 +415,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   previewSection: {
+    flex: 1,
     paddingHorizontal: 24,
-    marginBottom: 12,
+    justifyContent: 'center',
   },
   previewWrap: {
     width: '100%',
