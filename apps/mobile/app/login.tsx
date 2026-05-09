@@ -24,6 +24,7 @@ import { signInWithEmail } from '../lib/auth/email'
 import { markOnboardingCompleted } from '../features/onboarding/state'
 import { resetSelections } from '../features/onboarding/selections'
 import { invalidateTabCachesAndPrefetch } from '../lib/prefetch'
+import { isProActive } from '../lib/purchases'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -49,10 +50,19 @@ export default function LoginScreen() {
   // onboarding done so the root layout doesn't bounce back, and route home.
   // RC.logIn(userId) was already called inside the auth lib so the entitlement
   // (if any) is now bound to the new user_id; the webhook handles TRANSFER.
+  //
+  // Existing users whose Pro subscription has expired must be sent to the
+  // renewal paywall instead of the tabs — the boot gate in app/index.tsx only
+  // fires on initial render, so we re-check entitlement here before routing.
   const afterSignIn = async () => {
     resetSelections()
     await markOnboardingCompleted()
     await invalidateTabCachesAndPrefetch(qc)
+    const pro = await isProActive()
+    if (!pro) {
+      router.replace('/paywall')
+      return
+    }
     router.replace('/(tabs)/moments')
   }
 

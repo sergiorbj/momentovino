@@ -21,6 +21,6 @@ export default function Index() {
   if (done === null || hasPro === null) return null
 
   if (!done) return <Redirect href="/onboarding" />
-  if (!hasPro) return <Redirect href="/onboarding/paywall" />
+  if (!hasPro) return <Redirect href="/paywall" />
   return <Redirect href="/(tabs)/scanner" />
 }
