@@ -122,12 +122,12 @@ export default function PaywallScreen() {
     ? 'Starting…'
     : selectedPlan === 'yearly'
       ? `Subscribe — ${annualPriceString}/year`
-      : 'Start my 5-day free trial'
+      : 'Start my 3-day free trial'
 
   const reassureText =
     selectedPlan === 'yearly'
       ? 'Billed annually. Cancel renewal anytime in Settings.'
-      : `Free for 5 days, then ${monthlyPriceString}/month. Cancel anytime to avoid being charged.`
+      : `Free for 3 days, then ${monthlyPriceString}/month. Cancel anytime to avoid being charged.`
 
   return (
     <View style={styles.container}>
@@ -169,7 +169,7 @@ export default function PaywallScreen() {
                 <View style={styles.planLeft}>
                   <Text style={styles.planTitle}>Monthly</Text>
                   <Text style={styles.planDetail} numberOfLines={1}>
-                    <Text style={styles.planDetailStrong}>5 days free</Text>
+                    <Text style={styles.planDetailStrong}>3 days free</Text>
                     , then billed
                   </Text>
                 </View>

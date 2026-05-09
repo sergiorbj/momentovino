@@ -44,7 +44,7 @@ type PlanId = 'yearly' | 'monthly'
  *
  * Differs from `app/onboarding/paywall.tsx`:
  *  - No ProgressBar, no "step X of Y" framing.
- *  - No 5-day free trial wording — RevenueCat / Apple do not grant a second
+ *  - No 3-day free trial wording — RevenueCat / Apple do not grant a second
  *    intro offer to the same Apple ID, and existing users are coming back to
  *    renew, not to trial.
  *  - Success routes to `/(tabs)/moments` (the user already has an account).
