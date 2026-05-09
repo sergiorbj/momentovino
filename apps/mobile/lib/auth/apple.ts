@@ -3,6 +3,7 @@ import * as AppleAuthentication from 'expo-apple-authentication'
 
 import { supabase } from '../supabase'
 import { configurePurchases } from '../purchases'
+import { captureAnonSession, claimAnonEntitlement } from './anon-entitlement'
 
 export type AppleSignInOutcome =
   | { kind: 'success'; userId: string }
@@ -60,6 +61,12 @@ export async function signInWithApple(): Promise<AppleSignInOutcome> {
       .join(' ')
       .trim()
 
+    // Snapshot the anon session before signInWithIdToken swaps user_id.
+    // If the user bought Pro on the paywall (still anonymous at that point),
+    // we use this token after sign-in to migrate the entitlement to the new
+    // Apple-linked user via /api/claim-anon-entitlement.
+    const anonSnapshot = await captureAnonSession()
+
     const { data: signInData, error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
       token: credential.identityToken,
@@ -84,6 +91,13 @@ export async function signInWithApple(): Promise<AppleSignInOutcome> {
       await configurePurchases(userId)
     } catch (rcErr) {
       console.warn('[auth/apple] RevenueCat re-bind failed', rcErr)
+    }
+
+    // Move the orphaned Supabase entitlement (if any) to the Apple-linked user.
+    // RC's alias on its side is independent — this is for our `profiles.pro_*`
+    // mirror that drives `isProActive()`.
+    if (anonSnapshot && anonSnapshot.userId !== userId) {
+      await claimAnonEntitlement(anonSnapshot.accessToken)
     }
 
     return { kind: 'success', userId }

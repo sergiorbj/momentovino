@@ -2,6 +2,7 @@ import Constants from 'expo-constants'
 
 import { supabase } from '../supabase'
 import { configurePurchases } from '../purchases'
+import { captureAnonSession, claimAnonEntitlement } from './anon-entitlement'
 
 const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
 const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
@@ -113,6 +114,11 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
       return { kind: 'error', message: 'Google did not return an ID token.' }
     }
 
+    // Snapshot the anon session before signInWithIdToken swaps user_id, so we
+    // can migrate any Pro entitlement bought during onboarding to the new
+    // Google-linked user via /api/claim-anon-entitlement after sign-in.
+    const anonSnapshot = await captureAnonSession()
+
     // GoTrue checks: sha256(nonce you send) (hex) == `nonce` claim in the id token.
     // The iOS public Google Sign-In SDK does not let us supply a custom nonce, so
     // we do not have the *raw* secret to send — only a digest ends up in the JWT.
@@ -155,6 +161,11 @@ export async function signInWithGoogle(): Promise<GoogleSignInOutcome> {
       } catch (rcErr) {
         console.warn('[auth/google] RevenueCat re-bind failed', rcErr)
       }
+    }
+
+    // Move the orphaned Supabase entitlement (if any) to the Google-linked user.
+    if (anonSnapshot && data.user?.id && anonSnapshot.userId !== data.user.id) {
+      await claimAnonEntitlement(anonSnapshot.accessToken)
     }
 
     return { kind: 'success' }
