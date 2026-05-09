@@ -25,7 +25,7 @@ import WireframeGlobe from '../../components/globe/WireframeGlobe'
 import { useMomentStats } from '../../features/moments/hooks'
 
 const { width } = Dimensions.get('window')
-const GLOBE_SIZE = Math.min(width * 1.30, 340)
+const GLOBE_SIZE = Math.min(width * 1.30, 380)
 const GLASS_ICON = require('../../assets/glass-vino.png')
 
 const NAV_ANIM_DURATION = 350
@@ -221,8 +221,6 @@ export default function MomentsScreen() {
                 pins={stats.pins}
                 onPress={handleGlobePress}
                 config={{ size: GLOBE_SIZE }}
-                pinIcon={GLASS_ICON}
-                pinIconScale={0.18}
                 onReady={handleGlobeReady}
               />
             )}

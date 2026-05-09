@@ -48,8 +48,6 @@ const WELCOME_PINS: MomentPin[] = [
   { id: '23', latitude: 33.89, longitude: -5.55, label: 'Meknes' },
 ]
 
-const GLASS_ICON = require('../../assets/glass-vino.png')
-
 export default function WelcomeScreen() {
   const pins = useMemo(() => WELCOME_PINS, [])
 
@@ -75,8 +73,6 @@ export default function WelcomeScreen() {
           <WireframeGlobe
             pins={pins}
             config={{ size: GLOBE_SIZE }}
-            pinIcon={GLASS_ICON}
-            pinIconScale={0.18}
           />
         </View>
 

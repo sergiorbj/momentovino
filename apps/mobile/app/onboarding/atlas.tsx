@@ -31,7 +31,6 @@ const BORDER = '#E8DDD4'
 
 const { width } = Dimensions.get('window')
 const GLOBE_SIZE = Math.min(width * 0.85, 300)
-const GLASS_ICON = require('../../assets/glass-vino.png')
 
 type Phase = 'processing' | 'reveal'
 
@@ -85,8 +84,6 @@ export default function AtlasScreen() {
             <WireframeGlobe
               pins={pins}
               config={{ size: GLOBE_SIZE, rotationSpeed: 0.012 }}
-              pinIcon={GLASS_ICON}
-              pinIconScale={0.18}
             />
             <Text style={styles.processingText}>Pinning your first memory…</Text>
             <ActivityIndicator color={WINE} />
@@ -114,8 +111,6 @@ export default function AtlasScreen() {
             <WireframeGlobe
               pins={pins}
               config={{ size: GLOBE_SIZE }}
-              pinIcon={GLASS_ICON}
-              pinIconScale={0.18}
             />
           </View>
 
