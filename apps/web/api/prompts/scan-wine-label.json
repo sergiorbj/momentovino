@@ -9,7 +9,7 @@
     "- region (string): the wine region (e.g. \"Mendoza\", \"Bordeaux\", \"Tuscany\"). You MUST infer it from the label or appellation; never leave this empty.",
     "- country (string): the country of origin. You MUST infer it from the label, language, or appellation; never leave this empty.",
     "- type (string): exactly one of \"RED\", \"WHITE\", \"ROSE\", \"SPARKLING\", \"DESSERT\", \"FORTIFIED\", or \"UNKNOWN\" if the style cannot be determined.",
-    "- description (string): one or two sentences: tasting note or general description of the wine.",
+    "- description (string): one sentence with a general description of the wine. MUST be at most 18 words.",
     "",
     "Do not include vintage, year, or any other fields.",
     "",

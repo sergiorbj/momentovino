@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import {
   Image,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -41,7 +40,7 @@ export default function OnboardingScanResultScreen() {
           <Text style={styles.headerTitle}>Wine identified</Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.body}>
           <View style={styles.heroWrap}>
             {wine.labelPhoto ? (
               <Image
@@ -60,10 +59,14 @@ export default function OnboardingScanResultScreen() {
             )}
           </View>
 
-          <Text style={styles.wineName}>{wine.name}</Text>
+          <Text style={styles.wineName} numberOfLines={2}>
+            {wine.name}
+          </Text>
 
           {wine.description ? (
-            <Text style={styles.description}>{wine.description}</Text>
+            <Text style={styles.description} numberOfLines={3}>
+              {wine.description}
+            </Text>
           ) : null}
 
           <View style={styles.card}>
@@ -72,7 +75,7 @@ export default function OnboardingScanResultScreen() {
             <InfoRow label="Country" value={wine.country?.trim() ? wine.country : 'Not set'} />
             {wine.type ? <InfoRow label="Type" value={wine.type} /> : null}
           </View>
-        </ScrollView>
+        </View>
 
         <View style={styles.footer}>
           <TouchableOpacity
@@ -121,7 +124,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     color: WINE,
   },
-  scroll: { padding: 24, alignItems: 'center' },
+  body: { flex: 1, padding: 20, alignItems: 'center' },
   heroWrap: {
     position: 'relative',
     alignSelf: 'center',
@@ -132,6 +135,7 @@ const styles = StyleSheet.create({
     maxWidth: 280,
     aspectRatio: 0.75,
     backgroundColor: '#FDF2F4',
+    height: '58%',
   },
   heroImage: { width: '100%', height: '100%' },
   heroPlaceholder: {
@@ -146,27 +150,27 @@ const styles = StyleSheet.create({
   },
   wineName: {
     fontFamily: 'DMSerifDisplay_400Regular',
-    fontSize: 26,
+    fontSize: 22,
     color: BROWN,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   description: {
     fontFamily: 'DMSans_400Regular',
-    fontSize: 14,
+    fontSize: 13,
     color: SUBTLE,
     textAlign: 'center',
     fontStyle: 'italic',
-    lineHeight: 21,
-    marginBottom: 24,
+    lineHeight: 20,
+    marginBottom: 14,
     paddingHorizontal: 8,
   },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     width: '100%',
-    gap: 14,
+    gap: 12,
   },
   infoRow: {
     flexDirection: 'row',
@@ -187,15 +191,14 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 32,
+    paddingTop: 12,
+    paddingBottom: 20,
     gap: 12,
   },
   btnPrimary: {
     backgroundColor: WINE,
     borderRadius: 50,
     height: 56,
-    marginTop: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
