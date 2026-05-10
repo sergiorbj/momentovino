@@ -6,6 +6,7 @@ import { hasCompletedOnboarding } from '../features/onboarding/state'
 import { isProActive } from '../lib/purchases'
 
 const WINE = '#722F37'
+const VINO_ACCENT = '#C2703E'
 const BG = '#F5EBE0'
 
 /**
@@ -63,7 +64,7 @@ export default function Index() {
           />
         </Animated.View>
         <Animated.Text style={[styles.wordmark, { opacity: wordmarkOpacity }]}>
-          MomentoVino
+          Momento<Text style={styles.wordmarkAccent}>Vino</Text>
         </Animated.Text>
       </View>
     )
@@ -98,5 +99,8 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
     letterSpacing: 0.3,
+  },
+  wordmarkAccent: {
+    color: VINO_ACCENT,
   },
 })

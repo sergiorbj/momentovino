@@ -66,7 +66,9 @@ export default function WelcomeScreen() {
       <StatusBar style="dark" />
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
-          <Text style={styles.brand}>MomentoVino</Text>
+          <Text style={styles.brand}>
+            Momento<Text style={styles.brandAccent}>Vino</Text>
+          </Text>
         </View>
 
         <View style={styles.globeWrap}>
@@ -111,6 +113,9 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
     letterSpacing: 0.5,
+  },
+  brandAccent: {
+    color: SUBTLE,
   },
   globeWrap: {
     flex: 1,
