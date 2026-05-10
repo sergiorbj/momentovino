@@ -224,7 +224,24 @@ export default function ScannerScreen() {
           ) : null}
         </View>
 
-        {!permission?.granted ? (
+        {image ? (
+          <View style={styles.previewSection}>
+            <View style={styles.previewWrap}>
+              <Image source={{ uri: image.uri }} style={styles.preview} />
+
+              {scanning && (
+                <View style={styles.scanningOverlay}>
+                  <ActivityIndicator size="large" color="#FFFFFF" />
+                  <Text style={styles.scanningText}>Identifying wine...</Text>
+                </View>
+              )}
+
+              <TouchableOpacity style={styles.clearBtn} onPress={clearImage}>
+                <Ionicons name="close" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : !permission?.granted ? (
           <View style={styles.permissionWrap}>
             <View style={styles.permissionCard}>
               <Ionicons name="camera-outline" size={40} color="#FFFFFF" />
@@ -242,27 +259,7 @@ export default function ScannerScreen() {
             </View>
           </View>
         ) : (
-          <>
-            <View style={styles.flex} />
-            {image ? (
-              <View style={styles.previewSection}>
-                <View style={styles.previewWrap}>
-                  <Image source={{ uri: image.uri }} style={styles.preview} />
-
-                  {scanning && (
-                    <View style={styles.scanningOverlay}>
-                      <ActivityIndicator size="large" color="#FFFFFF" />
-                      <Text style={styles.scanningText}>Identifying wine...</Text>
-                    </View>
-                  )}
-
-                  <TouchableOpacity style={styles.clearBtn} onPress={clearImage}>
-                    <Ionicons name="close" size={20} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : null}
-          </>
+          <View style={styles.flex} />
         )}
 
         <View style={styles.footer}>
