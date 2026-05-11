@@ -55,6 +55,61 @@ export function hasProEntitlement(info: CustomerInfo | null | undefined): boolea
 }
 
 /**
+ * Format an arbitrary numeric amount as a currency string using the device
+ * locale. `currencyCode` comes straight from the RevenueCat product so the
+ * symbol and grouping match what the Apple sheet will show at checkout.
+ */
+export function formatPriceWithCurrency(amount: number, currencyCode: string): string {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currencyCode,
+      maximumFractionDigits: 2,
+    }).format(amount)
+  } catch {
+    return `${currencyCode} ${amount.toFixed(2)}`
+  }
+}
+
+/**
+ * Yearly price divided by 12, formatted in the same currency. Used on the
+ * yearly card to advertise the effective monthly cost ("Just $2.08/month").
+ */
+export function getMonthlyEquivalent(annualPkg: PurchasesPackage | null): string | null {
+  if (!annualPkg) return null
+  const yearly = annualPkg.product.price
+  const currency = annualPkg.product.currencyCode
+  if (typeof yearly !== 'number' || yearly <= 0 || !currency) return null
+  return formatPriceWithCurrency(yearly / 12, currency)
+}
+
+/**
+ * Percentage saved by the yearly plan vs paying monthly all year.
+ * Returns null if either package is missing, currencies differ, or the
+ * yearly isn't actually cheaper.
+ */
+export function getYearlyDiscountPercent(
+  monthlyPkg: PurchasesPackage | null,
+  annualPkg: PurchasesPackage | null,
+): number | null {
+  if (!monthlyPkg || !annualPkg) return null
+  const monthly = monthlyPkg.product.price
+  const yearly = annualPkg.product.price
+  if (
+    typeof monthly !== 'number' ||
+    typeof yearly !== 'number' ||
+    monthly <= 0 ||
+    yearly <= 0
+  ) {
+    return null
+  }
+  if (monthlyPkg.product.currencyCode !== annualPkg.product.currencyCode) return null
+  const discount = 1 - yearly / (monthly * 12)
+  if (discount <= 0) return null
+  return Math.round(discount * 100)
+}
+
+/**
  * Boot-time gate: prefers server-mirrored entitlement (`profiles` via
  * `user_entitlement`), falls back to RevenueCat while the webhook catches up
  * or when migration isn't applied yet.

@@ -17,6 +17,8 @@ import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import {
   getCurrentOffering,
+  getMonthlyEquivalent,
+  getYearlyDiscountPercent,
   hasProEntitlement,
   PRO_ENTITLEMENT_ID,
   purchasePackage,
@@ -58,8 +60,10 @@ export default function PaywallScreen() {
 
   const monthlyPkg: PurchasesPackage | null = offering?.monthly ?? null
   const annualPkg: PurchasesPackage | null = offering?.annual ?? null
-  const monthlyPriceString = monthlyPkg?.product.priceString ?? '$4.99'
-  const annualPriceString = annualPkg?.product.priceString ?? '$39.99'
+  const monthlyPriceString = monthlyPkg?.product.priceString ?? '$2.99'
+  const annualPriceString = annualPkg?.product.priceString ?? '$24.99'
+  const annualMonthlyEquivalent = getMonthlyEquivalent(annualPkg) ?? '$2.08'
+  const annualDiscountPercent = getYearlyDiscountPercent(monthlyPkg, annualPkg) ?? 30
 
   const subscribe = async () => {
     const pkg = selectedPlan === 'yearly' ? annualPkg : monthlyPkg
@@ -200,12 +204,14 @@ export default function PaywallScreen() {
               ]}
             >
               <View style={styles.planBadge}>
-                <Text style={styles.planBadgeText}>BEST VALUE · SAVE 33%</Text>
+                <Text style={styles.planBadgeText}>
+                  BEST VALUE · SAVE {annualDiscountPercent}%
+                </Text>
               </View>
               <View style={styles.planRow}>
                 <View style={styles.planLeft}>
                   <Text style={styles.planTitle}>Annual</Text>
-                  <Text style={styles.planDetail}>Just $3.33/month</Text>
+                  <Text style={styles.planDetail}>Just {annualMonthlyEquivalent}/month</Text>
                 </View>
                 <View style={styles.planRight}>
                   <Text style={styles.planPrice}>{annualPriceString}</Text>
