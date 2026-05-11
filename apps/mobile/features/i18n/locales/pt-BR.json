@@ -1,0 +1,13 @@
+{
+  "common": {
+    "back": "Voltar",
+    "cancel": "Cancelar",
+    "save": "Salvar"
+  },
+  "profile": {
+    "language": {
+      "title": "Idioma",
+      "subtitle": "Escolha o idioma usado no aplicativo."
+    }
+  }
+}

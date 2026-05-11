@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,47 +10,39 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
-import { getProfile, updateSettings } from '../../features/profile/api'
+import { setLanguage } from '../../features/i18n/config'
+import { useLanguage, useTranslation } from '../../features/i18n/hooks'
+import {
+  LANGUAGE_DISPLAY,
+  SUPPORTED_LANGUAGES,
+  type LanguageCode,
+} from '../../features/i18n/types'
+import { useUpdateSettings } from '../../features/profile/hooks'
 
 const WINE = '#722F37'
+const SUBTLE = '#6E5A5E'
 const BG = '#F5EBE0'
 
-type Lang = 'en' | 'pt-BR'
-
-const LANGUAGES: { code: Lang; label: string; flag: string }[] = [
-  { code: 'en', label: 'English (US)', flag: '🇺🇸' },
-  { code: 'pt-BR', label: 'Portugues (BR)', flag: '🇧🇷' },
-]
-
 export default function LanguageScreen() {
-  const [current, setCurrent] = useState<Lang>('en')
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const { t } = useTranslation()
+  const current = useLanguage()
+  const updateSettingsMutation = useUpdateSettings()
+  const [pending, setPending] = useState<LanguageCode | null>(null)
 
-  useEffect(() => {
-    ;(async () => {
-      try {
-        const { profile } = await getProfile()
-        setCurrent(profile.language)
-      } catch (e) {
-        console.warn('Failed to load language', e)
-      } finally {
-        setLoading(false)
-      }
-    })()
-  }, [])
-
-  const select = async (lang: Lang) => {
-    if (lang === current) return
-    setSaving(true)
-    try {
-      const { profile } = await updateSettings({ language: lang })
-      setCurrent(profile.language)
-    } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Could not change language')
-    } finally {
-      setSaving(false)
-    }
+  const select = async (code: LanguageCode) => {
+    if (code === current || pending) return
+    setPending(code)
+    // Apply locally first (AsyncStorage + i18n.changeLanguage) so the UI
+    // reflects the choice immediately, even if the server write fails or the
+    // user is offline. Server-side persistence is best-effort.
+    await setLanguage(code)
+    updateSettingsMutation.mutate(
+      { language: code },
+      {
+        onSettled: () => setPending(null),
+        onError: (err) => console.warn('Failed to persist language to server', err),
+      },
+    )
   }
 
   return (
@@ -61,39 +52,39 @@ export default function LanguageScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
             <Ionicons name="chevron-back" size={22} color={WINE} />
           </TouchableOpacity>
-          <Text style={styles.title}>Language</Text>
+          <Text style={styles.title}>{t('profile.language.title')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
-        {loading ? (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color={WINE} />
-          </View>
-        ) : (
-          <View style={styles.list}>
-            {LANGUAGES.map((lang, index) => {
-              const isSelected = lang.code === current
-              return (
-                <TouchableOpacity
-                  key={lang.code}
-                  style={[styles.row, index < LANGUAGES.length - 1 && styles.rowBorder]}
-                  onPress={() => select(lang.code)}
-                  disabled={saving}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.flag}>{lang.flag}</Text>
-                  <Text style={styles.label}>{lang.label}</Text>
-                  {isSelected && <Ionicons name="checkmark-circle" size={22} color={WINE} />}
-                </TouchableOpacity>
-              )
-            })}
-            {saving && (
-              <View style={styles.savingOverlay}>
-                <ActivityIndicator size="small" color={WINE} />
-              </View>
-            )}
-          </View>
-        )}
+        <Text style={styles.subtitle}>{t('profile.language.subtitle')}</Text>
+
+        <View style={styles.list}>
+          {SUPPORTED_LANGUAGES.map((code, index) => {
+            const display = LANGUAGE_DISPLAY[code]
+            const isSelected = code === current
+            const isPending = code === pending
+            return (
+              <TouchableOpacity
+                key={code}
+                style={[
+                  styles.row,
+                  index < SUPPORTED_LANGUAGES.length - 1 && styles.rowBorder,
+                ]}
+                onPress={() => select(code)}
+                disabled={pending !== null}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.flag}>{display.flag}</Text>
+                <Text style={styles.label}>{display.label}</Text>
+                {isPending ? (
+                  <ActivityIndicator size="small" color={WINE} />
+                ) : isSelected ? (
+                  <Ionicons name="checkmark-circle" size={22} color={WINE} />
+                ) : null}
+              </TouchableOpacity>
+            )
+          })}
+        </View>
       </SafeAreaView>
     </View>
   )
@@ -102,7 +93,6 @@ export default function LanguageScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   safe: { flex: 1 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -123,11 +113,19 @@ const styles = StyleSheet.create({
     fontSize: 26,
     color: WINE,
   },
+  subtitle: {
+    fontFamily: 'DMSans_400Regular',
+    fontSize: 14,
+    lineHeight: 20,
+    color: SUBTLE,
+    paddingHorizontal: 24,
+    marginTop: 4,
+    marginBottom: 16,
+  },
   list: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginHorizontal: 24,
-    marginTop: 16,
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -152,16 +150,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'DMSans_400Regular',
     color: '#1C1C1E',
-  },
-  savingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 16,
   },
 })

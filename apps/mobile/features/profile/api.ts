@@ -1,6 +1,7 @@
 import { getApiBaseUrl } from '../../lib/api-base'
 import type { Database } from '../../lib/database.types'
 import { supabase } from '../../lib/supabase'
+import { SUPPORTED_LANGUAGES, type LanguageCode } from '../i18n/types'
 
 async function getAccessToken(): Promise<string> {
   const { data } = await supabase.auth.getSession()
@@ -15,7 +16,7 @@ export type ProfileRow = {
   username: string
   bio: string | null
   avatar_url: string | null
-  language: 'en' | 'pt-BR'
+  language: LanguageCode
   notifications_enabled: boolean
   created_at: string
   updated_at: string
@@ -113,14 +114,11 @@ export async function updateProfile(input: UpdateProfileInput): Promise<{ profil
 }
 
 export type UpdateSettingsInput = {
-  language?: 'en' | 'pt-BR'
+  language?: LanguageCode
   notifications_enabled?: boolean
 }
 
-const SETTINGS_LANGUAGES: ReadonlySet<NonNullable<UpdateSettingsInput['language']>> = new Set([
-  'en',
-  'pt-BR',
-])
+const SETTINGS_LANGUAGES: ReadonlySet<LanguageCode> = new Set(SUPPORTED_LANGUAGES)
 
 /**
  * Updates `profiles.language` and/or `profiles.notifications_enabled` via Supabase
@@ -137,7 +135,7 @@ export async function updateSettings(input: UpdateSettingsInput): Promise<{ prof
 
   if (input.language !== undefined) {
     if (!SETTINGS_LANGUAGES.has(input.language)) {
-      throw new Error('Language must be en or pt-BR')
+      throw new Error(`Language must be one of: ${SUPPORTED_LANGUAGES.join(', ')}`)
     }
     patch.language = input.language
   }

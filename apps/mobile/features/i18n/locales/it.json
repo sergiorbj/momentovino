@@ -1,0 +1,13 @@
+{
+  "common": {
+    "back": "Indietro",
+    "cancel": "Annulla",
+    "save": "Salva"
+  },
+  "profile": {
+    "language": {
+      "title": "Lingua",
+      "subtitle": "Scegli la lingua utilizzata nell'app."
+    }
+  }
+}

@@ -45,6 +45,7 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-font',
+    'expo-localization',
     'expo-apple-authentication',
     '@react-native-community/datetimepicker',
     [

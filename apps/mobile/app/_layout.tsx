@@ -8,7 +8,7 @@ import {
 } from '@expo-google-fonts/dm-sans'
 import { DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display'
 import * as SplashScreen from 'expo-splash-screen'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { ensureAnonymousSession } from '../lib/session'
 import { configureGoogleSignIn } from '../lib/auth/google'
@@ -17,6 +17,7 @@ import { prefetchCoreData } from '../lib/prefetch'
 import { configurePurchases } from '../lib/purchases'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/query-keys'
+import { initI18n } from '../features/i18n/config'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -68,7 +69,16 @@ export default function RootLayout() {
     DMSerifDisplay_400Regular,
   })
 
-  const ready = fontsLoaded || fontError
+  // Initialise i18next from stored override → device locale → "en" before any
+  // screen renders, so first paint is in the correct language.
+  const [i18nReady, setI18nReady] = useState(false)
+  useEffect(() => {
+    void initI18n()
+      .catch((err) => console.warn('Failed to initialise i18n', err))
+      .finally(() => setI18nReady(true))
+  }, [])
+
+  const ready = (fontsLoaded || fontError) && i18nReady
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync()
