@@ -26,6 +26,7 @@ export type FamilyMemberRow = {
   joined_at: string
   email?: string | null
   display_name?: string | null
+  avatar_url?: string | null
   moments_count?: number
   wines_count?: number
   countries_count?: number

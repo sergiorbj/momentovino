@@ -115,6 +115,24 @@ function EmptyMembersCallout() {
   )
 }
 
+function MemberAvatar({ uri }: { uri?: string | null }) {
+  const [failed, setFailed] = useState(false)
+  const showImage = Boolean(uri) && !failed
+  return (
+    <View style={styles.memberAvatar}>
+      {showImage ? (
+        <Image
+          source={{ uri: uri as string }}
+          style={styles.memberAvatarImg}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Ionicons name="person" size={22} color={WINE} />
+      )}
+    </View>
+  )
+}
+
 function MemberRow({
   member,
   isSelf,
@@ -136,9 +154,7 @@ function MemberRow({
   const wines = member.wines_count ?? '–'
   return (
     <View style={styles.memberRow}>
-      <View style={styles.memberAvatar}>
-        <Ionicons name="person" size={22} color={WINE} />
-      </View>
+      <MemberAvatar uri={member.avatar_url} />
       <View style={styles.memberInfo}>
         <Text style={styles.memberName} numberOfLines={1}>
           {label}
@@ -165,7 +181,7 @@ function MemberRow({
           {removing ? (
             <ActivityIndicator color={WINE} size="small" />
           ) : (
-            <Ionicons name="person-remove-outline" size={20} color={WINE} />
+            <Ionicons name="close" size={22} color={WINE} />
           )}
         </TouchableOpacity>
       ) : null}
@@ -426,7 +442,7 @@ export default function FamilyScreen() {
       const memberName = member.display_name || member.email || 'this member'
       Alert.alert(
         'Remove from family?',
-        `${memberName} will lose access to the shared cellar.`,
+        `${memberName} will be removed from your family.`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -1032,6 +1048,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5EBE0',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  memberAvatarImg: {
+    width: 44,
+    height: 44,
   },
   memberInfo: {
     flex: 1,

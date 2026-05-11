@@ -314,6 +314,32 @@ def _list_members(url: str, key: str, family_id: str) -> list[dict[str, Any]]:
     return rows if isinstance(rows, list) else []
 
 
+def _load_member_avatars(url: str, key: str, user_ids: list[str]) -> dict[str, Optional[str]]:
+    """Fetch avatar_url for each user from public.profiles in one batch."""
+    if not user_ids:
+        return {}
+    in_list = ",".join(user_ids)
+    r = requests.get(
+        f"{url}/rest/v1/profiles",
+        params={
+            "id": f"in.({in_list})",
+            "select": "id,avatar_url",
+        },
+        headers={"Authorization": f"Bearer {key}", "apikey": key},
+        timeout=30,
+    )
+    if r.status_code != 200:
+        return {}
+    body = r.json() if r.content else []
+    rows = body if isinstance(body, list) else []
+    out: dict[str, Optional[str]] = {}
+    for row in rows:
+        if isinstance(row, dict) and row.get("id"):
+            url_val = row.get("avatar_url")
+            out[str(row["id"])] = str(url_val).strip() if url_val else None
+    return out
+
+
 def _load_member_stats(url: str, key: str, user_ids: list[str]) -> dict[str, dict[str, int]]:
     """Per-user totals for the family dashboard: moments, wines, distinct countries
     (derived from each moment's associated wine.country). Two PostgREST round-trips
@@ -667,6 +693,7 @@ class handler(BaseHTTPRequestHandler):
         members_raw = _list_members(url, key, fid)
         member_uids = [str(m["user_id"]) for m in members_raw if m.get("user_id")]
         stats_by_uid = _load_member_stats(url, key, member_uids)
+        avatars_by_uid = _load_member_avatars(url, key, member_uids)
         members_out: list[dict[str, Any]] = []
         for m in members_raw:
             u = _admin_user_by_id(url, key, m["user_id"])
@@ -678,6 +705,7 @@ class handler(BaseHTTPRequestHandler):
             row = dict(m)
             row["email"] = em
             row["display_name"] = dn
+            row["avatar_url"] = avatars_by_uid.get(str(m.get("user_id") or ""))
             s = stats_by_uid.get(str(m.get("user_id") or ""), {})
             row["moments_count"] = s.get("moments_count", 0)
             row["wines_count"] = s.get("wines_count", 0)
