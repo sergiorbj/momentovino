@@ -9,6 +9,7 @@ import {
   inviteFamilyMemberByUsername,
   inviteMemberByEmail,
   listMyInvitations,
+  removeFamilyMember,
   updateFamily,
   type CreateFamilyInput,
   type UpdateFamilyInput,
@@ -89,6 +90,16 @@ export function useDeclineInvitation() {
     mutationFn: (invitationId: string) => declineFamilyInvitation(invitationId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.myInvitations })
+    },
+  })
+}
+
+export function useRemoveFamilyMember() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (userId: string) => removeFamilyMember(userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.family })
     },
   })
 }

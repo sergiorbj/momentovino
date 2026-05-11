@@ -25,6 +25,10 @@ export type FamilyMemberRow = {
   role: 'admin' | 'member' | string
   joined_at: string
   email?: string | null
+  display_name?: string | null
+  moments_count?: number
+  wines_count?: number
+  countries_count?: number
 }
 
 /** Pending invitations as the admin sees them on the family dashboard.
@@ -316,6 +320,24 @@ export async function declineFamilyInvitation(invitationId: string): Promise<{ o
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new Error((body as { error?: string }).error ?? `Could not decline invite (${res.status})`)
+  }
+  return { ok: true }
+}
+
+export async function removeFamilyMember(userId: string): Promise<{ ok: true }> {
+  const access = await getAccessToken()
+  const res = await fetch(
+    `${getApiBaseUrl()}/family?op=members&user_id=${encodeURIComponent(userId)}`,
+    {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${access}` },
+    },
+  )
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(
+      (body as { error?: string }).error ?? `Could not remove member (${res.status})`,
+    )
   }
   return { ok: true }
 }

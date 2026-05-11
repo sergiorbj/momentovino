@@ -314,6 +314,66 @@ def _list_members(url: str, key: str, family_id: str) -> list[dict[str, Any]]:
     return rows if isinstance(rows, list) else []
 
 
+def _load_member_stats(url: str, key: str, user_ids: list[str]) -> dict[str, dict[str, int]]:
+    """Per-user totals for the family dashboard: moments, wines, distinct countries
+    (derived from each moment's associated wine.country). Two PostgREST round-trips
+    using `in.(uid1,uid2,…)` rather than one per member, so cost is O(1) per family."""
+    if not user_ids:
+        return {}
+    in_list = ",".join(user_ids)
+    moments_resp = requests.get(
+        f"{url}/rest/v1/moments",
+        params={
+            "user_id": f"in.({in_list})",
+            "select": "user_id,wines(country)",
+        },
+        headers={"Authorization": f"Bearer {key}", "apikey": key},
+        timeout=30,
+    )
+    wines_resp = requests.get(
+        f"{url}/rest/v1/wines",
+        params={
+            "created_by": f"in.({in_list})",
+            "select": "created_by",
+        },
+        headers={"Authorization": f"Bearer {key}", "apikey": key},
+        timeout=30,
+    )
+    agg: dict[str, dict[str, Any]] = {
+        uid: {"moments_count": 0, "wines_count": 0, "_countries": set()} for uid in user_ids
+    }
+    if moments_resp.status_code == 200:
+        rows = moments_resp.json() if isinstance(moments_resp.json(), list) else []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            uid = row.get("user_id")
+            if uid not in agg:
+                continue
+            agg[uid]["moments_count"] += 1
+            wine = row.get("wines")
+            country = wine.get("country") if isinstance(wine, dict) else None
+            if country:
+                agg[uid]["_countries"].add(country)
+    if wines_resp.status_code == 200:
+        rows = wines_resp.json() if isinstance(wines_resp.json(), list) else []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            uid = row.get("created_by")
+            if uid not in agg:
+                continue
+            agg[uid]["wines_count"] += 1
+    return {
+        uid: {
+            "moments_count": s["moments_count"],
+            "wines_count": s["wines_count"],
+            "countries_count": len(s["_countries"]),
+        }
+        for uid, s in agg.items()
+    }
+
+
 def _list_pending_invites(url: str, key: str, family_id: str) -> list[dict[str, Any]]:
     """Pending non-expired invitations for the admin dashboard. Includes both
     legacy email-token rows AND new username invites; for the latter we
@@ -605,11 +665,23 @@ class handler(BaseHTTPRequestHandler):
             return
         fid = fam["id"]
         members_raw = _list_members(url, key, fid)
+        member_uids = [str(m["user_id"]) for m in members_raw if m.get("user_id")]
+        stats_by_uid = _load_member_stats(url, key, member_uids)
         members_out: list[dict[str, Any]] = []
         for m in members_raw:
-            em = _admin_user_email(url, key, m["user_id"])
+            u = _admin_user_by_id(url, key, m["user_id"])
+            em: Optional[str] = None
+            dn: Optional[str] = None
+            if u:
+                em = (u.get("email") or "").strip().lower() or None
+                dn = _display_name_from_auth_user(u, em or "")
             row = dict(m)
             row["email"] = em
+            row["display_name"] = dn
+            s = stats_by_uid.get(str(m.get("user_id") or ""), {})
+            row["moments_count"] = s.get("moments_count", 0)
+            row["wines_count"] = s.get("wines_count", 0)
+            row["countries_count"] = s.get("countries_count", 0)
             members_out.append(row)
         pending = _list_pending_invites(url, key, fid)
         send_json(
@@ -1003,3 +1075,62 @@ class handler(BaseHTTPRequestHandler):
         gr_body = gr.json() if gr.status_code == 200 else []
         out = gr_body[0] if isinstance(gr_body, list) and gr_body else {"id": fid, "name": name}
         send_json(self, 200, {"family": out})
+
+    def do_DELETE(self):
+        path = _norm_path(self)
+        if path != "/api/family/members":
+            send_json(self, 404, {"error": "Not found"})
+            return
+        uid, err = auth_bearer_user_id(self)
+        if err:
+            send_json(self, err[0], err[1])
+            return
+        parsed = urlparse(self.path)
+        target_uid = (parse_qs(parsed.query).get("user_id") or [""])[0].strip()
+        if not target_uid:
+            send_json(self, 400, {"error": "user_id is required"})
+            return
+        url, key = supabase_config()
+        fam = _owned_family(url, key, uid)
+        if not fam:
+            send_json(self, 403, {"error": "Only the family owner can remove members"})
+            return
+        fid = fam["id"]
+        if target_uid == str(uid):
+            send_json(self, 400, {"error": "Use 'leave family' to remove yourself"})
+            return
+        if target_uid == str(fam.get("owner_id") or ""):
+            send_json(self, 400, {"error": "Cannot remove the family owner"})
+            return
+        chk = requests.get(
+            f"{url}/rest/v1/family_members",
+            params={
+                "family_id": f"eq.{fid}",
+                "user_id": f"eq.{target_uid}",
+                "select": "id",
+                "limit": "1",
+            },
+            headers={"Authorization": f"Bearer {key}", "apikey": key},
+            timeout=30,
+        )
+        if chk.status_code != 200:
+            send_json(self, 500, {"error": "Failed to verify member"})
+            return
+        rows = chk.json() if isinstance(chk.json(), list) else []
+        if not rows:
+            send_json(self, 404, {"error": "Member not in this family"})
+            return
+        r = requests.delete(
+            f"{url}/rest/v1/family_members",
+            params={"family_id": f"eq.{fid}", "user_id": f"eq.{target_uid}"},
+            headers={
+                "Authorization": f"Bearer {key}",
+                "apikey": key,
+                "Prefer": "return=minimal",
+            },
+            timeout=30,
+        )
+        if r.status_code not in (200, 204):
+            send_json(self, 500, {"error": r.text or "Failed to remove member"})
+            return
+        send_json(self, 200, {"removed": True, "user_id": target_uid})
