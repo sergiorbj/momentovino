@@ -30,6 +30,7 @@ import {
   useDeclineInvitation,
   useFamily,
   useMyInvitations,
+  useRemoveFamilyMember,
   useUpdateFamily,
 } from '../../features/family/hooks'
 import { uploadFamilyCoverPhoto } from '../../features/family/cover-upload'
@@ -114,22 +115,60 @@ function EmptyMembersCallout() {
   )
 }
 
-function MemberRow({ member, isSelf }: { member: FamilyMemberRow; isSelf: boolean }) {
-  const label =
-    isSelf ? 'You' : member.email || member.user_id.slice(0, 8) + '…'
-  const roleLabel = member.role === 'admin' ? 'Admin' : 'Member'
+function MemberRow({
+  member,
+  isSelf,
+  canRemove,
+  onRemove,
+  removing,
+}: {
+  member: FamilyMemberRow
+  isSelf: boolean
+  canRemove: boolean
+  onRemove: () => void
+  removing: boolean
+}) {
+  const label = isSelf
+    ? 'You'
+    : member.display_name || member.email || member.user_id.slice(0, 8) + '…'
+  const moments = member.moments_count ?? '–'
+  const countries = member.countries_count ?? '–'
+  const wines = member.wines_count ?? '–'
   return (
     <View style={styles.memberRow}>
       <View style={styles.memberAvatar}>
         <Ionicons name="person" size={22} color={WINE} />
       </View>
       <View style={styles.memberInfo}>
-        <Text style={styles.memberName}>{label}</Text>
-        <Text style={styles.memberMeta}>
-          {roleLabel}
-          {isSelf ? ' · this device' : ''}
+        <Text style={styles.memberName} numberOfLines={1}>
+          {label}
+        </Text>
+        <Text style={styles.memberStatsLine} numberOfLines={1}>
+          <Text style={styles.statNum}>{moments}</Text>
+          <Text style={styles.statUnit}> moments</Text>
+          <Text style={styles.statDot}>{'  ·  '}</Text>
+          <Text style={styles.statNum}>{countries}</Text>
+          <Text style={styles.statUnit}> countries</Text>
+          <Text style={styles.statDot}>{'  ·  '}</Text>
+          <Text style={styles.statNum}>{wines}</Text>
+          <Text style={styles.statUnit}> wines</Text>
         </Text>
       </View>
+      {canRemove ? (
+        <TouchableOpacity
+          onPress={onRemove}
+          disabled={removing}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={[styles.memberRemoveBtn, removing && styles.memberRemoveBtnDisabled]}
+          accessibilityLabel={`Remove ${label} from family`}
+        >
+          {removing ? (
+            <ActivityIndicator color={WINE} size="small" />
+          ) : (
+            <Ionicons name="person-remove-outline" size={20} color={WINE} />
+          )}
+        </TouchableOpacity>
+      ) : null}
     </View>
   )
 }
@@ -148,6 +187,8 @@ export default function FamilyScreen() {
   const { data: incomingData, refetch: refetchIncoming } = useMyInvitations()
   const acceptInvitationMutation = useAcceptInvitation()
   const declineInvitationMutation = useDeclineInvitation()
+  const removeMemberMutation = useRemoveFamilyMember()
+  const [pendingRemoveUid, setPendingRemoveUid] = useState<string | null>(null)
   const incomingInvitations = incomingData?.invitations ?? []
   const loading = isLoading && !dash
   const refreshing = isFetching && !isLoading
@@ -378,6 +419,37 @@ export default function FamilyScreen() {
       )
     },
     [declineInvitationMutation],
+  )
+
+  const handleRemoveMember = useCallback(
+    (member: FamilyMemberRow) => {
+      const memberName = member.display_name || member.email || 'this member'
+      Alert.alert(
+        'Remove from family?',
+        `${memberName} will lose access to the shared cellar.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Remove',
+            style: 'destructive',
+            onPress: async () => {
+              setPendingRemoveUid(member.user_id)
+              try {
+                await removeMemberMutation.mutateAsync(member.user_id)
+              } catch (e) {
+                Alert.alert(
+                  'Error',
+                  e instanceof Error ? e.message : 'Could not remove member',
+                )
+              } finally {
+                setPendingRemoveUid(null)
+              }
+            },
+          },
+        ],
+      )
+    },
+    [removeMemberMutation],
   )
 
   const hasFamily = Boolean(dash?.family)
@@ -626,14 +698,27 @@ export default function FamilyScreen() {
             ) : null}
 
             <View style={styles.membersList}>
-              {dash!.members.map((m, index) => (
-                <View
-                  key={m.id}
-                  style={[styles.memberRowWrap, index < dash!.members.length - 1 && styles.memberRowBorder]}
-                >
-                  <MemberRow member={m} isSelf={m.user_id === selfId} />
-                </View>
-              ))}
+              {dash!.members.map((m, index) => {
+                const isSelf = m.user_id === selfId
+                const canRemove =
+                  Boolean(dash!.isOwner) &&
+                  !isSelf &&
+                  m.user_id !== dash!.family!.owner_id
+                return (
+                  <View
+                    key={m.id}
+                    style={[styles.memberRowWrap, index < dash!.members.length - 1 && styles.memberRowBorder]}
+                  >
+                    <MemberRow
+                      member={m}
+                      isSelf={isSelf}
+                      canRemove={canRemove}
+                      onRemove={() => handleRemoveMember(m)}
+                      removing={pendingRemoveUid === m.user_id}
+                    />
+                  </View>
+                )
+              })}
             </View>
 
             {dash!.pendingInvitations.length > 0 && dash!.isOwner ? (
@@ -936,7 +1021,9 @@ const styles = StyleSheet.create({
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    gap: 12,
   },
   memberAvatar: {
     width: 44,
@@ -945,19 +1032,48 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5EBE0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
   },
-  memberInfo: { flex: 1 },
+  memberInfo: {
+    flex: 1,
+    minWidth: 0,
+    gap: 3,
+  },
   memberName: {
     fontSize: 15,
     fontFamily: 'DMSans_600SemiBold',
-    color: '#1C1C1E',
+    color: INK,
   },
   memberMeta: {
     fontSize: 13,
     fontFamily: 'DMSans_400Regular',
-    color: '#9CA3AF',
+    color: SUBTLE,
     marginTop: 2,
+  },
+  memberRemoveBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#722F3712',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  memberRemoveBtnDisabled: {
+    opacity: 0.5,
+  },
+  memberStatsLine: {
+    fontSize: 13,
+    fontFamily: 'DMSans_400Regular',
+    color: SUBTLE,
+  },
+  statNum: {
+    fontFamily: 'DMSans_600SemiBold',
+    color: INK,
+  },
+  statUnit: {
+    color: SUBTLE,
+  },
+  statDot: {
+    color: '#D4C4B8',
   },
   pendingRow: { padding: 14 },
   noFamilyScrollContent: {
