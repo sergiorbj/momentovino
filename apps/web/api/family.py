@@ -41,8 +41,28 @@ def _norm_description(body: dict[str, Any]) -> tuple[Optional[str], Optional[str
     return s, None
 
 
+_OP_TO_SUBPATH: dict[str, str] = {
+    "search-members": "/api/family/members/search",
+    "my-invitations": "/api/family/my-invitations",
+    "accept-invitation": "/api/family/invitations/accept",
+    "decline-invitation": "/api/family/invitations/decline",
+    "invite-by-username": "/api/family/invitations/by-username",
+    "members": "/api/family/members",
+}
+
+
 def _norm_path(handler: BaseHTTPRequestHandler) -> str:
-    p = urlparse(handler.path).path.rstrip("/") or "/"
+    """Normalize path. Vercel only routes `/api/family` exact to this function,
+    so callers pass the action via `?op=...` query param on the base path; we
+    translate that to the legacy subpath string the body code already branches
+    on. The Flask shim handles real subpaths fine, so both forms work in dev.
+    """
+    parsed = urlparse(handler.path)
+    p = parsed.path.rstrip("/") or "/"
+    if p == "/api/family":
+        op = (parse_qs(parsed.query).get("op") or [""])[0]
+        if op in _OP_TO_SUBPATH:
+            return _OP_TO_SUBPATH[op]
     return p
 
 
@@ -495,7 +515,7 @@ def _read_json(handler: BaseHTTPRequestHandler) -> dict[str, Any]:
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
-        path_only = parsed.path.rstrip("/") or "/"
+        path_only = _norm_path(self)
         uid, err = auth_bearer_user_id(self)
         if err:
             send_json(self, err[0], err[1])

@@ -137,7 +137,7 @@ export async function updateFamily(input: UpdateFamilyInput): Promise<{ family: 
 export async function searchFamilyInviteTargets(query: string): Promise<{ matches: FamilyInviteUserMatch[] }> {
   const token = await getAccessToken()
   const q = encodeURIComponent(query.trim())
-  const res = await fetch(`${getApiBaseUrl()}/family/members/search?q=${q}`, {
+  const res = await fetch(`${getApiBaseUrl()}/family?op=search-members&q=${q}`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) {
@@ -156,7 +156,7 @@ export async function inviteMemberByEmail(
   email: string,
 ): Promise<{ emailed: true; email: string } | { existingUser: true; message: string }> {
   const token = await getAccessToken()
-  const res = await fetch(`${getApiBaseUrl()}/family/members`, {
+  const res = await fetch(`${getApiBaseUrl()}/family?op=members`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -203,7 +203,7 @@ export type InviteByUsernameResult =
 
 export async function inviteFamilyMemberByUsername(userId: string): Promise<InviteByUsernameResult> {
   const access = await getAccessToken()
-  const res = await fetch(`${getApiBaseUrl()}/family/invitations/by-username`, {
+  const res = await fetch(`${getApiBaseUrl()}/family?op=invite-by-username`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${access}`,
@@ -256,7 +256,7 @@ export async function inviteFamilyMemberByUsername(userId: string): Promise<Invi
 
 export async function listMyInvitations(): Promise<{ invitations: IncomingInvitation[] }> {
   const access = await getAccessToken()
-  const res = await fetch(`${getApiBaseUrl()}/family/my-invitations`, {
+  const res = await fetch(`${getApiBaseUrl()}/family?op=my-invitations`, {
     headers: { Authorization: `Bearer ${access}` },
   })
   if (!res.ok) {
@@ -272,7 +272,7 @@ export type AcceptInvitationResult =
 
 export async function acceptFamilyInvitation(invitationId: string): Promise<AcceptInvitationResult> {
   const access = await getAccessToken()
-  const res = await fetch(`${getApiBaseUrl()}/family/invitations/accept`, {
+  const res = await fetch(`${getApiBaseUrl()}/family?op=accept-invitation`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${access}`,
@@ -305,7 +305,7 @@ export async function acceptFamilyInvitation(invitationId: string): Promise<Acce
 
 export async function declineFamilyInvitation(invitationId: string): Promise<{ ok: true }> {
   const access = await getAccessToken()
-  const res = await fetch(`${getApiBaseUrl()}/family/invitations/decline`, {
+  const res = await fetch(`${getApiBaseUrl()}/family?op=decline-invitation`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${access}`,
