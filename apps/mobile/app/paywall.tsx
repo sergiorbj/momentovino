@@ -33,7 +33,7 @@ const BORDER = '#E8DDD4'
 
 const BENEFITS: { icon: string; text: string }[] = [
   { icon: '🍷', text: 'Unlimited wine scans to see the details' },
-  { icon: '👨‍👩‍👧', text: 'Family sharing and shared cellars' },
+  { icon: '👨‍👩‍👧', text: 'Create a family group with your loved ones' },
   { icon: '📔', text: 'Every moment, kept forever in your journal' },
 ]
 
@@ -176,8 +176,7 @@ export default function PaywallScreen() {
             <Text style={styles.eyebrow}>MOMENTOVINO PRO</Text>
             <Text style={styles.headline}>Your subscription plan ended.</Text>
             <Text style={styles.sub}>
-              Renew to keep scanning labels, saving moments, and sharing your
-              cellar with the family.
+              Renew to keep scanning labels and saving every wine moment.
             </Text>
           </View>
 
