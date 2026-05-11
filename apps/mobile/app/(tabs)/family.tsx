@@ -58,16 +58,10 @@ function IncomingInvitationCard({
   const familyName = invitation.family?.name ?? 'a family'
   return (
     <View style={styles.invitationCard}>
-      <View style={styles.invitationIconWrap}>
-        <Ionicons name="mail-open-outline" size={22} color={WINE} />
-      </View>
-      <Text style={styles.invitationTitle}>You're invited to {familyName}</Text>
+      <Text style={styles.invitationTitle}>You're invited to <Text style={styles.invitationTitleFamilyName}>{familyName}</Text>!</Text>
       <Text style={styles.invitationSubtitle}>
-        {invitation.inviter_name} invited you to join their family on MomentoVino.
+        {invitation.inviter_name} invited you to join their family.
       </Text>
-      {invitation.family?.description ? (
-        <Text style={styles.invitationDescription}>"{invitation.family.description}"</Text>
-      ) : null}
       <View style={styles.invitationActions}>
         <TouchableOpacity
           style={[styles.invitationBtn, styles.invitationDeclineBtn, busy && styles.invitationBtnDisabled]}
@@ -485,11 +479,6 @@ export default function FamilyScreen() {
           >
             {incomingInvitations.length > 0 ? (
               <View style={styles.invitationsSection}>
-                <Text style={styles.invitationsHeader}>
-                  {incomingInvitations.length === 1
-                    ? 'You have an invitation'
-                    : `You have ${incomingInvitations.length} invitations`}
-                </Text>
                 {incomingInvitations.map((inv) => (
                   <IncomingInvitationCard
                     key={inv.id}
@@ -979,12 +968,6 @@ const styles = StyleSheet.create({
   invitationsSection: {
     marginBottom: 24,
   },
-  invitationsHeader: {
-    fontSize: 17,
-    fontFamily: 'DMSans_600SemiBold',
-    color: WINE,
-    marginBottom: 12,
-  },
   invitationCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -1006,9 +989,14 @@ const styles = StyleSheet.create({
   },
   invitationTitle: {
     fontSize: 19,
-    fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
     marginBottom: 6,
+  },
+  invitationTitleFamilyName: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    fontFamily: 'DMSerifDisplay_600Bold',
+    color: WINE,
   },
   invitationSubtitle: {
     fontSize: 14,
