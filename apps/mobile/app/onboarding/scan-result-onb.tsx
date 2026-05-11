@@ -34,7 +34,7 @@ export default function OnboardingScanResultScreen() {
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Wine identified</Text>
+          <Text style={styles.headerTitle}>Wine identified!</Text>
         </View>
 
         <View style={styles.body}>
@@ -107,6 +107,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   headerTitle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
     fontFamily: 'DMSerifDisplay_400Regular',
     fontSize: 26,
     color: WINE,

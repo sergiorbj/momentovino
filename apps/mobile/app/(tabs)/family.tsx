@@ -100,10 +100,10 @@ function EmptyNoFamily({ onCreate }: { onCreate: () => void }) {
       <Ionicons name="people" size={96} color={WINE} style={styles.emptyIcon} />
       <Text style={styles.emptyTitle}>No Family Yet</Text>
       <Text style={styles.emptySubtitle}>
-        Create a family group to share your{'\n'}wine moments with loved ones
+        Create a family group to share your wine moments with your loved ones
       </Text>
       <TouchableOpacity style={styles.createBtn} onPress={onCreate} activeOpacity={0.85}>
-        <Text style={styles.createBtnText}>Create New Family</Text>
+        <Text style={styles.createBtnText}>Start your Family</Text>
       </TouchableOpacity>
     </View>
   )

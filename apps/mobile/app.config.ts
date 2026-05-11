@@ -29,6 +29,7 @@ const config: ExpoConfig = {
     supportsTablet: true,
     bundleIdentifier: 'com.momentovino.app',
     usesAppleSignIn: true,
+    buildNumber: '29',
     config: { usesNonExemptEncryption: false },
   },
   android: {

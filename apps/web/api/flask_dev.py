@@ -86,9 +86,11 @@ def execute_handler(handler_class, method, flask_request):
     
     handler = handler_class.__new__(handler_class)
     handler.command = method
-    handler.path = flask_request.path
+    qs = flask_request.query_string.decode('utf-8') if flask_request.query_string else ''
+    full_path = f"{flask_request.path}?{qs}" if qs else flask_request.path
+    handler.path = full_path
     handler.request_version = 'HTTP/1.1'
-    handler.requestline = f"{method} {flask_request.path} HTTP/1.1"
+    handler.requestline = f"{method} {full_path} HTTP/1.1"
     handler.raw_requestline = handler.requestline.encode()
     handler.headers = flask_request.headers
     handler.client_address = ('127.0.0.1', 0)

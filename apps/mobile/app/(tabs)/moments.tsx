@@ -262,7 +262,7 @@ export default function MomentsScreen() {
             activeOpacity={0.85}
             onPress={() => router.push('/moments/new')}
           >
-            <Text style={styles.ctaBtnText}>+ Register New Moment</Text>
+            <Text style={styles.ctaBtnText}>+ Save a Moment</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
