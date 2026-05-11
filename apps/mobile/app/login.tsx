@@ -25,6 +25,7 @@ import { markOnboardingCompleted } from '../features/onboarding/state'
 import { resetSelections } from '../features/onboarding/selections'
 import { invalidateTabCachesAndPrefetch } from '../lib/prefetch'
 import { isProActive } from '../lib/purchases'
+import { useTranslation } from '../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -35,6 +36,7 @@ const BORDER = '#E8DDD4'
 type Mode = 'buttons' | 'email'
 
 export default function LoginScreen() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [mode, setMode] = useState<Mode>('buttons')
   const [email, setEmail] = useState('')
@@ -73,11 +75,11 @@ export default function LoginScreen() {
       const outcome = await signInWithApple()
       if (outcome.kind === 'cancelled') return
       if (outcome.kind === 'unavailable') {
-        Alert.alert('Continue with Apple unavailable', outcome.message)
+        Alert.alert(t('login.errors.appleUnavailable'), outcome.message)
         return
       }
       if (outcome.kind === 'error') {
-        Alert.alert('Could not sign in', outcome.message)
+        Alert.alert(t('login.errors.appleFailed'), outcome.message)
         return
       }
       await afterSignIn()
@@ -93,11 +95,11 @@ export default function LoginScreen() {
       const outcome = await signInWithGoogle()
       if (outcome.kind === 'cancelled') return
       if (outcome.kind === 'unavailable') {
-        Alert.alert('Google sign-in unavailable', outcome.message)
+        Alert.alert(t('login.errors.googleUnavailable'), outcome.message)
         return
       }
       if (outcome.kind === 'error') {
-        Alert.alert('Google sign-in failed', outcome.message)
+        Alert.alert(t('login.errors.googleFailed'), outcome.message)
         return
       }
       await afterSignIn()
@@ -116,11 +118,14 @@ export default function LoginScreen() {
         return
       }
       if (outcome.kind === 'invalid_credentials') {
-        Alert.alert('Wrong email or password', 'Double-check and try again, or reset your password.')
+        Alert.alert(
+          t('login.errors.invalidCredentialsTitle'),
+          t('login.errors.invalidCredentialsBody'),
+        )
         return
       }
       if (outcome.kind === 'error') {
-        Alert.alert('Sign-in failed', outcome.message)
+        Alert.alert(t('login.errors.genericFailed'), outcome.message)
       }
     } finally {
       setSubmitting(false)
@@ -154,11 +159,8 @@ export default function LoginScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.copy}>
-              <Text style={styles.headline}>Welcome back.</Text>
-              <Text style={styles.sub}>
-                Sign in to pick up your journal — wines, moments, and places, right where
-                you left them.
-              </Text>
+              <Text style={styles.headline}>{t('login.title')}</Text>
+              <Text style={styles.sub}>{t('login.subtitle')}</Text>
             </View>
 
             {mode === 'buttons' ? (
@@ -169,7 +171,7 @@ export default function LoginScreen() {
                   activeOpacity={0.85}
                 >
                   <Ionicons name="mail-outline" size={AUTH_PROVIDER.iconSize} color="#FFFFFF" />
-                  <Text style={styles.authEmailText}>Continue with email</Text>
+                  <Text style={styles.authEmailText}>{t('login.continueEmail')}</Text>
                 </TouchableOpacity>
 
                 {Platform.OS === 'ios' ? (
@@ -180,7 +182,7 @@ export default function LoginScreen() {
                     activeOpacity={0.85}
                   >
                     <Ionicons name="logo-apple" size={AUTH_PROVIDER.iconSize} color="#FFFFFF" />
-                    <Text style={styles.authAppleText}>Continue with Apple</Text>
+                    <Text style={styles.authAppleText}>{t('login.continueApple')}</Text>
                   </TouchableOpacity>
                 ) : null}
 
@@ -191,17 +193,17 @@ export default function LoginScreen() {
                   activeOpacity={0.85}
                 >
                   <Ionicons name="logo-google" size={AUTH_PROVIDER.iconSize} color={INK} />
-                  <Text style={styles.authGoogleText}>Continue with Google</Text>
+                  <Text style={styles.authGoogleText}>{t('login.continueGoogle')}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <View style={styles.form}>
-                <Text style={styles.inputLabel}>Email</Text>
+                <Text style={styles.inputLabel}>{t('login.emailLabel')}</Text>
                 <TextInput
                   style={styles.input}
                   value={email}
                   onChangeText={setEmail}
-                  placeholder="you@example.com"
+                  placeholder={t('login.emailPlaceholder')}
                   placeholderTextColor="#B5A6A8"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -209,31 +211,32 @@ export default function LoginScreen() {
                   autoComplete="email"
                   textContentType="emailAddress"
                 />
-                <Text style={styles.inputLabel}>Password</Text>
+                <Text style={styles.inputLabel}>{t('login.passwordLabel')}</Text>
                 <PasswordInput
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="Your password"
+                  placeholder={t('login.passwordPlaceholder')}
                   placeholderTextColor="#B5A6A8"
                   autoComplete="password"
                   textContentType="password"
                 />
                 <TouchableOpacity onPress={goForgot} activeOpacity={0.7} style={styles.forgotLink}>
-                  <Text style={styles.forgotLinkText}>Forgot password?</Text>
+                  <Text style={styles.forgotLinkText}>{t('login.forgotPassword')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setMode('buttons')}
                   activeOpacity={0.7}
                   style={styles.backLink}
                 >
-                  <Text style={styles.backLinkText}>Use another method</Text>
+                  <Text style={styles.backLinkText}>{t('login.useAnotherMethod')}</Text>
                 </TouchableOpacity>
               </View>
             )}
 
             <TouchableOpacity onPress={goSignUp} activeOpacity={0.7} style={styles.signUpLink}>
               <Text style={styles.signUpLinkText}>
-                Don't have an account? <Text style={styles.signUpLinkStrong}>Create one</Text>
+                {t('login.noAccount')}
+                <Text style={styles.signUpLinkStrong}>{t('login.createOne')}</Text>
               </Text>
             </TouchableOpacity>
           </ScrollView>
@@ -246,7 +249,9 @@ export default function LoginScreen() {
                 disabled={!canSubmit}
                 activeOpacity={0.85}
               >
-                <Text style={styles.ctaText}>{submitting ? 'Signing in…' : 'Sign in'}</Text>
+                <Text style={styles.ctaText}>
+                  {submitting ? t('login.signingIn') : t('login.signIn')}
+                </Text>
               </TouchableOpacity>
             </View>
           ) : null}

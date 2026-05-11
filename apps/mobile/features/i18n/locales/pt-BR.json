@@ -4,6 +4,32 @@
     "cancel": "Cancelar",
     "save": "Salvar"
   },
+  "login": {
+    "title": "Bem-vindo(a) de volta.",
+    "subtitle": "Entre para retomar seu diário — vinhos, momentos e lugares, exatamente onde você parou.",
+    "continueEmail": "Continuar com email",
+    "continueApple": "Continuar com a Apple",
+    "continueGoogle": "Continuar com o Google",
+    "emailLabel": "Email",
+    "emailPlaceholder": "voce@exemplo.com",
+    "passwordLabel": "Senha",
+    "passwordPlaceholder": "Sua senha",
+    "forgotPassword": "Esqueceu a senha?",
+    "useAnotherMethod": "Usar outro método",
+    "noAccount": "Não tem uma conta? ",
+    "createOne": "Crie uma",
+    "signIn": "Entrar",
+    "signingIn": "Entrando…",
+    "errors": {
+      "appleUnavailable": "Login com Apple indisponível",
+      "appleFailed": "Não foi possível entrar",
+      "googleUnavailable": "Login com Google indisponível",
+      "googleFailed": "Falha no login com Google",
+      "invalidCredentialsTitle": "Email ou senha incorretos",
+      "invalidCredentialsBody": "Verifique e tente novamente ou redefina sua senha.",
+      "genericFailed": "Falha no login"
+    }
+  },
   "profile": {
     "language": {
       "title": "Idioma",

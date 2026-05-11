@@ -4,6 +4,32 @@
     "cancel": "Cancel",
     "save": "Save"
   },
+  "login": {
+    "title": "Welcome back.",
+    "subtitle": "Sign in to pick up your journal — wines, moments, and places, right where you left them.",
+    "continueEmail": "Continue with email",
+    "continueApple": "Continue with Apple",
+    "continueGoogle": "Continue with Google",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Your password",
+    "forgotPassword": "Forgot password?",
+    "useAnotherMethod": "Use another method",
+    "noAccount": "Don't have an account? ",
+    "createOne": "Create one",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "errors": {
+      "appleUnavailable": "Continue with Apple unavailable",
+      "appleFailed": "Could not sign in",
+      "googleUnavailable": "Google sign-in unavailable",
+      "googleFailed": "Google sign-in failed",
+      "invalidCredentialsTitle": "Wrong email or password",
+      "invalidCredentialsBody": "Double-check and try again, or reset your password.",
+      "genericFailed": "Sign-in failed"
+    }
+  },
   "profile": {
     "language": {
       "title": "Language",

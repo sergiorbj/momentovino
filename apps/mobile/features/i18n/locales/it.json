@@ -4,6 +4,32 @@
     "cancel": "Annulla",
     "save": "Salva"
   },
+  "login": {
+    "title": "Bentornato.",
+    "subtitle": "Accedi per riprendere il tuo diario — vini, momenti e luoghi, proprio dove li hai lasciati.",
+    "continueEmail": "Continua con email",
+    "continueApple": "Continua con Apple",
+    "continueGoogle": "Continua con Google",
+    "emailLabel": "Email",
+    "emailPlaceholder": "tu@esempio.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "La tua password",
+    "forgotPassword": "Password dimenticata?",
+    "useAnotherMethod": "Usa un altro metodo",
+    "noAccount": "Non hai un account? ",
+    "createOne": "Creane uno",
+    "signIn": "Accedi",
+    "signingIn": "Accesso in corso…",
+    "errors": {
+      "appleUnavailable": "Accesso con Apple non disponibile",
+      "appleFailed": "Impossibile accedere",
+      "googleUnavailable": "Accesso con Google non disponibile",
+      "googleFailed": "Errore nell'accesso con Google",
+      "invalidCredentialsTitle": "Email o password errati",
+      "invalidCredentialsBody": "Controlla e riprova, oppure reimposta la password.",
+      "genericFailed": "Errore di accesso"
+    }
+  },
   "profile": {
     "language": {
       "title": "Lingua",
