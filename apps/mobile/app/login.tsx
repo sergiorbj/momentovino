@@ -60,7 +60,7 @@ export default function LoginScreen() {
     await invalidateTabCachesAndPrefetch(qc)
     const pro = await isProActive()
     if (!pro) {
-      router.replace('/paywall')
+      router.push('/paywall')
       return
     }
     router.replace('/(tabs)/moments')

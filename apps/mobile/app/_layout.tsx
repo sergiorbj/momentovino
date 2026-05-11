@@ -88,7 +88,10 @@ export default function RootLayout() {
         <Stack.Screen name="login" />
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="reset-password" />
-        <Stack.Screen name="paywall" options={{ gestureEnabled: false }} />
+        <Stack.Screen
+          name="paywall"
+          options={{ presentation: 'modal', gestureEnabled: false }}
+        />
         <Stack.Screen name="moments" />
         <Stack.Screen name="scanner" />
         <Stack.Screen name="family" />

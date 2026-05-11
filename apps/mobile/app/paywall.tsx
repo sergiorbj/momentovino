@@ -32,7 +32,7 @@ const BG = '#F5EBE0'
 const BORDER = '#E8DDD4'
 
 const BENEFITS: { icon: string; text: string }[] = [
-  { icon: '🍷', text: 'Unlimited wine scans, powered by AI' },
+  { icon: '🍷', text: 'Unlimited wine scans to see the details' },
   { icon: '👨‍👩‍👧', text: 'Family sharing and shared cellars' },
   { icon: '📔', text: 'Every moment, kept forever in your journal' },
 ]
@@ -145,17 +145,36 @@ export default function PaywallScreen() {
       ? 'Billed annually. Cancel renewal anytime in Settings.'
       : 'Billed monthly. Cancel renewal anytime in Settings.'
 
+  const onClose = () => {
+    // Modal-style dismiss: slide back down to the login screen when we were
+    // pushed over it (post-sign-in path). On the cold-boot redirect path
+    // there's nothing behind, so fall through to login.
+    if (router.canGoBack()) {
+      router.back()
+    } else {
+      router.replace('/login')
+    }
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
       <SafeAreaView style={styles.safe}>
+        <TouchableOpacity
+          style={styles.closeBtn}
+          onPress={onClose}
+          activeOpacity={0.7}
+          hitSlop={12}
+        >
+          <Ionicons name="close" size={26} color={INK} />
+        </TouchableOpacity>
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.copy}>
             <Text style={styles.eyebrow}>MOMENTOVINO PRO</Text>
-            <Text style={styles.headline}>Welcome back. Your Pro plan ended.</Text>
+            <Text style={styles.headline}>Your subscription plan ended.</Text>
             <Text style={styles.sub}>
               Renew to keep scanning labels, saving moments, and sharing your
               cellar with the family.
@@ -272,6 +291,17 @@ export default function PaywallScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   safe: { flex: 1 },
+  closeBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   scroll: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 16 },
   copy: { alignItems: 'center', gap: 10, marginBottom: 22 },
   eyebrow: {
