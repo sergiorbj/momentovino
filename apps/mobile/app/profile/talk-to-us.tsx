@@ -8,7 +8,7 @@ const BG = '#F5EBE0'
 const SUBTLE = '#C2703E'
 const INK = '#3F2A2E'
 
-const EMAIL = 'feedback@momentovino.app'
+const EMAIL = 'feedback@sergiobernardi.dev'
 
 export default function TalkToUsScreen() {
   const openEmail = () => {
@@ -34,7 +34,7 @@ export default function TalkToUsScreen() {
           <Text style={styles.heading}>We'd love to hear from you!</Text>
           <Text style={styles.description}>
             Whether you have an idea to make MomentoVino better, want to share feedback about your
-            experience, or just want to tell us about a cool wine moment — we're all ears.
+            experience, or just want to tell us about a cool wine moment... we're all ears.
           </Text>
 
           <TouchableOpacity style={styles.emailBtn} onPress={openEmail} activeOpacity={0.85}>
