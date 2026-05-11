@@ -438,6 +438,36 @@ def _list_pending_invites(url: str, key: str, family_id: str) -> list[dict[str, 
     return out
 
 
+def _pending_invited_user_ids(url: str, key: str, family_id: str) -> set[str]:
+    """Set of user_ids that currently hold a non-expired pending invite for
+    this family. Used to keep the invite search free of users we've already
+    invited — re-inviting them is either a no-op or a confusing duplicate."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    r = requests.get(
+        f"{url}/rest/v1/family_invitations",
+        params={
+            "family_id": f"eq.{family_id}",
+            "status": "eq.pending",
+            "expires_at": f"gt.{now_iso}",
+            "invited_user_id": "not.is.null",
+            "select": "invited_user_id",
+        },
+        headers={"Authorization": f"Bearer {key}", "apikey": key},
+        timeout=30,
+    )
+    if r.status_code != 200:
+        return set()
+    rows = r.json() if r.content else []
+    out: set[str] = set()
+    if isinstance(rows, list):
+        for row in rows:
+            if isinstance(row, dict):
+                iv = row.get("invited_user_id")
+                if iv:
+                    out.add(str(iv))
+    return out
+
+
 def _admin_user_by_id(url: str, key: str, user_id: str) -> Optional[dict[str, Any]]:
     r = requests.get(
         f"{url}/auth/v1/admin/users/{user_id}",
@@ -678,6 +708,7 @@ class handler(BaseHTTPRequestHandler):
             for m in members_raw:
                 if isinstance(m, dict) and m.get("user_id"):
                     exclude.add(str(m["user_id"]))
+            exclude |= _pending_invited_user_ids(url, key, fid)
             matches = _search_platform_users_for_invite(url, key, needle, exclude, limit=12)
             send_json(self, 200, {"matches": matches})
             return
