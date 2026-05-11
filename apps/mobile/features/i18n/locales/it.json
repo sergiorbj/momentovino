@@ -30,6 +30,58 @@
       "genericFailed": "Errore di accesso"
     }
   },
+  "forgotPassword": {
+    "title": "Reimposta la password.",
+    "subtitle": "Inserisci l'email collegata al tuo account MomentoVino. Ti invieremo un codice di 6 cifre da usare nella schermata successiva.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "tu@esempio.com",
+    "send": "Invia codice a 6 cifre",
+    "sending": "Invio in corso…",
+    "errors": {
+      "sendFailedTitle": "Impossibile inviare l'email",
+      "sendFailedBody": "Riprova più tardi."
+    }
+  },
+  "resetPassword": {
+    "codeStep": {
+      "title": "Inserisci il codice.",
+      "subtitlePrefix": "Abbiamo inviato un codice di 6 cifre a ",
+      "subtitleSuffix": ". Scade a breve.",
+      "fallbackEmail": "la tua email",
+      "emailLabel": "Email",
+      "emailPlaceholder": "tu@esempio.com",
+      "codeLabel": "Codice a 6 cifre",
+      "codePlaceholder": "123456",
+      "resendIdle": "Non ti è arrivato? Invia un nuovo codice",
+      "resendSending": "Invio in corso…",
+      "continue": "Continua",
+      "verifying": "Verifica in corso…",
+      "invalidCodeTitle": "Codice non valido o scaduto",
+      "invalidCodeBody": "Controlla il codice di 6 cifre dell'email oppure richiedine uno nuovo.",
+      "verifyFailedTitle": "Impossibile verificare il codice",
+      "verifyFailedBody": "Riprova più tardi.",
+      "resendFailedTitle": "Impossibile rinviare",
+      "resendFailedBody": "Riprova tra un momento.",
+      "resentTitle": "Nuovo codice inviato",
+      "resentBody": "Controlla {{email}} per trovare un nuovo codice a 6 cifre."
+    },
+    "passwordStep": {
+      "title": "Scegli una nuova password.",
+      "subtitle": "Almeno 8 caratteri. Usa qualcosa che solo tu ricordi.",
+      "newPasswordLabel": "Nuova password",
+      "newPasswordPlaceholder": "Min. 8 caratteri",
+      "confirmLabel": "Conferma password",
+      "confirmPlaceholder": "Digitala di nuovo",
+      "mismatch": "Le password non corrispondono.",
+      "update": "Aggiorna password",
+      "updating": "Aggiornamento…",
+      "updateFailedTitle": "Impossibile aggiornare la password",
+      "updateFailedBody": "Riprova più tardi.",
+      "successTitle": "Password aggiornata",
+      "successBody": "Accedi con la tua nuova password.",
+      "successCta": "OK"
+    }
+  },
   "profile": {
     "language": {
       "title": "Lingua",

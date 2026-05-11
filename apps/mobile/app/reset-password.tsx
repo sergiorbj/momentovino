@@ -24,6 +24,7 @@ import {
 import { queryClient } from '../lib/query-client'
 import { ensureAnonymousSession } from '../lib/session'
 import { supabase } from '../lib/supabase'
+import { useTranslation } from '../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -49,6 +50,7 @@ function pickParam(v: string | string[] | undefined): string | undefined {
  * cannot consume an OTP, so the code stays valid until expiry.
  */
 export default function ResetPasswordScreen() {
+  const { t } = useTranslation()
   const params = useLocalSearchParams<{ email?: string }>()
   const initialEmail = pickParam(params.email)?.trim().toLowerCase() ?? ''
 
@@ -91,14 +93,14 @@ export default function ResetPasswordScreen() {
       }
       if (outcome.kind === 'invalid_code') {
         Alert.alert(
-          'Invalid or expired code',
-          'Double-check the 6-digit code from the email or request a new one.',
+          t('resetPassword.codeStep.invalidCodeTitle'),
+          t('resetPassword.codeStep.invalidCodeBody'),
         )
         return
       }
       Alert.alert(
-        'Could not verify code',
-        outcome.kind === 'error' ? outcome.message : 'Try again later.',
+        t('resetPassword.codeStep.verifyFailedTitle'),
+        outcome.kind === 'error' ? outcome.message : t('resetPassword.codeStep.verifyFailedBody'),
       )
     } finally {
       setSubmitting(false)
@@ -111,14 +113,17 @@ export default function ResetPasswordScreen() {
     try {
       const outcome = await sendPasswordResetEmail(email)
       if (outcome.kind === 'success') {
-        Alert.alert('New code sent', `Check ${email} for a fresh 6-digit code.`)
+        Alert.alert(
+          t('resetPassword.codeStep.resentTitle'),
+          t('resetPassword.codeStep.resentBody', { email }),
+        )
         setCode('')
         codeInputRef.current?.focus()
         return
       }
       Alert.alert(
-        'Could not resend',
-        outcome.kind === 'error' ? outcome.message : 'Try again in a moment.',
+        t('resetPassword.codeStep.resendFailedTitle'),
+        outcome.kind === 'error' ? outcome.message : t('resetPassword.codeStep.resendFailedBody'),
       )
     } finally {
       setResending(false)
@@ -138,14 +143,21 @@ export default function ResetPasswordScreen() {
         } catch {
           // Best-effort guest bootstrap; login will still work without it.
         }
-        Alert.alert('Password updated', 'Sign in with your new password.', [
-          { text: 'OK', onPress: () => router.replace('/login') },
-        ])
+        Alert.alert(
+          t('resetPassword.passwordStep.successTitle'),
+          t('resetPassword.passwordStep.successBody'),
+          [
+            {
+              text: t('resetPassword.passwordStep.successCta'),
+              onPress: () => router.replace('/login'),
+            },
+          ],
+        )
         return
       }
       Alert.alert(
-        'Could not update password',
-        outcome.kind === 'error' ? outcome.message : 'Try again later.',
+        t('resetPassword.passwordStep.updateFailedTitle'),
+        outcome.kind === 'error' ? outcome.message : t('resetPassword.passwordStep.updateFailedBody'),
       )
     } finally {
       setSubmitting(false)
@@ -183,22 +195,25 @@ export default function ResetPasswordScreen() {
             {step === 'code' ? (
               <>
                 <View style={styles.copy}>
-                  <Text style={styles.headline}>Enter your code.</Text>
+                  <Text style={styles.headline}>{t('resetPassword.codeStep.title')}</Text>
                   <Text style={styles.sub}>
-                    We sent a 6-digit code to{' '}
-                    <Text style={styles.subStrong}>{email || 'your email'}</Text>. It expires shortly.
+                    {t('resetPassword.codeStep.subtitlePrefix')}
+                    <Text style={styles.subStrong}>
+                      {email || t('resetPassword.codeStep.fallbackEmail')}
+                    </Text>
+                    {t('resetPassword.codeStep.subtitleSuffix')}
                   </Text>
                 </View>
 
                 <View style={styles.form}>
                   {!initialEmail ? (
                     <>
-                      <Text style={styles.inputLabel}>Email</Text>
+                      <Text style={styles.inputLabel}>{t('resetPassword.codeStep.emailLabel')}</Text>
                       <TextInput
                         style={styles.input}
                         value={email}
-                        onChangeText={(t) => setEmail(t.trim())}
-                        placeholder="you@example.com"
+                        onChangeText={(v) => setEmail(v.trim())}
+                        placeholder={t('resetPassword.codeStep.emailPlaceholder')}
                         placeholderTextColor="#B5A6A8"
                         keyboardType="email-address"
                         autoCapitalize="none"
@@ -209,13 +224,13 @@ export default function ResetPasswordScreen() {
                     </>
                   ) : null}
 
-                  <Text style={styles.inputLabel}>6-digit code</Text>
+                  <Text style={styles.inputLabel}>{t('resetPassword.codeStep.codeLabel')}</Text>
                   <TextInput
                     ref={codeInputRef}
                     style={[styles.input, styles.codeInput]}
                     value={code}
-                    onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, CODE_LENGTH))}
-                    placeholder="123456"
+                    onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+                    placeholder={t('resetPassword.codeStep.codePlaceholder')}
                     placeholderTextColor="#B5A6A8"
                     keyboardType="number-pad"
                     autoComplete="one-time-code"
@@ -230,7 +245,9 @@ export default function ResetPasswordScreen() {
                     style={styles.resendLink}
                   >
                     <Text style={styles.resendText}>
-                      {resending ? 'Sending…' : "Didn't get it? Send a new code"}
+                      {resending
+                        ? t('resetPassword.codeStep.resendSending')
+                        : t('resetPassword.codeStep.resendIdle')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -238,34 +255,38 @@ export default function ResetPasswordScreen() {
             ) : (
               <>
                 <View style={styles.copy}>
-                  <Text style={styles.headline}>Choose a new password.</Text>
-                  <Text style={styles.sub}>
-                    At least 8 characters. Use something only you'd remember.
-                  </Text>
+                  <Text style={styles.headline}>{t('resetPassword.passwordStep.title')}</Text>
+                  <Text style={styles.sub}>{t('resetPassword.passwordStep.subtitle')}</Text>
                 </View>
 
                 <View style={styles.form}>
-                  <Text style={styles.inputLabel}>New password</Text>
+                  <Text style={styles.inputLabel}>
+                    {t('resetPassword.passwordStep.newPasswordLabel')}
+                  </Text>
                   <PasswordInput
                     value={password}
                     onChangeText={setPassword}
-                    placeholder="Min. 8 characters"
+                    placeholder={t('resetPassword.passwordStep.newPasswordPlaceholder')}
                     placeholderTextColor="#B5A6A8"
                     autoComplete="new-password"
                     textContentType="password"
                     passwordRules="minlength: 8;"
                   />
-                  <Text style={styles.inputLabel}>Confirm password</Text>
+                  <Text style={styles.inputLabel}>
+                    {t('resetPassword.passwordStep.confirmLabel')}
+                  </Text>
                   <PasswordInput
                     value={confirm}
                     onChangeText={setConfirm}
-                    placeholder="Type it again"
+                    placeholder={t('resetPassword.passwordStep.confirmPlaceholder')}
                     placeholderTextColor="#B5A6A8"
                     autoComplete="off"
                     textContentType="password"
                   />
                   {confirm.length > 0 && password !== confirm ? (
-                    <Text style={styles.errorText}>Passwords don't match.</Text>
+                    <Text style={styles.errorText}>
+                      {t('resetPassword.passwordStep.mismatch')}
+                    </Text>
                   ) : null}
                 </View>
               </>
@@ -280,7 +301,11 @@ export default function ResetPasswordScreen() {
                 disabled={!canSubmitCode}
                 activeOpacity={0.85}
               >
-                <Text style={styles.ctaText}>{submitting ? 'Verifying…' : 'Continue'}</Text>
+                <Text style={styles.ctaText}>
+                  {submitting
+                    ? t('resetPassword.codeStep.verifying')
+                    : t('resetPassword.codeStep.continue')}
+                </Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -289,7 +314,11 @@ export default function ResetPasswordScreen() {
                 disabled={!canSubmitPassword}
                 activeOpacity={0.85}
               >
-                <Text style={styles.ctaText}>{submitting ? 'Updating…' : 'Update password'}</Text>
+                <Text style={styles.ctaText}>
+                  {submitting
+                    ? t('resetPassword.passwordStep.updating')
+                    : t('resetPassword.passwordStep.update')}
+                </Text>
               </TouchableOpacity>
             )}
           </View>

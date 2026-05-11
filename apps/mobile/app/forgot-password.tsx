@@ -16,6 +16,7 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 
 import { sendPasswordResetEmail } from '../lib/auth/email'
+import { useTranslation } from '../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -24,6 +25,7 @@ const BG = '#F5EBE0'
 const BORDER = '#E8DDD4'
 
 export default function ForgotPasswordScreen() {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -43,8 +45,8 @@ export default function ForgotPasswordScreen() {
         return
       }
       Alert.alert(
-        'Could not send email',
-        outcome.kind === 'error' ? outcome.message : 'Try again later.',
+        t('forgotPassword.errors.sendFailedTitle'),
+        outcome.kind === 'error' ? outcome.message : t('forgotPassword.errors.sendFailedBody'),
       )
     } finally {
       setSubmitting(false)
@@ -76,20 +78,17 @@ export default function ForgotPasswordScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.copy}>
-              <Text style={styles.headline}>Reset your password.</Text>
-              <Text style={styles.sub}>
-                Enter the email tied to your MomentoVino account. We'll send a 6-digit code to
-                use on the next screen.
-              </Text>
+              <Text style={styles.headline}>{t('forgotPassword.title')}</Text>
+              <Text style={styles.sub}>{t('forgotPassword.subtitle')}</Text>
             </View>
 
             <View style={styles.form}>
-              <Text style={styles.inputLabel}>Email</Text>
+              <Text style={styles.inputLabel}>{t('forgotPassword.emailLabel')}</Text>
               <TextInput
                 style={styles.input}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="you@example.com"
+                placeholder={t('forgotPassword.emailPlaceholder')}
                 placeholderTextColor="#B5A6A8"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -107,7 +106,9 @@ export default function ForgotPasswordScreen() {
               disabled={!canSubmit}
               activeOpacity={0.85}
             >
-              <Text style={styles.ctaText}>{submitting ? 'Sending…' : 'Send 6-digit code'}</Text>
+              <Text style={styles.ctaText}>
+                {submitting ? t('forgotPassword.sending') : t('forgotPassword.send')}
+              </Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

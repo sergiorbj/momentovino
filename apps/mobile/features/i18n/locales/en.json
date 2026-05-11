@@ -30,6 +30,58 @@
       "genericFailed": "Sign-in failed"
     }
   },
+  "forgotPassword": {
+    "title": "Reset your password.",
+    "subtitle": "Enter the email tied to your MomentoVino account. We'll send a 6-digit code to use on the next screen.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "send": "Send 6-digit code",
+    "sending": "Sending…",
+    "errors": {
+      "sendFailedTitle": "Could not send email",
+      "sendFailedBody": "Try again later."
+    }
+  },
+  "resetPassword": {
+    "codeStep": {
+      "title": "Enter your code.",
+      "subtitlePrefix": "We sent a 6-digit code to ",
+      "subtitleSuffix": ". It expires shortly.",
+      "fallbackEmail": "your email",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "codeLabel": "6-digit code",
+      "codePlaceholder": "123456",
+      "resendIdle": "Didn't get it? Send a new code",
+      "resendSending": "Sending…",
+      "continue": "Continue",
+      "verifying": "Verifying…",
+      "invalidCodeTitle": "Invalid or expired code",
+      "invalidCodeBody": "Double-check the 6-digit code from the email or request a new one.",
+      "verifyFailedTitle": "Could not verify code",
+      "verifyFailedBody": "Try again later.",
+      "resendFailedTitle": "Could not resend",
+      "resendFailedBody": "Try again in a moment.",
+      "resentTitle": "New code sent",
+      "resentBody": "Check {{email}} for a fresh 6-digit code."
+    },
+    "passwordStep": {
+      "title": "Choose a new password.",
+      "subtitle": "At least 8 characters. Use something only you'd remember.",
+      "newPasswordLabel": "New password",
+      "newPasswordPlaceholder": "Min. 8 characters",
+      "confirmLabel": "Confirm password",
+      "confirmPlaceholder": "Type it again",
+      "mismatch": "Passwords don't match.",
+      "update": "Update password",
+      "updating": "Updating…",
+      "updateFailedTitle": "Could not update password",
+      "updateFailedBody": "Try again later.",
+      "successTitle": "Password updated",
+      "successBody": "Sign in with your new password.",
+      "successCta": "OK"
+    }
+  },
   "profile": {
     "language": {
       "title": "Language",
