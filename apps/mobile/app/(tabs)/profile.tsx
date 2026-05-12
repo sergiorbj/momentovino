@@ -131,13 +131,16 @@ export default function ProfileScreen() {
       value: profile?.notifications_enabled ?? true,
       onToggle: toggleNotifications,
     },
-    {
-      icon: 'globe-outline',
-      label: 'Language',
-      iconColor: '#2D6A4F',
-      type: 'nav',
-      onPress: () => router.push('/profile/language'),
-    },
+    // Re-enable once the tabs / moments / wines / family / profile screens
+    // are translated — until then switching language only affects onboarding +
+    // auth, which is confusing for the user.
+    // {
+    //   icon: 'globe-outline',
+    //   label: 'Language',
+    //   iconColor: '#2D6A4F',
+    //   type: 'nav',
+    //   onPress: () => router.push('/profile/language'),
+    // },
     {
       icon: 'chatbubble-ellipses-outline',
       label: 'Talk to Us',
