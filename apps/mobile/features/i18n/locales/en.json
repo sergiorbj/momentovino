@@ -89,6 +89,7 @@
     }
   },
   "moments": {
+    "atlasHint": "Tap the atlas to explore your moments",
     "edit": {
       "title": "Edit moment",
       "save": "Save changes",

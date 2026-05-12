@@ -89,6 +89,7 @@
     }
   },
   "moments": {
+    "atlasHint": "Tocca l'atlante per vedere i tuoi momenti",
     "edit": {
       "title": "Modifica momento",
       "save": "Salva modifiche",

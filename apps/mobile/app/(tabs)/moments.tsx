@@ -20,9 +20,12 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated'
+import { Ionicons } from '@expo/vector-icons'
+import { useTranslation } from 'react-i18next'
 
 import WireframeGlobe from '../../components/globe/WireframeGlobe'
 import { useMomentStats } from '../../features/moments/hooks'
+import { hasSeenAtlasHint, markAtlasHintSeen } from '../../features/moments/hints'
 
 const { width } = Dimensions.get('window')
 const GLOBE_SIZE = Math.min(width * 1.30, 380)
@@ -83,6 +86,7 @@ function AnimatedCounter({
 }
 
 export default function MomentsScreen() {
+  const { t } = useTranslation()
   const globeScale = useSharedValue(1)
   const globeOpacity = useSharedValue(1)
   const navigating = useRef(false)
@@ -92,13 +96,28 @@ export default function MomentsScreen() {
   const loadingOpacity = useSharedValue(1)
   const sway = useSharedValue(0)
   const bob = useSharedValue(0)
+  const hintOpacity = useSharedValue(0)
+  const hintPulse = useSharedValue(1)
   const hasAnimatedInRef = useRef(false)
   const [dataReady, setDataReady] = useState(false)
   const [globeReady, setGlobeReady] = useState(false)
   const [valuesVisible, setValuesVisible] = useState(false)
   const [loadingMounted, setLoadingMounted] = useState(true)
+  // null = still resolving from storage. We delay rendering the hint until we
+  // know, to avoid a flash for users who already dismissed it.
+  const [showAtlasHint, setShowAtlasHint] = useState<boolean | null>(null)
 
   const { stats, loading } = useMomentStats()
+
+  useEffect(() => {
+    let cancelled = false
+    hasSeenAtlasHint().then((seen) => {
+      if (!cancelled) setShowAtlasHint(!seen)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!loading) setDataReady(true)
@@ -160,6 +179,25 @@ export default function MomentsScreen() {
     unmountLoading,
   ])
 
+  useEffect(() => {
+    if (showAtlasHint !== true) return
+    if (!dataReady || !globeReady) return
+    // Fade the hint in slightly after the rest of the content so it reads as
+    // a secondary affordance, then start a gentle opacity pulse to draw the eye.
+    hintOpacity.value = withTiming(1, {
+      duration: ENTER_DURATION,
+      easing: Easing.out(Easing.cubic),
+    })
+    hintPulse.value = withRepeat(
+      withSequence(
+        withTiming(0.55, { duration: 1200, easing: Easing.inOut(Easing.sin) }),
+        withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.sin) }),
+      ),
+      -1,
+      false,
+    )
+  }, [showAtlasHint, dataReady, globeReady, hintOpacity, hintPulse])
+
   useFocusEffect(
     useCallback(() => {
       globeScale.value = 1
@@ -176,12 +214,23 @@ export default function MomentsScreen() {
     if (navigating.current) return
     navigating.current = true
 
+    if (showAtlasHint) {
+      // Persist as fire-and-forget; the dismissal is intentional and we don't
+      // want to block the navigation animation on storage I/O.
+      void markAtlasHintSeen()
+      setShowAtlasHint(false)
+      hintOpacity.value = withTiming(0, {
+        duration: NAV_ANIM_DURATION,
+        easing: Easing.out(Easing.cubic),
+      })
+    }
+
     const timingCfg = { duration: NAV_ANIM_DURATION, easing: Easing.out(Easing.cubic) }
     globeScale.value = withTiming(2.5, timingCfg)
     globeOpacity.value = withTiming(0, timingCfg, () => {
       runOnJS(navigateToList)()
     })
-  }, [globeScale, globeOpacity, navigateToList])
+  }, [globeScale, globeOpacity, navigateToList, showAtlasHint, hintOpacity])
 
   const globeAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: globeScale.value }],
@@ -202,6 +251,10 @@ export default function MomentsScreen() {
       { translateY: bob.value * -6 },
       { rotate: `${sway.value * 14}deg` },
     ],
+  }))
+
+  const hintAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: hintOpacity.value * hintPulse.value,
   }))
 
   const displayCount = (n: number) => (valuesVisible ? n : 0)
@@ -225,6 +278,16 @@ export default function MomentsScreen() {
               />
             )}
           </Animated.View>
+
+          {showAtlasHint === true && (
+            <Animated.View
+              pointerEvents="none"
+              style={[styles.atlasHint, hintAnimatedStyle]}
+            >
+              <Ionicons name="chevron-up" size={16} color="#C2703E" />
+              <Text style={styles.atlasHintText}>{t('moments.atlasHint')}</Text>
+            </Animated.View>
+          )}
 
           <View style={styles.stats}>
             <View style={styles.statItem}>
@@ -312,6 +375,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  atlasHint: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    marginBottom: 20,
+    gap: 2,
+  },
+  atlasHintText: {
+    fontSize: 13,
+    fontFamily: 'DMSans_500Medium',
+    color: '#C2703E',
+    letterSpacing: 0.2,
+    textAlign: 'center',
   },
   stats: {
     flexDirection: 'row',

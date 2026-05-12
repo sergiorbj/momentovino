@@ -89,6 +89,7 @@
     }
   },
   "moments": {
+    "atlasHint": "Toca el atlas para ver tus momentos",
     "edit": {
       "title": "Editar momento",
       "save": "Guardar cambios",
