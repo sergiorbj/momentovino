@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
   ScrollView,
@@ -12,7 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 
-import { useMomentDetail } from '../../features/moments/hooks'
+import { useDeleteMoment, useMomentDetail } from '../../features/moments/hooks'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -51,7 +53,24 @@ function Stars({ rating }: { rating: number }) {
 
 export default function MomentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
+  const { t } = useTranslation()
   const { moment, wine, photos, loading } = useMomentDetail(id ?? '')
+  const { remove, deleting } = useDeleteMoment(id ?? '')
+
+  const confirmDelete = () => {
+    Alert.alert(
+      t('moments.delete.confirmTitle'),
+      t('moments.delete.confirmBody'),
+      [
+        { text: t('moments.delete.cancel'), style: 'cancel' },
+        {
+          text: t('moments.delete.confirm'),
+          style: 'destructive',
+          onPress: () => void remove(),
+        },
+      ],
+    )
+  }
 
   if (loading || !moment) {
     return (
@@ -85,7 +104,35 @@ export default function MomentDetailScreen() {
         )}
 
         <View style={styles.body}>
-          <Text style={styles.title}>{moment.title}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title} numberOfLines={2}>
+              {moment.title}
+            </Text>
+            <TouchableOpacity
+              style={styles.iconAction}
+              onPress={() => router.push(`/moments/${moment.id}/edit`)}
+              hitSlop={8}
+              disabled={deleting}
+            >
+              <Ionicons name="settings-outline" size={22} color={WINE} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconAction}
+              onPress={confirmDelete}
+              hitSlop={8}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <ActivityIndicator size="small" color={WINE} />
+              ) : (
+                <Ionicons name="trash-outline" size={22} color={WINE} />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {moment.description ? (
+            <Text style={styles.description}>{moment.description}</Text>
+          ) : null}
 
           <View style={styles.infoRow}>
             <Ionicons name="calendar-outline" size={16} color={SUBTLE} />
@@ -96,10 +143,6 @@ export default function MomentDetailScreen() {
             <Ionicons name="location-outline" size={16} color={SUBTLE} />
             <Text style={styles.infoText}>{moment.location_name}</Text>
           </View>
-
-          {moment.description ? (
-            <Text style={styles.description}>{moment.description}</Text>
-          ) : null}
 
           {moment.rating != null && (
             <View style={styles.section}>
@@ -187,10 +230,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: { padding: 24, gap: 16 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   title: {
+    flex: 1,
     fontFamily: 'DMSerifDisplay_400Regular',
     fontSize: 26,
     color: BROWN,
+  },
+  iconAction: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   infoText: {

@@ -88,6 +88,19 @@
       "subtitle": "Scegli la lingua utilizzata nell'app."
     }
   },
+  "moments": {
+    "edit": {
+      "title": "Modifica momento",
+      "save": "Salva modifiche",
+      "cancel": "Annulla"
+    },
+    "delete": {
+      "confirmTitle": "Eliminare questo momento?",
+      "confirmBody": "Il momento e le sue foto verranno rimossi definitivamente. Questa azione non può essere annullata.",
+      "confirm": "Elimina",
+      "cancel": "Annulla"
+    }
+  },
   "onboarding": {
     "welcome": {
       "headline": "I tuoi viaggi-nel-vino, un diario meraviglioso.",

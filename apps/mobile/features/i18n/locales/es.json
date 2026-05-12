@@ -88,6 +88,19 @@
       "subtitle": "Elige el idioma utilizado en la aplicación."
     }
   },
+  "moments": {
+    "edit": {
+      "title": "Editar momento",
+      "save": "Guardar cambios",
+      "cancel": "Cancelar"
+    },
+    "delete": {
+      "confirmTitle": "¿Eliminar este momento?",
+      "confirmBody": "Se eliminarán el momento y sus fotos de forma permanente. Esta acción no se puede deshacer.",
+      "confirm": "Eliminar",
+      "cancel": "Cancelar"
+    }
+  },
   "onboarding": {
     "welcome": {
       "headline": "Tus viajes-a-través-del-vino, un diario hermoso.",

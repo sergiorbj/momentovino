@@ -198,6 +198,114 @@ export async function createMoment(values: MomentFormValues): Promise<MomentRow>
   return moment
 }
 
+export async function updateMoment(
+  id: string,
+  values: MomentFormValues,
+): Promise<MomentRow> {
+  const { data: userData, error: userErr } = await supabase.auth.getUser()
+  if (userErr || !userData.user) throw userErr ?? new Error('No authenticated user')
+  const userId = userData.user.id
+
+  const { data: existingPhotos, error: existingErr } = await supabase
+    .from('moment_photos')
+    .select('id, url, position, is_cover')
+    .eq('moment_id', id)
+    .order('position', { ascending: true })
+  if (existingErr) throw existingErr
+
+  const existing = existingPhotos ?? []
+  const keptUrls = new Set(values.photos.filter((p) => !p.uri.startsWith('file:') && !p.uri.startsWith('content:')).map((p) => p.uri))
+  const toDelete = existing.filter((row) => !keptUrls.has(row.url))
+
+  if (toDelete.length > 0) {
+    const ids = toDelete.map((row) => row.id)
+    const { error: delErr } = await supabase.from('moment_photos').delete().in('id', ids)
+    if (delErr) throw new Error(`[moment_photos.delete] ${delErr.message}`)
+  }
+
+  // Reindex retained photos to keep positions contiguous and re-anchor cover.
+  let coverUrl: string | null = null
+  for (let i = 0; i < values.photos.length; i++) {
+    const photo = values.photos[i]
+    const isExisting = !photo.uri.startsWith('file:') && !photo.uri.startsWith('content:')
+
+    if (isExisting) {
+      const row = existing.find((r) => r.url === photo.uri)
+      if (row) {
+        const { error: updErr } = await supabase
+          .from('moment_photos')
+          .update({ position: i, is_cover: photo.isCover })
+          .eq('id', row.id)
+        if (updErr) throw new Error(`[moment_photos.update #${i}] ${updErr.message}`)
+      }
+      if (photo.isCover) coverUrl = photo.uri
+      continue
+    }
+
+    let url: string
+    try {
+      url = await uploadPhoto(userId, id, i, photo.uri)
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : 'unknown'
+      throw new Error(`[storage.upload #${i}] ${detail}`)
+    }
+    if (photo.isCover) coverUrl = url
+
+    const { error: insertErr } = await supabase.from('moment_photos').insert({
+      moment_id: id,
+      url,
+      position: i,
+      is_cover: photo.isCover,
+    })
+    if (insertErr) throw new Error(`[moment_photos.insert #${i}] ${insertErr.message}`)
+  }
+
+  const { data: updated, error: updErr } = await supabase
+    .from('moments')
+    .update({
+      wine_id: values.wineId,
+      title: values.title,
+      description: values.description ?? null,
+      happened_at: values.happenedAt,
+      location_name: values.locationName,
+      latitude: values.latitude,
+      longitude: values.longitude,
+      rating: values.rating ?? null,
+      cover_photo_url: coverUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('user_id', userId)
+    .select()
+    .single()
+  if (updErr || !updated) {
+    const detail = updErr?.message ?? 'unknown'
+    throw new Error(`[moments.update] ${detail}`)
+  }
+
+  return updated
+}
+
+export async function deleteMoment(id: string): Promise<void> {
+  const { data: userData, error: userErr } = await supabase.auth.getUser()
+  if (userErr || !userData.user) throw userErr ?? new Error('No authenticated user')
+  const userId = userData.user.id
+
+  const folder = `${userId}/${id}`
+  const { data: storageFiles } = await supabase.storage.from(BUCKET).list(folder)
+  if (storageFiles && storageFiles.length > 0) {
+    const paths = storageFiles.map((f) => `${folder}/${f.name}`)
+    await supabase.storage.from(BUCKET).remove(paths)
+  }
+
+  const { error: deleteErr } = await supabase
+    .from('moments')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId)
+  if (deleteErr) throw new Error(`[moments.delete] ${deleteErr.message}`)
+}
+
 export async function fetchMoments(): Promise<MomentWithWine[]> {
   const { data, error } = await supabase
     .from('moments')

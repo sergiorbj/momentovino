@@ -88,6 +88,19 @@
       "subtitle": "Choose the language used throughout the app."
     }
   },
+  "moments": {
+    "edit": {
+      "title": "Edit moment",
+      "save": "Save changes",
+      "cancel": "Cancel"
+    },
+    "delete": {
+      "confirmTitle": "Delete this moment?",
+      "confirmBody": "This will permanently remove the moment and its photos. This can't be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
+  },
   "onboarding": {
     "welcome": {
       "headline": "Your travels-through-wine, one beautiful journal.",

@@ -7,6 +7,7 @@ export default function MomentsLayout() {
       <Stack.Screen name="new" />
       <Stack.Screen name="wine-picker" />
       <Stack.Screen name="[id]" />
+      <Stack.Screen name="[id]/edit" />
     </Stack>
   )
 }

@@ -162,6 +162,7 @@ const styles = StyleSheet.create({
   separator: { height: 12 },
   card: {
     flexDirection: 'row',
+    alignItems: 'stretch',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 12,
@@ -174,17 +175,18 @@ const styles = StyleSheet.create({
   },
   thumb: {
     width: 72,
-    height: 72,
+    alignSelf: 'stretch',
     borderRadius: 12,
     backgroundColor: '#E5D5C5',
   },
   thumbPlaceholder: {
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 72,
   },
   thumbPlaceholderIcon: { width: 32, height: 32, tintColor: WINE },
   wineChipIcon: { width: 14, height: 14, tintColor: WINE },
-  cardBody: { flex: 1, justifyContent: 'center', gap: 3 },
+  cardBody: { flex: 1, justifyContent: 'center', gap: 6 },
   cardTitle: {
     fontFamily: 'DMSans_600SemiBold',
     fontSize: 15,
@@ -198,20 +200,14 @@ const styles = StyleSheet.create({
   wineChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 4,
-    backgroundColor: '#FDF2F4',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    marginTop: 2,
+    gap: 6,
   },
   wineChipText: {
     fontFamily: 'DMSans_500Medium',
-    fontSize: 11,
+    fontSize: 12,
     color: WINE,
   },
-  stars: { flexDirection: 'row', gap: 2, marginTop: 2 },
+  stars: { flexDirection: 'row', gap: 2 },
   empty: {
     alignItems: 'center',
     paddingVertical: 60,

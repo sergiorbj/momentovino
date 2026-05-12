@@ -8,10 +8,12 @@ import { queryKeys } from '../../lib/query-keys'
 import {
   createMoment,
   createWine,
+  deleteMoment,
   fetchMomentDetail,
   fetchMoments,
   fetchMomentStats,
   searchWines,
+  updateMoment,
 } from './api'
 import type { MomentFormValues, WineInput } from './schema'
 
@@ -55,6 +57,72 @@ export function useCreateMoment() {
   )
 
   return { submit, submitting, error } as const
+}
+
+/**
+ * Handles the moment update flow: submit, loading state, error handling,
+ * cache invalidation, and navigation on success.
+ */
+export function useUpdateMoment(momentId: string) {
+  const qc = useQueryClient()
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+
+  const submit = useCallback(
+    async (values: MomentFormValues): Promise<MomentRow | null> => {
+      try {
+        setSubmitting(true)
+        setError(null)
+        const result = await updateMoment(momentId, values)
+        invalidateMomentSurfaces(qc)
+        qc.invalidateQueries({ queryKey: queryKeys.momentDetail(momentId) })
+        qc.invalidateQueries({ queryKey: queryKeys.momentStats })
+        router.back()
+        return result
+      } catch (err) {
+        const e = err instanceof Error ? err : new Error('Unknown error')
+        setError(e)
+        Alert.alert('Could not save changes', e.message)
+        return null
+      } finally {
+        setSubmitting(false)
+      }
+    },
+    [momentId, qc],
+  )
+
+  return { submit, submitting, error } as const
+}
+
+/**
+ * Deletes a moment (storage objects + DB row) and pops back on success.
+ */
+export function useDeleteMoment(momentId: string) {
+  const qc = useQueryClient()
+  const [deleting, setDeleting] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
+
+  const remove = useCallback(async (): Promise<boolean> => {
+    try {
+      setDeleting(true)
+      setError(null)
+      await deleteMoment(momentId)
+      invalidateMomentSurfaces(qc)
+      qc.invalidateQueries({ queryKey: queryKeys.momentStats })
+      qc.removeQueries({ queryKey: queryKeys.momentDetail(momentId) })
+      router.back()
+      return true
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error('Unknown error')
+      setError(e)
+      Alert.alert('Could not delete moment', e.message)
+      return false
+    } finally {
+      setDeleting(false)
+    }
+  }, [momentId, qc])
+
+  return { remove, deleting, error } as const
 }
 
 /**

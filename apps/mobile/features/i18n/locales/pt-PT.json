@@ -88,6 +88,19 @@
       "subtitle": "Escolha o idioma usado na aplicação."
     }
   },
+  "moments": {
+    "edit": {
+      "title": "Editar momento",
+      "save": "Guardar alterações",
+      "cancel": "Cancelar"
+    },
+    "delete": {
+      "confirmTitle": "Eliminar este momento?",
+      "confirmBody": "O momento e as fotografias serão removidos definitivamente. Esta acção não pode ser anulada.",
+      "confirm": "Eliminar",
+      "cancel": "Cancelar"
+    }
+  },
   "onboarding": {
     "welcome": {
       "headline": "As suas viagens-pelo-vinho, num diário bonito.",
