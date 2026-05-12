@@ -35,7 +35,10 @@ export default function ScannerScreen() {
   const { width: winW, height: winH } = useWindowDimensions()
   const dimMaskId = useId().replace(/:/g, '')
   const cameraRef = useRef<CameraView>(null)
-  const { forMoment } = useLocalSearchParams<{ forMoment?: string }>()
+  const { forMoment, editMomentId } = useLocalSearchParams<{
+    forMoment?: string
+    editMomentId?: string
+  }>()
 
   const [permission, requestPermission] = useCameraPermissions()
   const [tabFocused, setTabFocused] = useState(true)
@@ -132,6 +135,7 @@ export default function ScannerScreen() {
           type: result.type,
           description: result.description,
           ...(forMoment ? { forMoment } : {}),
+          ...(editMomentId ? { editMomentId } : {}),
         },
       })
     } catch (err) {
@@ -139,7 +143,7 @@ export default function ScannerScreen() {
     } finally {
       setScanning(false)
     }
-  }, [image, clearImage, forMoment])
+  }, [image, clearImage, forMoment, editMomentId])
 
   const showLiveCamera = !image && permission?.granted
 

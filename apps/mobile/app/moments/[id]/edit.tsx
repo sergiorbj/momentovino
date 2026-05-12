@@ -61,6 +61,10 @@ export default function EditMomentScreen() {
   const [hydrated, setHydrated] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
   const [wineLabel, setWineLabel] = useState<string | null>(null)
+  // Flips to true when the user swaps the wine via the picker (existing cellar
+  // pick → clone on save). Stays false for the initial hydrated wine and for
+  // scanner returns (the scanner already inserted a fresh row).
+  const [wineFromExisting, setWineFromExisting] = useState(false)
 
   useEffect(() => {
     if (!moment || hydrated) return
@@ -90,6 +94,7 @@ export default function EditMomentScreen() {
       if (pick) {
         setValue('wineId', pick.wineId, { shouldValidate: true })
         setWineLabel(pick.wineName)
+        setWineFromExisting(pick.isExistingWine === true)
       }
     }, [setValue]),
   )
@@ -201,7 +206,7 @@ export default function EditMomentScreen() {
   }
 
   const onSubmit = (values: MomentFormValues) => {
-    void submit(values)
+    void submit(values, { cloneWineFromExisting: wineFromExisting })
   }
 
   if (loading || !moment) {
@@ -366,7 +371,12 @@ export default function EditMomentScreen() {
             >
               <Pressable
                 style={styles.input}
-                onPress={() => router.push('/moments/wine-picker')}
+                onPress={() =>
+                  router.push({
+                    pathname: '/moments/wine-picker',
+                    params: { editMomentId: momentId },
+                  })
+                }
               >
                 <Text
                   style={{

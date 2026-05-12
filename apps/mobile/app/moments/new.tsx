@@ -45,6 +45,9 @@ export default function NewMomentScreen() {
   const { t } = useTranslation()
   const [submitting, setSubmitting] = useState(false)
   const [wineLabel, setWineLabel] = useState<string | null>(params.wineName ?? null)
+  // Wines entering via `params` come from the scanner (fresh row already created),
+  // so they don't need cloning. Picker selections flip this to `true` below.
+  const [wineFromExisting, setWineFromExisting] = useState(false)
 
   const { control, handleSubmit, setValue, watch, formState } = useForm<MomentFormValues>({
     resolver: zodResolver(momentFormSchema),
@@ -67,6 +70,7 @@ export default function NewMomentScreen() {
       if (pick) {
         setValue('wineId', pick.wineId, { shouldValidate: true })
         setWineLabel(pick.wineName)
+        setWineFromExisting(pick.isExistingWine === true)
       }
     }, [setValue])
   )
@@ -200,7 +204,7 @@ export default function NewMomentScreen() {
   const onSubmit = async (values: MomentFormValues) => {
     try {
       setSubmitting(true)
-      await createMoment(values)
+      await createMoment(values, { cloneWineFromExisting: wineFromExisting })
       qc.invalidateQueries({ queryKey: ['moments'] })
       qc.invalidateQueries({ queryKey: ['wines'] })
       qc.invalidateQueries({ queryKey: queryKeys.profile })

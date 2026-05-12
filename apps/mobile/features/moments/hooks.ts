@@ -14,6 +14,7 @@ import {
   fetchMomentStats,
   searchWines,
   updateMoment,
+  type UpdateMomentOptions,
 } from './api'
 import type { MomentFormValues, WineInput } from './schema'
 
@@ -62,6 +63,9 @@ export function useCreateMoment() {
 /**
  * Handles the moment update flow: submit, loading state, error handling,
  * cache invalidation, and navigation on success.
+ *
+ * `submit` accepts `UpdateMomentOptions` so the edit screen can flag wine swaps
+ * coming from the picker (clone needed) versus the scanner (already a fresh row).
  */
 export function useUpdateMoment(momentId: string) {
   const qc = useQueryClient()
@@ -69,11 +73,14 @@ export function useUpdateMoment(momentId: string) {
   const [error, setError] = useState<Error | null>(null)
 
   const submit = useCallback(
-    async (values: MomentFormValues): Promise<MomentRow | null> => {
+    async (
+      values: MomentFormValues,
+      options?: UpdateMomentOptions,
+    ): Promise<MomentRow | null> => {
       try {
         setSubmitting(true)
         setError(null)
-        const result = await updateMoment(momentId, values)
+        const result = await updateMoment(momentId, values, options)
         invalidateMomentSurfaces(qc)
         qc.invalidateQueries({ queryKey: queryKeys.momentDetail(momentId) })
         qc.invalidateQueries({ queryKey: queryKeys.momentStats })

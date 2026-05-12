@@ -1,4 +1,13 @@
-export type PendingWinePick = { wineId: string; wineName: string }
+export type PendingWinePick = {
+  wineId: string
+  wineName: string
+  /**
+   * True when the wine already existed in the user's cellar and was selected via the
+   * wine picker (so `createMoment` should clone the row → `×N` and total count both
+   * increase). False/undefined when the wine was just created by the scanner.
+   */
+  isExistingWine?: boolean
+}
 
 let pending: PendingWinePick | null = null
 

@@ -92,6 +92,50 @@ export async function createWine(input: WineInput): Promise<WineRow> {
   return data
 }
 
+/**
+ * Clones an existing wine row for the current user. Used when the user logs a new
+ * moment with a wine already in their cellar: by inserting another wine row with
+ * the same identifying fields, the cluster (`×N`) badge and the total wines count
+ * both go up — mirroring what would happen if they had re-scanned the same bottle.
+ * The label photo is preserved so the cluster avatar stays consistent.
+ */
+export async function cloneWineForReuse(sourceWineId: string): Promise<WineRow> {
+  const { data: userData, error: userErr } = await supabase.auth.getUser()
+  if (userErr || !userData.user) throw userErr ?? new Error('No authenticated user')
+  const userId = userData.user.id
+
+  const { data: source, error: fetchErr } = await supabase
+    .from('wines')
+    .select('name, producer, vintage, region, country, type, label_photo_url')
+    .eq('id', sourceWineId)
+    .eq('created_by', userId)
+    .single()
+  if (fetchErr || !source) {
+    const detail = fetchErr?.message ?? 'source wine not found'
+    throw new Error(`[wines.clone.fetch] ${detail}`)
+  }
+
+  const { data: clone, error: insertErr } = await supabase
+    .from('wines')
+    .insert({
+      created_by: userId,
+      name: source.name,
+      producer: source.producer,
+      vintage: source.vintage,
+      region: source.region,
+      country: source.country,
+      type: source.type,
+      label_photo_url: source.label_photo_url,
+    })
+    .select()
+    .single()
+  if (insertErr || !clone) {
+    const detail = insertErr?.message ?? 'unknown'
+    throw new Error(`[wines.clone.insert] ${detail}`)
+  }
+  return clone
+}
+
 /** Deletes wine rows owned by the current user. Moments keep `wine_id` null via FK. */
 export async function deleteWinesByIds(ids: string[]): Promise<void> {
   if (ids.length === 0) return
@@ -133,16 +177,35 @@ async function uploadPhoto(
   return data.publicUrl
 }
 
-export async function createMoment(values: MomentFormValues): Promise<MomentRow> {
+export interface CreateMomentOptions {
+  /**
+   * When the wine was selected via the picker (i.e. it already exists in the user's
+   * cellar), clone the wine row first so that logging another moment for it bumps
+   * both the per-wine `×N` badge and the total wine count — same as re-scanning.
+   * Leave false/undefined when the wine was just created by the scanner.
+   */
+  cloneWineFromExisting?: boolean
+}
+
+export async function createMoment(
+  values: MomentFormValues,
+  options?: CreateMomentOptions,
+): Promise<MomentRow> {
   const { data: userData, error: userErr } = await supabase.auth.getUser()
   if (userErr || !userData.user) throw userErr ?? new Error('No authenticated user')
   const userId = userData.user.id
+
+  let wineIdForMoment = values.wineId
+  if (options?.cloneWineFromExisting && values.wineId) {
+    const clone = await cloneWineForReuse(values.wineId)
+    wineIdForMoment = clone.id
+  }
 
   const { data: moment, error: insertErr } = await supabase
     .from('moments')
     .insert({
       user_id: userId,
-      wine_id: values.wineId,
+      wine_id: wineIdForMoment,
       title: values.title,
       description: values.description ?? null,
       happened_at: values.happenedAt,
@@ -155,7 +218,7 @@ export async function createMoment(values: MomentFormValues): Promise<MomentRow>
     .single()
   if (insertErr || !moment) {
     const detail = insertErr?.message ?? 'unknown'
-    throw new Error(`[moments.insert] ${detail} (uid=${userId.slice(0, 8)} wine=${values.wineId.slice(0, 8)})`)
+    throw new Error(`[moments.insert] ${detail} (uid=${userId.slice(0, 8)} wine=${wineIdForMoment.slice(0, 8)})`)
   }
 
   let coverUrl: string | null = null
@@ -198,13 +261,48 @@ export async function createMoment(values: MomentFormValues): Promise<MomentRow>
   return moment
 }
 
+export interface UpdateMomentOptions {
+  /**
+   * Mirrors `CreateMomentOptions.cloneWineFromExisting`: when the user swaps the
+   * moment's wine to one that already exists in the cellar (picker selection), we
+   * clone that row so the cellar `×N` reflects an additional bottle. Scanner swaps
+   * leave this false because the scanner already inserted a fresh wine row.
+   */
+  cloneWineFromExisting?: boolean
+}
+
 export async function updateMoment(
   id: string,
   values: MomentFormValues,
+  options?: UpdateMomentOptions,
 ): Promise<MomentRow> {
   const { data: userData, error: userErr } = await supabase.auth.getUser()
   if (userErr || !userData.user) throw userErr ?? new Error('No authenticated user')
   const userId = userData.user.id
+
+  // Snapshot the previous wine_id so we can adjust the cellar count if the user
+  // swaps wines. We re-query here instead of trusting form state because the
+  // form's wineId is the *new* selection.
+  const { data: existingMoment, error: existingMomentErr } = await supabase
+    .from('moments')
+    .select('wine_id')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .single()
+  if (existingMomentErr || !existingMoment) {
+    const detail = existingMomentErr?.message ?? 'moment not found'
+    throw new Error(`[moments.fetch] ${detail}`)
+  }
+  const previousWineId = existingMoment.wine_id
+
+  // If swapping to another existing wine, clone it so the cellar `×N` grows
+  // (matches the create-moment behaviour and what `cloneWineForReuse` documents).
+  let finalWineId = values.wineId
+  const wineChanged = previousWineId !== values.wineId
+  if (wineChanged && options?.cloneWineFromExisting && values.wineId) {
+    const clone = await cloneWineForReuse(values.wineId)
+    finalWineId = clone.id
+  }
 
   const { data: existingPhotos, error: existingErr } = await supabase
     .from('moment_photos')
@@ -263,7 +361,7 @@ export async function updateMoment(
   const { data: updated, error: updErr } = await supabase
     .from('moments')
     .update({
-      wine_id: values.wineId,
+      wine_id: finalWineId,
       title: values.title,
       description: values.description ?? null,
       happened_at: values.happenedAt,
@@ -281,6 +379,21 @@ export async function updateMoment(
   if (updErr || !updated) {
     const detail = updErr?.message ?? 'unknown'
     throw new Error(`[moments.update] ${detail}`)
+  }
+
+  // Decrement the cellar count for the previous wine: delete the row IFF no other
+  // moment of this user still references it. The FK is ON DELETE SET NULL
+  // (migration 0001), so an unchecked delete would silently null out a legitimate
+  // moment from before the clone-on-pick feature shipped.
+  if (wineChanged && previousWineId) {
+    const { count, error: countErr } = await supabase
+      .from('moments')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('wine_id', previousWineId)
+    if (!countErr && (count ?? 0) === 0) {
+      await supabase.from('wines').delete().eq('id', previousWineId).eq('created_by', userId)
+    }
   }
 
   return updated

@@ -10,7 +10,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 
 import { WineRowAvatar } from '../../components/WineRowAvatar'
 import { setPendingWinePick } from '../../features/moments/wine-picker-handoff'
@@ -27,6 +27,10 @@ const SUBTLE = '#C2703E'
 const BG = '#F5EBE0'
 
 export default function WinePickerScreen() {
+  // `editMomentId` is set only when the picker was opened from the moment edit
+  // screen; it's forwarded to the scanner so a "scan a new wine" return knows to
+  // dismiss back to the edit screen rather than `/moments/new`.
+  const { editMomentId } = useLocalSearchParams<{ editMomentId?: string }>()
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
 
@@ -52,7 +56,7 @@ export default function WinePickerScreen() {
 
   const select = (cluster: WineCluster) => {
     const w = cluster.canonical
-    setPendingWinePick({ wineId: w.id, wineName: w.name })
+    setPendingWinePick({ wineId: w.id, wineName: w.name, isExistingWine: true })
     router.back()
   }
 
@@ -73,7 +77,15 @@ export default function WinePickerScreen() {
         <View style={styles.body}>
           <TouchableOpacity
             style={styles.scanCta}
-            onPress={() => router.push({ pathname: '/(tabs)/scanner', params: { forMoment: '1' } })}
+            onPress={() =>
+              router.push({
+                pathname: '/(tabs)/scanner',
+                params: {
+                  forMoment: '1',
+                  ...(editMomentId ? { editMomentId } : {}),
+                },
+              })
+            }
             activeOpacity={0.85}
           >
             <Ionicons name="scan-outline" size={18} color="#FFFFFF" />

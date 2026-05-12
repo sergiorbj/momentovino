@@ -37,8 +37,10 @@ export default function ScanResultScreen() {
     type: string
     description: string
     forMoment?: string
+    editMomentId?: string
   }>()
   const forMoment = params.forMoment === '1'
+  const editMomentId = params.editMomentId
 
   const [labelPhoto] = useState<PendingLabelPhoto | null>(() => takeLabelPhotoForResult())
   const [saving, setSaving] = useState(false)
@@ -84,8 +86,15 @@ export default function ScanResultScreen() {
       await qc.invalidateQueries({ queryKey: queryKeys.momentStats, refetchType: 'all' })
 
       if (target === 'existingMoment') {
-        setPendingWinePick({ wineId: wine.id, wineName: wine.name })
-        router.dismissTo('/moments/new')
+        setPendingWinePick({ wineId: wine.id, wineName: wine.name, isExistingWine: false })
+        if (editMomentId) {
+          router.dismissTo({
+            pathname: '/moments/[id]/edit',
+            params: { id: editMomentId },
+          })
+        } else {
+          router.dismissTo('/moments/new')
+        }
       } else if (target === 'newMoment') {
         router.replace({
           pathname: '/moments/new',
