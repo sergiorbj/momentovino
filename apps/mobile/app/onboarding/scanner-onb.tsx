@@ -21,6 +21,7 @@ import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 import { scanWineImage } from '../../features/scanner/api'
 import { isScanError } from '../../features/scanner/types'
 import { setCapturedWine } from '../../features/onboarding/onboarding-capture'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const BG_DARK = '#1C1510'
@@ -30,6 +31,7 @@ const FRAME_CORNER_RADIUS = 14
 type PickedImage = { uri: string; mimeType: string }
 
 export default function OnboardingScannerScreen() {
+  const { t } = useTranslation()
   const { width: winW, height: winH } = useWindowDimensions()
   const dimMaskId = useId().replace(/:/g, '')
   const cameraRef = useRef<CameraView>(null)
@@ -61,7 +63,10 @@ export default function OnboardingScannerScreen() {
   const pickFromGallery = useCallback(async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (!perm.granted) {
-      Alert.alert('Permission needed', 'Allow photo library access to pick wine photos.')
+      Alert.alert(
+        t('onboarding.scanner.errors.permissionNeededTitle'),
+        t('onboarding.scanner.errors.permissionNeededBody'),
+      )
       return
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -72,7 +77,7 @@ export default function OnboardingScannerScreen() {
       const asset = result.assets[0]
       setImage({ uri: asset.uri, mimeType: asset.mimeType ?? 'image/jpeg' })
     }
-  }, [])
+  }, [t])
 
   const clearImage = useCallback(() => {
     setImage(null)
@@ -90,11 +95,14 @@ export default function OnboardingScannerScreen() {
         setImage({ uri: photo.uri, mimeType: 'image/jpeg' })
       }
     } catch (err) {
-      Alert.alert('Camera', err instanceof Error ? err.message : 'Could not take photo')
+      Alert.alert(
+        t('onboarding.scanner.errors.cameraTitle'),
+        err instanceof Error ? err.message : t('onboarding.scanner.errors.cameraFallback'),
+      )
     } finally {
       setCapturing(false)
     }
-  }, [cameraReady, capturing])
+  }, [cameraReady, capturing, t])
 
   const handleScan = useCallback(async () => {
     if (!image) return
@@ -105,7 +113,7 @@ export default function OnboardingScannerScreen() {
 
       if (isScanError(result)) {
         clearImage()
-        Alert.alert('Could not identify', result.error)
+        Alert.alert(t('onboarding.scanner.errors.couldNotIdentifyTitle'), result.error)
         return
       }
 
@@ -121,11 +129,14 @@ export default function OnboardingScannerScreen() {
 
       router.push('/onboarding/scan-result-onb')
     } catch (err) {
-      Alert.alert('Scan failed', err instanceof Error ? err.message : 'Unknown error')
+      Alert.alert(
+        t('onboarding.scanner.errors.scanFailedTitle'),
+        err instanceof Error ? err.message : t('onboarding.scanner.errors.scanFailedFallback'),
+      )
     } finally {
       setScanning(false)
     }
-  }, [image, clearImage])
+  }, [image, clearImage, t])
 
   const showLiveCamera = !image && permission?.granted
 
@@ -202,14 +213,14 @@ export default function OnboardingScannerScreen() {
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.closeBtn}
-            accessibilityLabel="Close scanner"
+            accessibilityLabel={t('onboarding.scanner.closeLabel')}
           >
             <Ionicons name="close" size={22} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={styles.title}>Scan the label</Text>
+            <Text style={styles.title}>{t('onboarding.scanner.title')}</Text>
             {!image ? (
-              <Text style={styles.subtitle}>Align the bottle inside the frame, then capture</Text>
+              <Text style={styles.subtitle}>{t('onboarding.scanner.subtitle')}</Text>
             ) : null}
           </View>
           <View style={styles.headerRightSpacer} />
@@ -223,7 +234,7 @@ export default function OnboardingScannerScreen() {
               {scanning && (
                 <View style={styles.scanningOverlay}>
                   <ActivityIndicator size="large" color="#FFFFFF" />
-                  <Text style={styles.scanningText}>Identifying wine...</Text>
+                  <Text style={styles.scanningText}>{t('onboarding.scanner.identifying')}</Text>
                 </View>
               )}
 
@@ -236,16 +247,16 @@ export default function OnboardingScannerScreen() {
           <View style={styles.permissionWrap}>
             <View style={styles.permissionCard}>
               <Ionicons name="camera-outline" size={40} color="#FFFFFF" />
-              <Text style={styles.permissionTitle}>Camera access</Text>
+              <Text style={styles.permissionTitle}>{t('onboarding.scanner.permissionTitle')}</Text>
               <Text style={styles.permissionText}>
-                We open the camera so you can photograph the label in one tap.
+                {t('onboarding.scanner.permissionBody')}
               </Text>
               <TouchableOpacity
                 style={styles.permissionBtn}
                 onPress={requestPermission}
                 activeOpacity={0.85}
               >
-                <Text style={styles.permissionBtnText}>Allow camera</Text>
+                <Text style={styles.permissionBtnText}>{t('onboarding.scanner.allowCamera')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.permissionGallery}
@@ -253,7 +264,7 @@ export default function OnboardingScannerScreen() {
                 activeOpacity={0.85}
               >
                 <Ionicons name="images-outline" size={20} color={WINE} />
-                <Text style={styles.permissionGalleryText}>Choose from gallery instead</Text>
+                <Text style={styles.permissionGalleryText}>{t('onboarding.scanner.galleryAlt')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -274,7 +285,7 @@ export default function OnboardingScannerScreen() {
               ) : (
                 <>
                   <Ionicons name="sparkles" size={20} color="#FFFFFF" />
-                  <Text style={styles.scanBtnText}>Scan this wine</Text>
+                  <Text style={styles.scanBtnText}>{t('onboarding.scanner.scanThisWine')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -284,10 +295,10 @@ export default function OnboardingScannerScreen() {
                 style={styles.galleryOnly}
                 onPress={pickFromGallery}
                 activeOpacity={0.85}
-                accessibilityLabel="Choose from gallery"
+                accessibilityLabel={t('onboarding.scanner.chooseFromGalleryLabel')}
               >
                 <Ionicons name="images" size={26} color="#FFFFFF" />
-                <Text style={styles.galleryOnlyText}>Gallery</Text>
+                <Text style={styles.galleryOnlyText}>{t('onboarding.scanner.galleryShort')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -298,7 +309,7 @@ export default function OnboardingScannerScreen() {
                 onPress={takePhoto}
                 disabled={capturing || !cameraReady}
                 activeOpacity={0.9}
-                accessibilityLabel="Take photo"
+                accessibilityLabel={t('onboarding.scanner.takePhotoLabel')}
               >
                 {capturing ? (
                   <ActivityIndicator color={WINE} />

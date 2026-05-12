@@ -28,6 +28,7 @@ import {
   getCapture,
   setCapturedMoment,
 } from '../../features/onboarding/onboarding-capture'
+import { useLanguage, useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -37,24 +38,28 @@ const BG = '#F5EBE0'
 // Same shape as `momentFormSchema` minus `wineId` (the wine row doesn't exist
 // yet — it gets created in `finalizeAccount` post-auth) and with photos
 // relaxed to optional, since onboarding accepts a moment without photos.
-const onboardingMomentSchema = z.object({
-  title: z.string().min(2, 'Title is required').max(80),
-  description: z.string().max(500).optional(),
-  happenedAt: z.string().min(1, 'Date is required'),
-  locationName: z.string().min(2, 'Pick a location'),
-  latitude: z.number().min(-90).max(90),
-  longitude: z.number().min(-180).max(180),
-  rating: z.number().int().min(1).max(5).optional(),
-  photos: z.array(photoInputSchema).max(3),
-})
+function buildOnboardingMomentSchema(t: (key: string) => string) {
+  return z.object({
+    title: z.string().min(2, t('onboarding.newMoment.validation.titleRequired')).max(80),
+    description: z.string().max(500).optional(),
+    happenedAt: z.string().min(1, t('onboarding.newMoment.validation.dateRequired')),
+    locationName: z.string().min(2, t('onboarding.newMoment.validation.locationRequired')),
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    rating: z.number().int().min(1).max(5).optional(),
+    photos: z.array(photoInputSchema).max(3),
+  })
+}
 
-type OnboardingMomentValues = z.infer<typeof onboardingMomentSchema>
+type OnboardingMomentValues = z.infer<ReturnType<typeof buildOnboardingMomentSchema>>
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
 export default function OnboardingNewMomentScreen() {
+  const { t } = useTranslation()
+  const language = useLanguage()
   const wine = getCapture().wine
   const [submitting, setSubmitting] = useState(false)
 
@@ -62,8 +67,10 @@ export default function OnboardingNewMomentScreen() {
     if (!wine) router.replace('/onboarding/scanner-onb')
   }, [wine])
 
+  const schema = useRef(buildOnboardingMomentSchema(t)).current
+
   const { control, handleSubmit, setValue, watch, formState } = useForm<OnboardingMomentValues>({
-    resolver: zodResolver(onboardingMomentSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       title: '',
       description: '',
@@ -92,7 +99,7 @@ export default function OnboardingNewMomentScreen() {
 
   const happenedAt = watch('happenedAt')
   const displayDate = happenedAt
-    ? new Date(happenedAt + 'T00:00:00').toLocaleDateString('en-US', {
+    ? new Date(happenedAt + 'T00:00:00').toLocaleDateString(language, {
         month: 'long',
         day: 'numeric',
         year: 'numeric',
@@ -153,7 +160,10 @@ export default function OnboardingNewMomentScreen() {
     if (photos.length >= 3) return
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (!perm.granted) {
-      Alert.alert('Permission needed', 'Allow photo library access to add pictures.')
+      Alert.alert(
+        t('onboarding.newMoment.errors.permissionNeededTitle'),
+        t('onboarding.newMoment.errors.permissionNeededBody'),
+      )
       return
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -199,7 +209,7 @@ export default function OnboardingNewMomentScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
             <Ionicons name="close" size={22} color={WINE} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>New moment</Text>
+          <Text style={styles.headerTitle}>{t('onboarding.newMoment.headerTitle')}</Text>
         </View>
 
         <KeyboardAvoidingView
@@ -207,7 +217,7 @@ export default function OnboardingNewMomentScreen() {
           style={styles.flex}
         >
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-            <Field label="Title" error={formState.errors.title?.message}>
+            <Field label={t('onboarding.newMoment.titleLabel')} error={formState.errors.title?.message}>
               <Controller
                 control={control}
                 name="title"
@@ -216,14 +226,17 @@ export default function OnboardingNewMomentScreen() {
                     style={styles.input}
                     value={value}
                     onChangeText={onChange}
-                    placeholder="A toast in Mendoza"
+                    placeholder={t('onboarding.newMoment.titlePlaceholder')}
                     placeholderTextColor="#A98B7E"
                   />
                 )}
               />
             </Field>
 
-            <Field label="Description" error={formState.errors.description?.message}>
+            <Field
+              label={t('onboarding.newMoment.descriptionLabel')}
+              error={formState.errors.description?.message}
+            >
               <Controller
                 control={control}
                 name="description"
@@ -232,7 +245,7 @@ export default function OnboardingNewMomentScreen() {
                     style={[styles.input, styles.multiline]}
                     value={value ?? ''}
                     onChangeText={onChange}
-                    placeholder="Who was there, what made it special…"
+                    placeholder={t('onboarding.newMoment.descriptionPlaceholder')}
                     placeholderTextColor="#A98B7E"
                     multiline
                   />
@@ -240,7 +253,10 @@ export default function OnboardingNewMomentScreen() {
               />
             </Field>
 
-            <Field label="Date" error={formState.errors.happenedAt?.message}>
+            <Field
+              label={t('onboarding.newMoment.dateLabel')}
+              error={formState.errors.happenedAt?.message}
+            >
               <Pressable style={styles.dateBtn} onPress={() => setDatePickerVisible(true)}>
                 <Ionicons
                   name="calendar-outline"
@@ -254,7 +270,7 @@ export default function OnboardingNewMomentScreen() {
                     fontSize: 15,
                   }}
                 >
-                  {displayDate ?? 'Pick a date'}
+                  {displayDate ?? t('onboarding.newMoment.pickDate')}
                 </Text>
               </Pressable>
               <DateTimePickerModal
@@ -265,13 +281,16 @@ export default function OnboardingNewMomentScreen() {
                 maximumDate={new Date()}
                 onConfirm={handleDateConfirm}
                 onCancel={() => setDatePickerVisible(false)}
-                confirmTextIOS="Confirm"
-                cancelTextIOS="Cancel"
+                confirmTextIOS={t('onboarding.newMoment.datePickerConfirm')}
+                cancelTextIOS={t('onboarding.newMoment.datePickerCancel')}
                 themeVariant="light"
               />
             </Field>
 
-            <Field label="Location" error={formState.errors.locationName?.message}>
+            <Field
+              label={t('onboarding.newMoment.locationLabel')}
+              error={formState.errors.locationName?.message}
+            >
               {locationPickerOpen ? (
                 <View>
                   <View style={styles.locSearchWrap}>
@@ -280,7 +299,7 @@ export default function OnboardingNewMomentScreen() {
                       style={styles.locSearchInput}
                       value={locationQuery}
                       onChangeText={setLocationQuery}
-                      placeholder="Search city or country…"
+                      placeholder={t('onboarding.newMoment.locationSearch')}
                       placeholderTextColor="#A98B7E"
                       autoFocus
                     />
@@ -296,7 +315,7 @@ export default function OnboardingNewMomentScreen() {
                       keyboardShouldPersistTaps="handled"
                     >
                       {locationResults.length === 0 && !locationLoading && (
-                        <Text style={styles.locEmpty}>No results found</Text>
+                        <Text style={styles.locEmpty}>{t('onboarding.newMoment.noResults')}</Text>
                       )}
                       {locationResults.map((item, index) => (
                         <View key={item.id}>
@@ -326,13 +345,13 @@ export default function OnboardingNewMomentScreen() {
                       fontFamily: 'DMSans_400Regular',
                     }}
                   >
-                    {selectedLocation ?? 'Tap to search a city…'}
+                    {selectedLocation ?? t('onboarding.newMoment.locationTap')}
                   </Text>
                 </Pressable>
               )}
             </Field>
 
-            <Field label="Wine">
+            <Field label={t('onboarding.newMoment.wineLabel')}>
               <View style={styles.wineLocked}>
                 <Text style={styles.wineLockedText} numberOfLines={1}>
                   {wine.name}
@@ -341,7 +360,7 @@ export default function OnboardingNewMomentScreen() {
               </View>
             </Field>
 
-            <Field label="Rating (optional)">
+            <Field label={t('onboarding.newMoment.ratingLabel')}>
               <View style={styles.stars}>
                 {[1, 2, 3, 4, 5].map((n) => (
                   <TouchableOpacity
@@ -361,7 +380,7 @@ export default function OnboardingNewMomentScreen() {
               </View>
             </Field>
 
-            <Field label="Photos" error={formState.errors.photos?.message as string | undefined}>
+            <Field label={t('onboarding.newMoment.photosLabel')} error={formState.errors.photos?.message as string | undefined}>
               <View style={styles.photosRow}>
                 {photos.map((photo, index) => (
                   <View key={`${photo.uri}-${index}`} style={styles.photoWrap}>
@@ -379,7 +398,7 @@ export default function OnboardingNewMomentScreen() {
                       <Text
                         style={[styles.coverText, photo.isCover && styles.coverTextActive]}
                       >
-                        {photo.isCover ? 'Cover' : 'Set cover'}
+                        {photo.isCover ? t('onboarding.newMoment.cover') : t('onboarding.newMoment.setCover')}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -403,7 +422,7 @@ export default function OnboardingNewMomentScreen() {
               {submitting ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.submitText}>Save moment</Text>
+                <Text style={styles.submitText}>{t('onboarding.newMoment.saveMoment')}</Text>
               )}
             </TouchableOpacity>
           </View>

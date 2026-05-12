@@ -87,5 +87,207 @@
       "title": "Idioma",
       "subtitle": "Elige el idioma utilizado en la aplicación."
     }
+  },
+  "onboarding": {
+    "welcome": {
+      "headline": "Tus viajes-a-través-del-vino, un diario hermoso.",
+      "subtitle": "Escanea una etiqueta, fija el momento, guarda el recuerdo para siempre.",
+      "getStarted": "Empezar",
+      "haveAccount": "Ya tengo una cuenta"
+    },
+    "goal": {
+      "headline": "¿Qué te trae a MomentoVino?",
+      "subtitle": "Marca todas las que apliquen — adaptaremos tu diario a ti.",
+      "continue": "Continuar",
+      "options": {
+        "remember": "Recordar botellas que me han encantado",
+        "travels": "Crear un diario de mis viajes con vino",
+        "share": "Compartir recuerdos de vino con familia y amigos",
+        "discover": "Descubrir vinos nuevos que vale la pena recordar"
+      }
+    },
+    "pain": {
+      "headline": "¿Cuál de estas te suena?",
+      "subtitle": "Marca todas las que apliquen — no hay respuestas erróneas.",
+      "continue": "Continuar",
+      "options": {
+        "forget_names": "Olvido el nombre de los vinos que me encantaron",
+        "buried_photos": "Mis fotos de vino están perdidas en mi galería",
+        "friend_asks": "Cuando un amigo pregunta \"¿cuál era ese vino?\", me quedo en blanco",
+        "trip_blur": "No recuerdo qué bebí en ese viaje del año pasado"
+      }
+    },
+    "introCreate": {
+      "headline": "Añadamos tu primera botella.",
+      "subtitle": "El diario empieza con un solo momento. Tres pasos rápidos y tu atlas tiene su primer pin.",
+      "step1Title": "Escanea la etiqueta",
+      "step1Body": "Saca una foto o elige la etiqueta de la botella — rellenamos el productor, la región y las notas por ti.",
+      "step2Title": "Escribe el momento",
+      "step2Body": "Añade un título, el lugar, la fecha — incluso una foto de la noche, si tienes.",
+      "step3Title": "Mírala en tu atlas",
+      "step3Body": "Tu botella queda fijada en tu mapa personal de vinos. La primera de muchas.",
+      "cta": "Escanear mi primera botella"
+    },
+    "scanner": {
+      "title": "Escanea la etiqueta",
+      "subtitle": "Alinea la botella dentro del marco y captura",
+      "closeLabel": "Cerrar escáner",
+      "identifying": "Identificando vino...",
+      "permissionTitle": "Acceso a la cámara",
+      "permissionBody": "Abrimos la cámara para que fotografíes la etiqueta en un toque.",
+      "allowCamera": "Permitir cámara",
+      "galleryAlt": "Elegir de la galería",
+      "galleryShort": "Galería",
+      "takePhotoLabel": "Tomar foto",
+      "chooseFromGalleryLabel": "Elegir de la galería",
+      "scanThisWine": "Escanear este vino",
+      "errors": {
+        "permissionNeededTitle": "Permiso necesario",
+        "permissionNeededBody": "Permite el acceso a la galería para elegir fotos de vino.",
+        "cameraTitle": "Cámara",
+        "cameraFallback": "No se pudo tomar la foto",
+        "couldNotIdentifyTitle": "No se pudo identificar",
+        "scanFailedTitle": "Fallo en el escaneo",
+        "scanFailedFallback": "Error desconocido"
+      }
+    },
+    "scanResult": {
+      "title": "¡Vino identificado!",
+      "labels": {
+        "producer": "Productor",
+        "region": "Región",
+        "country": "País",
+        "type": "Tipo"
+      },
+      "notSet": "Sin definir",
+      "createMoment": "Crear mi momento"
+    },
+    "newMoment": {
+      "headerTitle": "Nuevo momento",
+      "titleLabel": "Título",
+      "titlePlaceholder": "Un brindis en Mendoza",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Quién estaba allí, qué lo hizo especial…",
+      "dateLabel": "Fecha",
+      "pickDate": "Elegir fecha",
+      "datePickerConfirm": "Confirmar",
+      "datePickerCancel": "Cancelar",
+      "locationLabel": "Ubicación",
+      "locationSearch": "Buscar ciudad o país…",
+      "locationTap": "Toca para buscar una ciudad…",
+      "noResults": "Sin resultados",
+      "wineLabel": "Vino",
+      "ratingLabel": "Valoración (opcional)",
+      "photosLabel": "Fotos",
+      "cover": "Portada",
+      "setCover": "Establecer portada",
+      "saveMoment": "Guardar momento",
+      "validation": {
+        "titleRequired": "El título es obligatorio",
+        "dateRequired": "La fecha es obligatoria",
+        "locationRequired": "Elige una ubicación"
+      },
+      "errors": {
+        "permissionNeededTitle": "Permiso necesario",
+        "permissionNeededBody": "Permite el acceso a la galería para añadir fotos."
+      }
+    },
+    "atlas": {
+      "pinning": "Fijando tu primer recuerdo…",
+      "headline": "Tu primer recuerdo está en tu atlas.",
+      "subtitle": "Una botella, un lugar — el inicio de tu diario.",
+      "hint": "Toca el momento más tarde para añadir fotos, editar detalles o compartirlo con la familia.",
+      "cta": "Guardar mi diario",
+      "shareMessage": "Acabo de empezar mi atlas de vinos en MomentoVino 🍷"
+    },
+    "paywall": {
+      "headline": "Tus recuerdos de vino, para siempre.",
+      "subtitle": "Momentos ilimitados. Botellas ilimitadas. Un diario hermoso que aún tendrás dentro de 10 años.",
+      "benefits": {
+        "atlas": "Tu atlas de vinos, cada botella en el mapa",
+        "family": "Comparte con la familia, registrad momentos juntos",
+        "story": "Guarda la historia detrás de cada botella"
+      },
+      "monthly": "Mensual",
+      "monthlyDetailPrefix": "3 días gratis",
+      "monthlyDetailSuffix": ", luego cobrado",
+      "perMonth": "al mes",
+      "annual": "Anual",
+      "annualDetail": "Solo {{monthly}}/mes",
+      "perYear": "al año",
+      "badge": "MEJOR OPCIÓN · AHORRA {{percent}}%",
+      "ctaStarting": "Iniciando…",
+      "ctaSubscribeYearly": "Suscribirme — {{price}}/año",
+      "ctaTrialMonthly": "Empezar 3 días gratis",
+      "reassureYearly": "Facturación anual. Cancela la renovación cuando quieras en Ajustes.",
+      "reassureMonthly": "3 días gratis, luego {{price}}/mes. Cancela cuando quieras para no ser cobrado.",
+      "restore": "Restaurar compras",
+      "terms": "Términos",
+      "privacy": "Privacidad",
+      "errors": {
+        "unavailableTitle": "Suscripción no disponible",
+        "unavailableBody": "No se pudieron cargar las opciones. Inténtalo de nuevo.",
+        "subscribeFailedTitle": "Fallo en la suscripción",
+        "subscribeFailedFallback": "No se pudo iniciar la suscripción",
+        "nothingToRestoreTitle": "Nada que restaurar",
+        "nothingToRestoreBody": "No se encontró suscripción activa en este Apple ID.",
+        "restoreFailedTitle": "Fallo al restaurar",
+        "restoreFailedFallback": "No se pudieron restaurar las compras"
+      }
+    },
+    "saveAccount": {
+      "headline": "Guarda tu diario de vinos.",
+      "subtitle": "Tu suscripción es tuya — elige cómo quieres entrar para mantener tus momentos seguros en todos los dispositivos.",
+      "continueEmail": "Continuar con email",
+      "continueApple": "Continuar con Apple",
+      "continueGoogle": "Continuar con Google",
+      "displayNameLabel": "Nombre para mostrar",
+      "displayNamePlaceholder": "¿Cómo te llamamos?",
+      "emailLabel": "Email",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Al menos 8 caracteres",
+      "useAnotherMethod": "Usar otro método",
+      "saving": "Guardando…",
+      "saveJournal": "Guardar mi diario",
+      "legalEmail": "Al crear una cuenta aceptas nuestros Términos y Política de Privacidad.",
+      "legalProviders": "Al continuar aceptas nuestros Términos y Política de Privacidad. Tu suscripción ya está activa en este Apple ID — inicia sesión para asociarla a tu cuenta.",
+      "errors": {
+        "setupFailedTitle": "No se pudo terminar la configuración",
+        "setupFailedFallback": "Inténtalo de nuevo en un momento.",
+        "appleUnavailable": "Inicio de sesión con Apple no disponible",
+        "appleFailed": "No se pudo iniciar sesión",
+        "googleUnavailable": "Inicio de sesión con Google no disponible",
+        "googleFailed": "Error al iniciar sesión con Google",
+        "checkInboxTitle": "Revisa tu bandeja",
+        "checkInboxBody": "Enviamos un enlace de confirmación a {{email}}. Tócalo para verificar el email — tu suscripción ya está guardada en esta cuenta.",
+        "checkInboxContinue": "Continuar",
+        "alreadyExistsTitle": "Ya tienes una cuenta",
+        "alreadyExistsBody": "Este email ya está registrado. Inicia sesión — tu compra se transferirá a esa cuenta en este Apple ID.",
+        "alreadyExistsCancel": "Cancelar",
+        "alreadyExistsSignIn": "Iniciar sesión",
+        "createFailedTitle": "No se pudo crear la cuenta",
+        "createFailedFallback": "Algo salió mal."
+      }
+    },
+    "completeProfile": {
+      "headline": "Casi listo",
+      "subtitle": "Confirma cómo deberíamos llamarte y acepta los términos para terminar de crear tu cuenta.",
+      "displayNameLabel": "Nombre para mostrar",
+      "displayNamePlaceholder": "¿Cómo te llamamos?",
+      "legalTitle": "Términos y Privacidad",
+      "legalPrefix": "Acepto los ",
+      "legalTerms": "Términos de Servicio",
+      "legalJoin": " y la ",
+      "legalPrivacy": "Política de Privacidad",
+      "legalSuffix": ".",
+      "saving": "Guardando…",
+      "continue": "Continuar",
+      "back": "Atrás",
+      "errors": {
+        "failedTitle": "Algo salió mal",
+        "failedFallback": "No se pudo finalizar. Inténtalo de nuevo."
+      }
+    }
   }
 }

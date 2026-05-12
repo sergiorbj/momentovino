@@ -13,6 +13,7 @@ import { router } from 'expo-router'
 import WireframeGlobe from '../../components/globe/WireframeGlobe'
 import type { MomentPin } from '../../components/globe/types'
 import { resetSelections } from '../../features/onboarding/selections'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -49,6 +50,7 @@ const WELCOME_PINS: MomentPin[] = [
 ]
 
 export default function WelcomeScreen() {
+  const { t } = useTranslation()
   const pins = useMemo(() => WELCOME_PINS, [])
 
   const startFlow = () => {
@@ -79,20 +81,16 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.copy}>
-          <Text style={styles.headline}>
-            Your travels-through-wine, one beautiful journal.
-          </Text>
-          <Text style={styles.sub}>
-            Scan a label, pin the moment, keep the memory forever.
-          </Text>
+          <Text style={styles.headline}>{t('onboarding.welcome.headline')}</Text>
+          <Text style={styles.sub}>{t('onboarding.welcome.subtitle')}</Text>
         </View>
 
         <View style={styles.footer}>
           <TouchableOpacity style={styles.cta} onPress={startFlow} activeOpacity={0.85}>
-            <Text style={styles.ctaText}>Get started</Text>
+            <Text style={styles.ctaText}>{t('onboarding.welcome.getStarted')}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={goLogin} activeOpacity={0.7} style={styles.loginWrap}>
-            <Text style={styles.loginText}>I already have an account</Text>
+            <Text style={styles.loginText}>{t('onboarding.welcome.haveAccount')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

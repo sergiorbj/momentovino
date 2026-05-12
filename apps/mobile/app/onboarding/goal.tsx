@@ -7,21 +7,23 @@ import { router } from 'expo-router'
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import { OptionRow } from '../../components/onboarding/OptionRow'
 import { setGoals, type OnboardingGoal } from '../../features/onboarding/selections'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
 const BG = '#F5EBE0'
 
-type GoalOption = { key: OnboardingGoal; emoji: string; label: string }
+type GoalOption = { key: OnboardingGoal; emoji: string }
 
 const OPTIONS: GoalOption[] = [
-  { key: 'remember', emoji: '📖', label: "Remember bottles I've loved" },
-  { key: 'travels', emoji: '🌍', label: 'Build a journal of my wine travels' },
-  { key: 'share', emoji: '🍷', label: 'Share wine memories with family & friends' },
-  { key: 'discover', emoji: '🍇', label: 'Discover new wines worth remembering' },
+  { key: 'remember', emoji: '📖' },
+  { key: 'travels', emoji: '🌍' },
+  { key: 'share', emoji: '🍷' },
+  { key: 'discover', emoji: '🍇' },
 ]
 
 export default function GoalScreen() {
+  const { t } = useTranslation()
   const [selected, setSelected] = useState<Set<OnboardingGoal>>(new Set())
 
   const toggle = (key: OnboardingGoal) => {
@@ -49,8 +51,8 @@ export default function GoalScreen() {
 
         <View style={styles.body}>
           <View style={styles.copy}>
-            <Text style={styles.headline}>What brings you to MomentoVino?</Text>
-            <Text style={styles.sub}>Pick all that apply — we'll tailor your journal around them.</Text>
+            <Text style={styles.headline}>{t('onboarding.goal.headline')}</Text>
+            <Text style={styles.sub}>{t('onboarding.goal.subtitle')}</Text>
           </View>
 
           <View style={styles.options}>
@@ -59,7 +61,7 @@ export default function GoalScreen() {
                 key={opt.key}
                 mode="multi"
                 emoji={opt.emoji}
-                label={opt.label}
+                label={t(`onboarding.goal.options.${opt.key}`)}
                 selected={selected.has(opt.key)}
                 onPress={() => toggle(opt.key)}
               />
@@ -74,7 +76,7 @@ export default function GoalScreen() {
             disabled={!canContinue}
             activeOpacity={0.85}
           >
-            <Text style={styles.ctaText}>Continue</Text>
+            <Text style={styles.ctaText}>{t('onboarding.goal.continue')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

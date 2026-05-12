@@ -5,6 +5,7 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -12,27 +13,17 @@ const SUBTLE = '#6E5A5E'
 const BG = '#F5EBE0'
 const BORDER = '#E8DDD4'
 
-type Step = { icon: keyof typeof Ionicons.glyphMap; title: string; body: string }
+type StepKey = '1' | '2' | '3'
+type Step = { icon: keyof typeof Ionicons.glyphMap; key: StepKey }
 
 const STEPS: Step[] = [
-  {
-    icon: 'camera-outline',
-    title: 'Scan the label',
-    body: "Snap or pick the bottle's label — we'll fill in the producer, region and notes for you.",
-  },
-  {
-    icon: 'sparkles-outline',
-    title: 'Write the moment',
-    body: 'Add a title, the place, the date — even a photo of the night, if you have one.',
-  },
-  {
-    icon: 'globe-outline',
-    title: 'See it on your atlas',
-    body: 'Your bottle gets pinned to your personal wine map. The first of many.',
-  },
+  { icon: 'camera-outline', key: '1' },
+  { icon: 'sparkles-outline', key: '2' },
+  { icon: 'globe-outline', key: '3' },
 ]
 
 export default function IntroCreateScreen() {
+  const { t } = useTranslation()
   const cont = () => router.push('/onboarding/scanner-onb')
 
   return (
@@ -43,23 +34,23 @@ export default function IntroCreateScreen() {
 
         <View style={styles.body}>
           <View style={styles.copy}>
-            <Text style={styles.headline}>Let's add your first bottle.</Text>
-            <Text style={styles.sub}>
-              The journal starts with a single moment. Three quick steps and your atlas has its first pin.
-            </Text>
+            <Text style={styles.headline}>{t('onboarding.introCreate.headline')}</Text>
+            <Text style={styles.sub}>{t('onboarding.introCreate.subtitle')}</Text>
           </View>
 
           <View style={styles.steps}>
             {STEPS.map((step, idx) => (
-              <View key={step.title} style={styles.stepRow}>
+              <View key={step.key} style={styles.stepRow}>
                 <View style={styles.stepIconWrap}>
                   <Ionicons name={step.icon} size={20} color={WINE} />
                 </View>
                 <View style={styles.stepText}>
                   <Text style={styles.stepTitle}>
-                    {idx + 1}. {step.title}
+                    {idx + 1}. {t(`onboarding.introCreate.step${step.key}Title`)}
                   </Text>
-                  <Text style={styles.stepBody}>{step.body}</Text>
+                  <Text style={styles.stepBody}>
+                    {t(`onboarding.introCreate.step${step.key}Body`)}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -69,7 +60,7 @@ export default function IntroCreateScreen() {
         <View style={styles.footer}>
           <TouchableOpacity style={styles.cta} onPress={cont} activeOpacity={0.85}>
             <Ionicons name="camera" size={20} color="#FFFFFF" />
-            <Text style={styles.ctaText}>Scan your first bottle</Text>
+            <Text style={styles.ctaText}>{t('onboarding.introCreate.cta')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

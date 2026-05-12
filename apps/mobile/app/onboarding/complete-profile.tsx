@@ -22,6 +22,7 @@ import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import { finalizeAccount } from '../../features/onboarding/finalize-account'
 import { privacyPolicyUrl, termsOfServiceUrl } from '../../lib/marketing-urls'
 import { supabase } from '../../lib/supabase'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -55,6 +56,7 @@ async function loadSuggestedDisplayName(): Promise<string> {
 }
 
 export default function CompleteProfileScreen() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [busy, setBusy] = useState(false)
   const [loadingName, setLoadingName] = useState(true)
@@ -98,8 +100,10 @@ export default function CompleteProfileScreen() {
       router.replace('/(tabs)/moments')
     } catch (err) {
       Alert.alert(
-        'Something went wrong',
-        err instanceof Error ? err.message : 'Could not finish setup. Try again.',
+        t('onboarding.completeProfile.errors.failedTitle'),
+        err instanceof Error
+          ? err.message
+          : t('onboarding.completeProfile.errors.failedFallback'),
       )
     } finally {
       setBusy(false)
@@ -118,19 +122,18 @@ export default function CompleteProfileScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.copy}>
-            <Text style={styles.headline}>Almost there</Text>
-            <Text style={styles.sub}>
-              Confirm how we should address you and accept the legal terms to finish creating your
-              account.
-            </Text>
+            <Text style={styles.headline}>{t('onboarding.completeProfile.headline')}</Text>
+            <Text style={styles.sub}>{t('onboarding.completeProfile.subtitle')}</Text>
           </View>
 
-          <Text style={styles.inputLabel}>Display name</Text>
+          <Text style={styles.inputLabel}>
+            {t('onboarding.completeProfile.displayNameLabel')}
+          </Text>
           <TextInput
             style={styles.input}
             value={displayName}
-            onChangeText={(t) => setDisplayName(t.slice(0, 50))}
-            placeholder="How should we call you?"
+            onChangeText={(v) => setDisplayName(v.slice(0, 50))}
+            placeholder={t('onboarding.completeProfile.displayNamePlaceholder')}
             placeholderTextColor="#B5A6A8"
             autoCapitalize="words"
             autoCorrect={false}
@@ -145,17 +148,19 @@ export default function CompleteProfileScreen() {
               <Ionicons name="document-text-outline" size={18} color={WINE} />
             </View>
             <View style={styles.legalCopy}>
-              <Text style={styles.legalTitle}>Terms & Privacy</Text>
+              <Text style={styles.legalTitle}>
+                {t('onboarding.completeProfile.legalTitle')}
+              </Text>
               <Text style={styles.legalSubtitle}>
-                I agree to the{' '}
+                {t('onboarding.completeProfile.legalPrefix')}
                 <Text style={styles.link} onPress={() => openUrl(termsOfServiceUrl())}>
-                  Terms of Service
-                </Text>{' '}
-                and{' '}
-                <Text style={styles.link} onPress={() => openUrl(privacyPolicyUrl())}>
-                  Privacy Policy
+                  {t('onboarding.completeProfile.legalTerms')}
                 </Text>
-                .
+                {t('onboarding.completeProfile.legalJoin')}
+                <Text style={styles.link} onPress={() => openUrl(privacyPolicyUrl())}>
+                  {t('onboarding.completeProfile.legalPrivacy')}
+                </Text>
+                {t('onboarding.completeProfile.legalSuffix')}
               </Text>
             </View>
             <Switch
@@ -180,11 +185,15 @@ export default function CompleteProfileScreen() {
             disabled={!canContinue}
             activeOpacity={0.85}
           >
-            <Text style={styles.ctaText}>{busy ? 'Saving…' : 'Continue'}</Text>
+            <Text style={styles.ctaText}>
+              {busy
+                ? t('onboarding.completeProfile.saving')
+                : t('onboarding.completeProfile.continue')}
+            </Text>
           </TouchableOpacity>
 
           <Pressable onPress={() => router.back()} style={styles.backPress}>
-            <Text style={styles.backText}>Back</Text>
+            <Text style={styles.backText}>{t('onboarding.completeProfile.back')}</Text>
           </Pressable>
         </View>
       </SafeAreaView>

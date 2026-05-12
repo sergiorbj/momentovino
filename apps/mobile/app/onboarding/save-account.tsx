@@ -24,6 +24,7 @@ import { signInWithApple } from '../../lib/auth/apple'
 import { signInWithGoogle } from '../../lib/auth/google'
 import { signUpWithEmail } from '../../lib/auth/email'
 import { finalizeAccount } from '../../features/onboarding/finalize-account'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -34,6 +35,7 @@ const BORDER = '#E8DDD4'
 type Mode = 'buttons' | 'email'
 
 export default function SaveAccountScreen() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [busy, setBusy] = useState(false)
   const [mode, setMode] = useState<Mode>('buttons')
@@ -57,8 +59,10 @@ export default function SaveAccountScreen() {
     } catch (err) {
       console.warn('[save-account] finalize failed', err)
       Alert.alert(
-        'Could not finish setup',
-        err instanceof Error ? err.message : 'Try again in a moment.',
+        t('onboarding.saveAccount.errors.setupFailedTitle'),
+        err instanceof Error
+          ? err.message
+          : t('onboarding.saveAccount.errors.setupFailedFallback'),
       )
     }
   }
@@ -70,11 +74,11 @@ export default function SaveAccountScreen() {
       const outcome = await signInWithApple()
       if (outcome.kind === 'cancelled') return
       if (outcome.kind === 'unavailable') {
-        Alert.alert('Continue with Apple unavailable', outcome.message)
+        Alert.alert(t('onboarding.saveAccount.errors.appleUnavailable'), outcome.message)
         return
       }
       if (outcome.kind === 'error') {
-        Alert.alert('Could not sign in', outcome.message)
+        Alert.alert(t('onboarding.saveAccount.errors.appleFailed'), outcome.message)
         return
       }
       router.push('/onboarding/complete-profile')
@@ -90,11 +94,11 @@ export default function SaveAccountScreen() {
       const outcome = await signInWithGoogle()
       if (outcome.kind === 'cancelled') return
       if (outcome.kind === 'unavailable') {
-        Alert.alert('Google sign-in unavailable', outcome.message)
+        Alert.alert(t('onboarding.saveAccount.errors.googleUnavailable'), outcome.message)
         return
       }
       if (outcome.kind === 'error') {
-        Alert.alert('Google sign-in failed', outcome.message)
+        Alert.alert(t('onboarding.saveAccount.errors.googleFailed'), outcome.message)
         return
       }
       router.push('/onboarding/complete-profile')
@@ -119,11 +123,13 @@ export default function SaveAccountScreen() {
       }
       if (outcome.kind === 'needs_email_confirmation') {
         Alert.alert(
-          'Check your inbox',
-          `We sent a confirmation link to ${email.trim().toLowerCase()}. Tap it to verify your email — your subscription is already saved on this account.`,
+          t('onboarding.saveAccount.errors.checkInboxTitle'),
+          t('onboarding.saveAccount.errors.checkInboxBody', {
+            email: email.trim().toLowerCase(),
+          }),
           [
             {
-              text: 'Continue',
+              text: t('onboarding.saveAccount.errors.checkInboxContinue'),
               onPress: () => {
                 void finalizeAndEnterApp(trimmedName)
               },
@@ -134,18 +140,23 @@ export default function SaveAccountScreen() {
       }
       if (outcome.kind === 'already_exists') {
         Alert.alert(
-          'You already have an account',
-          'This email is already registered. Sign in instead — your purchase will be transferred to that account on this Apple ID.',
+          t('onboarding.saveAccount.errors.alreadyExistsTitle'),
+          t('onboarding.saveAccount.errors.alreadyExistsBody'),
           [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Sign in', onPress: () => router.replace('/login') },
+            { text: t('onboarding.saveAccount.errors.alreadyExistsCancel'), style: 'cancel' },
+            {
+              text: t('onboarding.saveAccount.errors.alreadyExistsSignIn'),
+              onPress: () => router.replace('/login'),
+            },
           ]
         )
         return
       }
       Alert.alert(
-        'Could not create account',
-        outcome.kind === 'error' ? outcome.message : 'Something went wrong.',
+        t('onboarding.saveAccount.errors.createFailedTitle'),
+        outcome.kind === 'error'
+          ? outcome.message
+          : t('onboarding.saveAccount.errors.createFailedFallback'),
       )
     } finally {
       setBusy(false)
@@ -168,10 +179,8 @@ export default function SaveAccountScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.copy}>
-              <Text style={styles.headline}>Save your wine journal.</Text>
-              <Text style={styles.sub}>
-                Your subscription is yours — pick how you want to sign in so we can keep your moments safe across every device.
-              </Text>
+              <Text style={styles.headline}>{t('onboarding.saveAccount.headline')}</Text>
+              <Text style={styles.sub}>{t('onboarding.saveAccount.subtitle')}</Text>
             </View>
 
             {mode === 'buttons' ? (
@@ -183,7 +192,9 @@ export default function SaveAccountScreen() {
                   activeOpacity={0.85}
                 >
                   <Ionicons name="mail-outline" size={AUTH_PROVIDER.iconSize} color="#FFFFFF" />
-                  <Text style={styles.authEmailText}>Continue with email</Text>
+                  <Text style={styles.authEmailText}>
+                    {t('onboarding.saveAccount.continueEmail')}
+                  </Text>
                 </TouchableOpacity>
 
                 {Platform.OS === 'ios' ? (
@@ -194,7 +205,9 @@ export default function SaveAccountScreen() {
                     activeOpacity={0.85}
                   >
                     <Ionicons name="logo-apple" size={AUTH_PROVIDER.iconSize} color="#FFFFFF" />
-                    <Text style={styles.authAppleText}>Continue with Apple</Text>
+                    <Text style={styles.authAppleText}>
+                      {t('onboarding.saveAccount.continueApple')}
+                    </Text>
                   </TouchableOpacity>
                 ) : null}
 
@@ -205,7 +218,9 @@ export default function SaveAccountScreen() {
                   activeOpacity={0.85}
                 >
                   <Ionicons name="logo-google" size={AUTH_PROVIDER.iconSize} color={INK} />
-                  <Text style={styles.authGoogleText}>Continue with Google</Text>
+                  <Text style={styles.authGoogleText}>
+                    {t('onboarding.saveAccount.continueGoogle')}
+                  </Text>
                 </TouchableOpacity>
 
                 {busy ? (
@@ -216,12 +231,14 @@ export default function SaveAccountScreen() {
               </View>
             ) : (
               <View style={styles.form}>
-                <Text style={styles.inputLabel}>Display name</Text>
+                <Text style={styles.inputLabel}>
+                  {t('onboarding.saveAccount.displayNameLabel')}
+                </Text>
                 <TextInput
                   style={styles.input}
                   value={displayName}
-                  onChangeText={(t) => setDisplayName(t.slice(0, 50))}
-                  placeholder="How should we call you?"
+                  onChangeText={(v) => setDisplayName(v.slice(0, 50))}
+                  placeholder={t('onboarding.saveAccount.displayNamePlaceholder')}
                   placeholderTextColor="#B5A6A8"
                   autoCapitalize="words"
                   autoCorrect={false}
@@ -229,12 +246,12 @@ export default function SaveAccountScreen() {
                   textContentType="name"
                   maxLength={50}
                 />
-                <Text style={styles.inputLabel}>Email</Text>
+                <Text style={styles.inputLabel}>{t('onboarding.saveAccount.emailLabel')}</Text>
                 <TextInput
                   style={styles.input}
                   value={email}
                   onChangeText={setEmail}
-                  placeholder="you@example.com"
+                  placeholder={t('onboarding.saveAccount.emailPlaceholder')}
                   placeholderTextColor="#B5A6A8"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -242,11 +259,13 @@ export default function SaveAccountScreen() {
                   autoComplete="email"
                   textContentType="emailAddress"
                 />
-                <Text style={styles.inputLabel}>Password</Text>
+                <Text style={styles.inputLabel}>
+                  {t('onboarding.saveAccount.passwordLabel')}
+                </Text>
                 <PasswordInput
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="At least 8 characters"
+                  placeholder={t('onboarding.saveAccount.passwordPlaceholder')}
                   placeholderTextColor="#B5A6A8"
                   autoComplete="new-password"
                   textContentType="newPassword"
@@ -256,7 +275,9 @@ export default function SaveAccountScreen() {
                   activeOpacity={0.7}
                   style={styles.backLink}
                 >
-                  <Text style={styles.backLinkText}>Use another method</Text>
+                  <Text style={styles.backLinkText}>
+                    {t('onboarding.saveAccount.useAnotherMethod')}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -270,17 +291,17 @@ export default function SaveAccountScreen() {
                 disabled={!canSubmitEmail}
                 activeOpacity={0.85}
               >
-                <Text style={styles.ctaText}>{busy ? 'Saving…' : 'Save my journal'}</Text>
+                <Text style={styles.ctaText}>
+                  {busy
+                    ? t('onboarding.saveAccount.saving')
+                    : t('onboarding.saveAccount.saveJournal')}
+                </Text>
               </TouchableOpacity>
-              <Text style={styles.legal}>
-                By creating an account you agree to our Terms and Privacy Policy.
-              </Text>
+              <Text style={styles.legal}>{t('onboarding.saveAccount.legalEmail')}</Text>
             </View>
           ) : (
             <View style={styles.footer}>
-              <Text style={styles.legal}>
-                By continuing you agree to our Terms and Privacy Policy. Your subscription is already active on this Apple ID — sign in to attach it to your account.
-              </Text>
+              <Text style={styles.legal}>{t('onboarding.saveAccount.legalProviders')}</Text>
             </View>
           )}
         </KeyboardAvoidingView>

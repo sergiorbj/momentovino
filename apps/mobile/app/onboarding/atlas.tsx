@@ -22,6 +22,7 @@ import {
   type CapturedMoment,
   type CapturedWine,
 } from '../../features/onboarding/onboarding-capture'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -35,6 +36,7 @@ const GLOBE_SIZE = Math.min(width * 0.85, 300)
 type Phase = 'processing' | 'reveal'
 
 export default function AtlasScreen() {
+  const { t } = useTranslation()
   // Snapshot once — capture state lives in a module-level singleton, but the
   // user could in theory tap-back into this screen and we want the same data.
   const capture = useRef(getCapture()).current
@@ -65,7 +67,7 @@ export default function AtlasScreen() {
   const share = async () => {
     try {
       await Share.share({
-        message: 'I just started my wine atlas on MomentoVino 🍷',
+        message: t('onboarding.atlas.shareMessage'),
       })
     } catch {
       // ignore
@@ -85,7 +87,7 @@ export default function AtlasScreen() {
               pins={pins}
               config={{ size: GLOBE_SIZE, rotationSpeed: 0.012 }}
             />
-            <Text style={styles.processingText}>Pinning your first memory…</Text>
+            <Text style={styles.processingText}>{t('onboarding.atlas.pinning')}</Text>
             <ActivityIndicator color={WINE} />
           </View>
         </SafeAreaView>
@@ -115,22 +117,20 @@ export default function AtlasScreen() {
           </View>
 
           <View style={styles.copy}>
-            <Text style={styles.headline}>Your first memory is on your atlas.</Text>
-            <Text style={styles.sub}>One bottle, one place — the start of your journal.</Text>
+            <Text style={styles.headline}>{t('onboarding.atlas.headline')}</Text>
+            <Text style={styles.sub}>{t('onboarding.atlas.subtitle')}</Text>
           </View>
 
           <View style={styles.feed}>
             <MomentCard moment={moment} wine={wine} />
           </View>
 
-          <Text style={styles.hint}>
-            Tap your moment later to add photos, edit details, or share it with family.
-          </Text>
+          <Text style={styles.hint}>{t('onboarding.atlas.hint')}</Text>
         </View>
 
         <View style={styles.footer}>
           <TouchableOpacity style={styles.cta} onPress={cont} activeOpacity={0.85}>
-            <Text style={styles.ctaText}>Save my journal</Text>
+            <Text style={styles.ctaText}>{t('onboarding.atlas.cta')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

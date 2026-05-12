@@ -87,5 +87,207 @@
       "title": "Language",
       "subtitle": "Choose the language used throughout the app."
     }
+  },
+  "onboarding": {
+    "welcome": {
+      "headline": "Your travels-through-wine, one beautiful journal.",
+      "subtitle": "Scan a label, pin the moment, keep the memory forever.",
+      "getStarted": "Get started",
+      "haveAccount": "I already have an account"
+    },
+    "goal": {
+      "headline": "What brings you to MomentoVino?",
+      "subtitle": "Pick all that apply — we'll tailor your journal around them.",
+      "continue": "Continue",
+      "options": {
+        "remember": "Remember bottles I've loved",
+        "travels": "Build a journal of my wine travels",
+        "share": "Share wine memories with family & friends",
+        "discover": "Discover new wines worth remembering"
+      }
+    },
+    "pain": {
+      "headline": "Which of these sounds like you?",
+      "subtitle": "Pick all that apply — no wrong answers.",
+      "continue": "Continue",
+      "options": {
+        "forget_names": "I forget the name of wines I loved",
+        "buried_photos": "My wine photos are buried in my camera roll",
+        "friend_asks": "When a friend asks \"what was that wine?\", I go blank",
+        "trip_blur": "I can't remember what I drank on that trip last year"
+      }
+    },
+    "introCreate": {
+      "headline": "Let's add your first bottle.",
+      "subtitle": "The journal starts with a single moment. Three quick steps and your atlas has its first pin.",
+      "step1Title": "Scan the label",
+      "step1Body": "Snap or pick the bottle's label — we'll fill in the producer, region and notes for you.",
+      "step2Title": "Write the moment",
+      "step2Body": "Add a title, the place, the date — even a photo of the night, if you have one.",
+      "step3Title": "See it on your atlas",
+      "step3Body": "Your bottle gets pinned to your personal wine map. The first of many.",
+      "cta": "Scan your first bottle"
+    },
+    "scanner": {
+      "title": "Scan the label",
+      "subtitle": "Align the bottle inside the frame, then capture",
+      "closeLabel": "Close scanner",
+      "identifying": "Identifying wine...",
+      "permissionTitle": "Camera access",
+      "permissionBody": "We open the camera so you can photograph the label in one tap.",
+      "allowCamera": "Allow camera",
+      "galleryAlt": "Choose from gallery instead",
+      "galleryShort": "Gallery",
+      "takePhotoLabel": "Take photo",
+      "chooseFromGalleryLabel": "Choose from gallery",
+      "scanThisWine": "Scan this wine",
+      "errors": {
+        "permissionNeededTitle": "Permission needed",
+        "permissionNeededBody": "Allow photo library access to pick wine photos.",
+        "cameraTitle": "Camera",
+        "cameraFallback": "Could not take photo",
+        "couldNotIdentifyTitle": "Could not identify",
+        "scanFailedTitle": "Scan failed",
+        "scanFailedFallback": "Unknown error"
+      }
+    },
+    "scanResult": {
+      "title": "Wine identified!",
+      "labels": {
+        "producer": "Producer",
+        "region": "Region",
+        "country": "Country",
+        "type": "Type"
+      },
+      "notSet": "Not set",
+      "createMoment": "Create my moment"
+    },
+    "newMoment": {
+      "headerTitle": "New moment",
+      "titleLabel": "Title",
+      "titlePlaceholder": "A toast in Mendoza",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Who was there, what made it special…",
+      "dateLabel": "Date",
+      "pickDate": "Pick a date",
+      "datePickerConfirm": "Confirm",
+      "datePickerCancel": "Cancel",
+      "locationLabel": "Location",
+      "locationSearch": "Search city or country…",
+      "locationTap": "Tap to search a city…",
+      "noResults": "No results found",
+      "wineLabel": "Wine",
+      "ratingLabel": "Rating (optional)",
+      "photosLabel": "Photos",
+      "cover": "Cover",
+      "setCover": "Set cover",
+      "saveMoment": "Save moment",
+      "validation": {
+        "titleRequired": "Title is required",
+        "dateRequired": "Date is required",
+        "locationRequired": "Pick a location"
+      },
+      "errors": {
+        "permissionNeededTitle": "Permission needed",
+        "permissionNeededBody": "Allow photo library access to add pictures."
+      }
+    },
+    "atlas": {
+      "pinning": "Pinning your first memory…",
+      "headline": "Your first memory is on your atlas.",
+      "subtitle": "One bottle, one place — the start of your journal.",
+      "hint": "Tap your moment later to add photos, edit details, or share it with family.",
+      "cta": "Save my journal",
+      "shareMessage": "I just started my wine atlas on MomentoVino 🍷"
+    },
+    "paywall": {
+      "headline": "Your wine memories, forever.",
+      "subtitle": "Unlimited moments. Unlimited bottles. One beautiful journal you'll still have in 10 years.",
+      "benefits": {
+        "atlas": "Your wine atlas, every bottle on the map",
+        "family": "Share with family, register moments together",
+        "story": "Save the story behind every bottle"
+      },
+      "monthly": "Monthly",
+      "monthlyDetailPrefix": "3 days free",
+      "monthlyDetailSuffix": ", then billed",
+      "perMonth": "per month",
+      "annual": "Annual",
+      "annualDetail": "Just {{monthly}}/month",
+      "perYear": "per year",
+      "badge": "BEST VALUE · SAVE {{percent}}%",
+      "ctaStarting": "Starting…",
+      "ctaSubscribeYearly": "Subscribe — {{price}}/year",
+      "ctaTrialMonthly": "Start my 3-day free trial",
+      "reassureYearly": "Billed annually. Cancel renewal anytime in Settings.",
+      "reassureMonthly": "Free for 3 days, then {{price}}/month. Cancel anytime to avoid being charged.",
+      "restore": "Restore purchases",
+      "terms": "Terms",
+      "privacy": "Privacy",
+      "errors": {
+        "unavailableTitle": "Subscription unavailable",
+        "unavailableBody": "Could not load subscription options. Please try again.",
+        "subscribeFailedTitle": "Subscription failed",
+        "subscribeFailedFallback": "Could not start subscription",
+        "nothingToRestoreTitle": "Nothing to restore",
+        "nothingToRestoreBody": "No active subscription found on this Apple ID.",
+        "restoreFailedTitle": "Restore failed",
+        "restoreFailedFallback": "Could not restore purchases"
+      }
+    },
+    "saveAccount": {
+      "headline": "Save your wine journal.",
+      "subtitle": "Your subscription is yours — pick how you want to sign in so we can keep your moments safe across every device.",
+      "continueEmail": "Continue with email",
+      "continueApple": "Continue with Apple",
+      "continueGoogle": "Continue with Google",
+      "displayNameLabel": "Display name",
+      "displayNamePlaceholder": "How should we call you?",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "useAnotherMethod": "Use another method",
+      "saving": "Saving…",
+      "saveJournal": "Save my journal",
+      "legalEmail": "By creating an account you agree to our Terms and Privacy Policy.",
+      "legalProviders": "By continuing you agree to our Terms and Privacy Policy. Your subscription is already active on this Apple ID — sign in to attach it to your account.",
+      "errors": {
+        "setupFailedTitle": "Could not finish setup",
+        "setupFailedFallback": "Try again in a moment.",
+        "appleUnavailable": "Continue with Apple unavailable",
+        "appleFailed": "Could not sign in",
+        "googleUnavailable": "Google sign-in unavailable",
+        "googleFailed": "Google sign-in failed",
+        "checkInboxTitle": "Check your inbox",
+        "checkInboxBody": "We sent a confirmation link to {{email}}. Tap it to verify your email — your subscription is already saved on this account.",
+        "checkInboxContinue": "Continue",
+        "alreadyExistsTitle": "You already have an account",
+        "alreadyExistsBody": "This email is already registered. Sign in instead — your purchase will be transferred to that account on this Apple ID.",
+        "alreadyExistsCancel": "Cancel",
+        "alreadyExistsSignIn": "Sign in",
+        "createFailedTitle": "Could not create account",
+        "createFailedFallback": "Something went wrong."
+      }
+    },
+    "completeProfile": {
+      "headline": "Almost there",
+      "subtitle": "Confirm how we should address you and accept the legal terms to finish creating your account.",
+      "displayNameLabel": "Display name",
+      "displayNamePlaceholder": "How should we call you?",
+      "legalTitle": "Terms & Privacy",
+      "legalPrefix": "I agree to the ",
+      "legalTerms": "Terms of Service",
+      "legalJoin": " and ",
+      "legalPrivacy": "Privacy Policy",
+      "legalSuffix": ".",
+      "saving": "Saving…",
+      "continue": "Continue",
+      "back": "Back",
+      "errors": {
+        "failedTitle": "Something went wrong",
+        "failedFallback": "Could not finish setup. Try again."
+      }
+    }
   }
 }

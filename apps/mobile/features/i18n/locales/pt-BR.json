@@ -87,5 +87,207 @@
       "title": "Idioma",
       "subtitle": "Escolha o idioma usado no aplicativo."
     }
+  },
+  "onboarding": {
+    "welcome": {
+      "headline": "Suas viagens-pelo-vinho, em um diário lindo.",
+      "subtitle": "Escaneie um rótulo, marque o momento, guarde a memória para sempre.",
+      "getStarted": "Começar",
+      "haveAccount": "Já tenho uma conta"
+    },
+    "goal": {
+      "headline": "O que te traz ao MomentoVino?",
+      "subtitle": "Marque tudo que se aplica — vamos adaptar seu diário a isso.",
+      "continue": "Continuar",
+      "options": {
+        "remember": "Lembrar dos vinhos que amei",
+        "travels": "Construir um diário das minhas viagens com vinho",
+        "share": "Compartilhar memórias de vinho com família e amigos",
+        "discover": "Descobrir novos vinhos para lembrar"
+      }
+    },
+    "pain": {
+      "headline": "Qual destas parece você?",
+      "subtitle": "Marque tudo que se aplica — não há resposta errada.",
+      "continue": "Continuar",
+      "options": {
+        "forget_names": "Esqueço o nome dos vinhos que amei",
+        "buried_photos": "Minhas fotos de vinho ficam perdidas no rolo da câmera",
+        "friend_asks": "Quando um amigo pergunta \"qual era aquele vinho?\", dou branco",
+        "trip_blur": "Não lembro o que bebi naquela viagem do ano passado"
+      }
+    },
+    "introCreate": {
+      "headline": "Vamos adicionar sua primeira garrafa.",
+      "subtitle": "O diário começa com um único momento. Três passos rápidos e seu atlas ganha o primeiro pin.",
+      "step1Title": "Escaneie o rótulo",
+      "step1Body": "Tire uma foto ou escolha o rótulo da garrafa — vamos preencher produtor, região e notas para você.",
+      "step2Title": "Escreva o momento",
+      "step2Body": "Adicione um título, o lugar, a data — até uma foto da noite, se tiver.",
+      "step3Title": "Veja no seu atlas",
+      "step3Body": "Sua garrafa é fixada no seu mapa pessoal de vinhos. A primeira de muitas.",
+      "cta": "Escanear minha primeira garrafa"
+    },
+    "scanner": {
+      "title": "Escaneie o rótulo",
+      "subtitle": "Alinhe a garrafa dentro do quadro e capture",
+      "closeLabel": "Fechar scanner",
+      "identifying": "Identificando o vinho...",
+      "permissionTitle": "Acesso à câmera",
+      "permissionBody": "Abrimos a câmera para você fotografar o rótulo em um toque.",
+      "allowCamera": "Permitir câmera",
+      "galleryAlt": "Escolher da galeria",
+      "galleryShort": "Galeria",
+      "takePhotoLabel": "Tirar foto",
+      "chooseFromGalleryLabel": "Escolher da galeria",
+      "scanThisWine": "Escanear este vinho",
+      "errors": {
+        "permissionNeededTitle": "Permissão necessária",
+        "permissionNeededBody": "Permita o acesso à galeria para escolher fotos de vinho.",
+        "cameraTitle": "Câmera",
+        "cameraFallback": "Não foi possível tirar a foto",
+        "couldNotIdentifyTitle": "Não foi possível identificar",
+        "scanFailedTitle": "Falha no scan",
+        "scanFailedFallback": "Erro desconhecido"
+      }
+    },
+    "scanResult": {
+      "title": "Vinho identificado!",
+      "labels": {
+        "producer": "Produtor",
+        "region": "Região",
+        "country": "País",
+        "type": "Tipo"
+      },
+      "notSet": "Não definido",
+      "createMoment": "Criar meu momento"
+    },
+    "newMoment": {
+      "headerTitle": "Novo momento",
+      "titleLabel": "Título",
+      "titlePlaceholder": "Um brinde em Mendoza",
+      "descriptionLabel": "Descrição",
+      "descriptionPlaceholder": "Quem estava lá, o que tornou especial…",
+      "dateLabel": "Data",
+      "pickDate": "Escolher data",
+      "datePickerConfirm": "Confirmar",
+      "datePickerCancel": "Cancelar",
+      "locationLabel": "Local",
+      "locationSearch": "Buscar cidade ou país…",
+      "locationTap": "Toque para buscar uma cidade…",
+      "noResults": "Nenhum resultado",
+      "wineLabel": "Vinho",
+      "ratingLabel": "Avaliação (opcional)",
+      "photosLabel": "Fotos",
+      "cover": "Capa",
+      "setCover": "Definir capa",
+      "saveMoment": "Salvar momento",
+      "validation": {
+        "titleRequired": "Título é obrigatório",
+        "dateRequired": "Data é obrigatória",
+        "locationRequired": "Escolha um local"
+      },
+      "errors": {
+        "permissionNeededTitle": "Permissão necessária",
+        "permissionNeededBody": "Permita o acesso à galeria para adicionar fotos."
+      }
+    },
+    "atlas": {
+      "pinning": "Fixando sua primeira memória…",
+      "headline": "Sua primeira memória está no seu atlas.",
+      "subtitle": "Uma garrafa, um lugar — o começo do seu diário.",
+      "hint": "Toque no momento depois para adicionar fotos, editar detalhes ou compartilhar com a família.",
+      "cta": "Salvar meu diário",
+      "shareMessage": "Acabei de começar meu atlas de vinhos no MomentoVino 🍷"
+    },
+    "paywall": {
+      "headline": "Suas memórias de vinho, para sempre.",
+      "subtitle": "Momentos ilimitados. Garrafas ilimitadas. Um diário lindo que você ainda vai ter daqui a 10 anos.",
+      "benefits": {
+        "atlas": "Seu atlas de vinhos, cada garrafa no mapa",
+        "family": "Compartilhe com a família, registrem momentos juntos",
+        "story": "Guarde a história por trás de cada garrafa"
+      },
+      "monthly": "Mensal",
+      "monthlyDetailPrefix": "3 dias grátis",
+      "monthlyDetailSuffix": ", depois cobrado",
+      "perMonth": "por mês",
+      "annual": "Anual",
+      "annualDetail": "Apenas {{monthly}}/mês",
+      "perYear": "por ano",
+      "badge": "MELHOR OFERTA · ECONOMIZE {{percent}}%",
+      "ctaStarting": "Iniciando…",
+      "ctaSubscribeYearly": "Assinar — {{price}}/ano",
+      "ctaTrialMonthly": "Começar 3 dias grátis",
+      "reassureYearly": "Cobrança anual. Cancele a renovação a qualquer momento nas Configurações.",
+      "reassureMonthly": "3 dias grátis, depois {{price}}/mês. Cancele a qualquer momento para não ser cobrado.",
+      "restore": "Restaurar compras",
+      "terms": "Termos",
+      "privacy": "Privacidade",
+      "errors": {
+        "unavailableTitle": "Assinatura indisponível",
+        "unavailableBody": "Não foi possível carregar as opções. Tente novamente.",
+        "subscribeFailedTitle": "Falha na assinatura",
+        "subscribeFailedFallback": "Não foi possível iniciar a assinatura",
+        "nothingToRestoreTitle": "Nada para restaurar",
+        "nothingToRestoreBody": "Nenhuma assinatura ativa encontrada neste Apple ID.",
+        "restoreFailedTitle": "Falha ao restaurar",
+        "restoreFailedFallback": "Não foi possível restaurar as compras"
+      }
+    },
+    "saveAccount": {
+      "headline": "Salve seu diário de vinhos.",
+      "subtitle": "Sua assinatura é sua — escolha como quer entrar para mantermos seus momentos seguros em todos os dispositivos.",
+      "continueEmail": "Continuar com email",
+      "continueApple": "Continuar com a Apple",
+      "continueGoogle": "Continuar com o Google",
+      "displayNameLabel": "Nome de exibição",
+      "displayNamePlaceholder": "Como devemos te chamar?",
+      "emailLabel": "Email",
+      "emailPlaceholder": "voce@exemplo.com",
+      "passwordLabel": "Senha",
+      "passwordPlaceholder": "No mínimo 8 caracteres",
+      "useAnotherMethod": "Usar outro método",
+      "saving": "Salvando…",
+      "saveJournal": "Salvar meu diário",
+      "legalEmail": "Ao criar uma conta você concorda com nossos Termos e Política de Privacidade.",
+      "legalProviders": "Ao continuar você concorda com nossos Termos e Política de Privacidade. Sua assinatura já está ativa neste Apple ID — entre para vinculá-la à sua conta.",
+      "errors": {
+        "setupFailedTitle": "Não foi possível concluir a configuração",
+        "setupFailedFallback": "Tente novamente em instantes.",
+        "appleUnavailable": "Login com Apple indisponível",
+        "appleFailed": "Não foi possível entrar",
+        "googleUnavailable": "Login com Google indisponível",
+        "googleFailed": "Falha no login com Google",
+        "checkInboxTitle": "Verifique sua caixa de entrada",
+        "checkInboxBody": "Enviamos um link de confirmação para {{email}}. Toque nele para verificar seu email — sua assinatura já está salva nesta conta.",
+        "checkInboxContinue": "Continuar",
+        "alreadyExistsTitle": "Você já tem uma conta",
+        "alreadyExistsBody": "Este email já está cadastrado. Entre nela — sua compra será transferida para essa conta neste Apple ID.",
+        "alreadyExistsCancel": "Cancelar",
+        "alreadyExistsSignIn": "Entrar",
+        "createFailedTitle": "Não foi possível criar a conta",
+        "createFailedFallback": "Algo deu errado."
+      }
+    },
+    "completeProfile": {
+      "headline": "Quase lá",
+      "subtitle": "Confirme como devemos te chamar e aceite os termos para concluir a criação da conta.",
+      "displayNameLabel": "Nome de exibição",
+      "displayNamePlaceholder": "Como devemos te chamar?",
+      "legalTitle": "Termos e Privacidade",
+      "legalPrefix": "Concordo com os ",
+      "legalTerms": "Termos de Serviço",
+      "legalJoin": " e a ",
+      "legalPrivacy": "Política de Privacidade",
+      "legalSuffix": ".",
+      "saving": "Salvando…",
+      "continue": "Continuar",
+      "back": "Voltar",
+      "errors": {
+        "failedTitle": "Algo deu errado",
+        "failedFallback": "Não foi possível concluir. Tente novamente."
+      }
+    }
   }
 }

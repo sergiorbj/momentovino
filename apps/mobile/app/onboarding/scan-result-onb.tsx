@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
 import { getCapture } from '../../features/onboarding/onboarding-capture'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -19,6 +20,7 @@ const BG = '#F5EBE0'
 const BROWN = '#5C4033'
 
 export default function OnboardingScanResultScreen() {
+  const { t } = useTranslation()
   const wine = getCapture().wine
 
   // Stale navigation (capture was reset). Send the user back to start a fresh scan.
@@ -34,7 +36,7 @@ export default function OnboardingScanResultScreen() {
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Wine identified!</Text>
+          <Text style={styles.headerTitle}>{t('onboarding.scanResult.title')}</Text>
         </View>
 
         <View style={styles.body}>
@@ -67,10 +69,20 @@ export default function OnboardingScanResultScreen() {
           ) : null}
 
           <View style={styles.card}>
-            {wine.producer ? <InfoRow label="Producer" value={wine.producer} /> : null}
-            <InfoRow label="Region" value={wine.region?.trim() ? wine.region : 'Not set'} />
-            <InfoRow label="Country" value={wine.country?.trim() ? wine.country : 'Not set'} />
-            {wine.type ? <InfoRow label="Type" value={wine.type} /> : null}
+            {wine.producer ? (
+              <InfoRow label={t('onboarding.scanResult.labels.producer')} value={wine.producer} />
+            ) : null}
+            <InfoRow
+              label={t('onboarding.scanResult.labels.region')}
+              value={wine.region?.trim() ? wine.region : t('onboarding.scanResult.notSet')}
+            />
+            <InfoRow
+              label={t('onboarding.scanResult.labels.country')}
+              value={wine.country?.trim() ? wine.country : t('onboarding.scanResult.notSet')}
+            />
+            {wine.type ? (
+              <InfoRow label={t('onboarding.scanResult.labels.type')} value={wine.type} />
+            ) : null}
           </View>
         </View>
 
@@ -81,7 +93,7 @@ export default function OnboardingScanResultScreen() {
             activeOpacity={0.85}
           >
             <Ionicons name="sparkles-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.btnPrimaryText}>Create my moment</Text>
+            <Text style={styles.btnPrimaryText}>{t('onboarding.scanResult.createMoment')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

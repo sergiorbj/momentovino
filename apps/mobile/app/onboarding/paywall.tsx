@@ -25,6 +25,7 @@ import {
   restorePurchases,
 } from '../../lib/purchases'
 import { queryKeys } from '../../lib/query-keys'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -32,15 +33,16 @@ const SUBTLE = '#6E5A5E'
 const BG = '#F5EBE0'
 const BORDER = '#E8DDD4'
 
-const BENEFITS: { icon: string; text: string }[] = [
-  { icon: '🌍', text: 'Your wine atlas, every bottle on the map' },
-  { icon: '🍷', text: 'Share with family, register moments together' },
-  { icon: '📸', text: 'Save the story behind every bottle' },
+const BENEFIT_KEYS: { icon: string; key: 'atlas' | 'family' | 'story' }[] = [
+  { icon: '🌍', key: 'atlas' },
+  { icon: '🍷', key: 'family' },
+  { icon: '📸', key: 'story' },
 ]
 
 type PlanId = 'yearly' | 'monthly'
 
 export default function PaywallScreen() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [purchasing, setPurchasing] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('yearly')
@@ -69,8 +71,8 @@ export default function PaywallScreen() {
     const pkg = selectedPlan === 'yearly' ? annualPkg : monthlyPkg
     if (!pkg) {
       Alert.alert(
-        'Subscription unavailable',
-        'Could not load subscription options. Please try again.',
+        t('onboarding.paywall.errors.unavailableTitle'),
+        t('onboarding.paywall.errors.unavailableBody'),
       )
       return
     }
@@ -94,8 +96,11 @@ export default function PaywallScreen() {
       if (err && typeof err === 'object' && 'userCancelled' in err && err.userCancelled) {
         return
       }
-      const msg = err instanceof Error ? err.message : 'Could not start subscription'
-      Alert.alert('Subscription failed', msg)
+      const msg =
+        err instanceof Error
+          ? err.message
+          : t('onboarding.paywall.errors.subscribeFailedFallback')
+      Alert.alert(t('onboarding.paywall.errors.subscribeFailedTitle'), msg)
     } finally {
       setPurchasing(false)
     }
@@ -107,31 +112,34 @@ export default function PaywallScreen() {
       const customerInfo = await restorePurchases()
       if (!hasProEntitlement(customerInfo)) {
         Alert.alert(
-          'Nothing to restore',
-          'No active subscription found on this Apple ID.',
+          t('onboarding.paywall.errors.nothingToRestoreTitle'),
+          t('onboarding.paywall.errors.nothingToRestoreBody'),
         )
         return
       }
       await qc.invalidateQueries({ queryKey: queryKeys.entitlement })
       router.replace('/onboarding/save-account')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Could not restore purchases'
-      Alert.alert('Restore failed', msg)
+      const msg =
+        err instanceof Error
+          ? err.message
+          : t('onboarding.paywall.errors.restoreFailedFallback')
+      Alert.alert(t('onboarding.paywall.errors.restoreFailedTitle'), msg)
     } finally {
       setPurchasing(false)
     }
   }
 
   const ctaLabel = purchasing
-    ? 'Starting…'
+    ? t('onboarding.paywall.ctaStarting')
     : selectedPlan === 'yearly'
-      ? `Subscribe — ${annualPriceString}/year`
-      : 'Start my 3-day free trial'
+      ? t('onboarding.paywall.ctaSubscribeYearly', { price: annualPriceString })
+      : t('onboarding.paywall.ctaTrialMonthly')
 
   const reassureText =
     selectedPlan === 'yearly'
-      ? 'Billed annually. Cancel renewal anytime in Settings.'
-      : `Free for 3 days, then ${monthlyPriceString}/month. Cancel anytime to avoid being charged.`
+      ? t('onboarding.paywall.reassureYearly')
+      : t('onboarding.paywall.reassureMonthly', { price: monthlyPriceString })
 
   return (
     <View style={styles.container}>
@@ -144,18 +152,17 @@ export default function PaywallScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.copy}>
-            <Text style={styles.headline}>Your wine memories, forever.</Text>
-            <Text style={styles.sub}>
-              Unlimited moments. Unlimited bottles. One beautiful journal you'll
-              still have in 10 years.
-            </Text>
+            <Text style={styles.headline}>{t('onboarding.paywall.headline')}</Text>
+            <Text style={styles.sub}>{t('onboarding.paywall.subtitle')}</Text>
           </View>
 
           <View style={styles.benefits}>
-            {BENEFITS.map((b) => (
-              <View key={b.text} style={styles.benefitRow}>
+            {BENEFIT_KEYS.map((b) => (
+              <View key={b.key} style={styles.benefitRow}>
                 <Text style={styles.benefitIcon}>{b.icon}</Text>
-                <Text style={styles.benefitText}>{b.text}</Text>
+                <Text style={styles.benefitText}>
+                  {t(`onboarding.paywall.benefits.${b.key}`)}
+                </Text>
               </View>
             ))}
           </View>
@@ -171,15 +178,17 @@ export default function PaywallScreen() {
             >
               <View style={styles.planRow}>
                 <View style={styles.planLeft}>
-                  <Text style={styles.planTitle}>Monthly</Text>
+                  <Text style={styles.planTitle}>{t('onboarding.paywall.monthly')}</Text>
                   <Text style={styles.planDetail} numberOfLines={1}>
-                    <Text style={styles.planDetailStrong}>3 days free</Text>
-                    , then billed
+                    <Text style={styles.planDetailStrong}>
+                      {t('onboarding.paywall.monthlyDetailPrefix')}
+                    </Text>
+                    {t('onboarding.paywall.monthlyDetailSuffix')}
                   </Text>
                 </View>
                 <View style={styles.planRight}>
                   <Text style={styles.planPrice}>{monthlyPriceString}</Text>
-                  <Text style={styles.planPeriod}>per month</Text>
+                  <Text style={styles.planPeriod}>{t('onboarding.paywall.perMonth')}</Text>
                 </View>
                 <View
                   style={[
@@ -205,17 +214,19 @@ export default function PaywallScreen() {
             >
               <View style={styles.planBadge}>
                 <Text style={styles.planBadgeText}>
-                  BEST VALUE · SAVE {annualDiscountPercent}%
+                  {t('onboarding.paywall.badge', { percent: annualDiscountPercent })}
                 </Text>
               </View>
               <View style={styles.planRow}>
                 <View style={styles.planLeft}>
-                  <Text style={styles.planTitle}>Annual</Text>
-                  <Text style={styles.planDetail}>Just {annualMonthlyEquivalent}/month</Text>
+                  <Text style={styles.planTitle}>{t('onboarding.paywall.annual')}</Text>
+                  <Text style={styles.planDetail}>
+                    {t('onboarding.paywall.annualDetail', { monthly: annualMonthlyEquivalent })}
+                  </Text>
                 </View>
                 <View style={styles.planRight}>
                   <Text style={styles.planPrice}>{annualPriceString}</Text>
-                  <Text style={styles.planPeriod}>per year</Text>
+                  <Text style={styles.planPeriod}>{t('onboarding.paywall.perYear')}</Text>
                 </View>
                 <View
                   style={[
@@ -244,15 +255,15 @@ export default function PaywallScreen() {
           <Text style={styles.reassure}>{reassureText}</Text>
           <View style={styles.tinyRow}>
             <TouchableOpacity onPress={restore} activeOpacity={0.7}>
-              <Text style={styles.tinyLink}>Restore purchases</Text>
+              <Text style={styles.tinyLink}>{t('onboarding.paywall.restore')}</Text>
             </TouchableOpacity>
             <Text style={styles.tinyDot}>·</Text>
             <TouchableOpacity activeOpacity={0.7}>
-              <Text style={styles.tinyLink}>Terms</Text>
+              <Text style={styles.tinyLink}>{t('onboarding.paywall.terms')}</Text>
             </TouchableOpacity>
             <Text style={styles.tinyDot}>·</Text>
             <TouchableOpacity activeOpacity={0.7}>
-              <Text style={styles.tinyLink}>Privacy</Text>
+              <Text style={styles.tinyLink}>{t('onboarding.paywall.privacy')}</Text>
             </TouchableOpacity>
           </View>
         </View>
