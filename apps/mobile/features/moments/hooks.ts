@@ -25,6 +25,10 @@ function invalidateMomentSurfaces(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ['moments'] })
   qc.invalidateQueries({ queryKey: ['wines'] })
   qc.invalidateQueries({ queryKey: queryKeys.profile })
+  // Family dashboard renders the current user's moment/wine/country counters in
+  // the "You" row, so any moment or wine mutation has to bust that cache too.
+  // Other members' counters refresh whenever their data is re-fetched.
+  qc.invalidateQueries({ queryKey: queryKeys.family })
 }
 
 /**
@@ -177,6 +181,7 @@ export function useCreateWine() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['wines'] })
       qc.invalidateQueries({ queryKey: queryKeys.profile })
+      qc.invalidateQueries({ queryKey: queryKeys.family })
     },
   })
 

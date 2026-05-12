@@ -27,6 +27,7 @@ export function useDeleteWines() {
       qc.invalidateQueries({ queryKey: ['wines'] })
       qc.invalidateQueries({ queryKey: ['moments'] })
       qc.invalidateQueries({ queryKey: queryKeys.profile })
+      qc.invalidateQueries({ queryKey: queryKeys.family })
     },
   })
 }

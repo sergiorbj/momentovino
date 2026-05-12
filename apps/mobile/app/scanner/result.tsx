@@ -84,6 +84,7 @@ export default function ScanResultScreen() {
       await qc.invalidateQueries({ queryKey: queryKeys.winesCount, refetchType: 'all' })
       await qc.invalidateQueries({ queryKey: queryKeys.profile, refetchType: 'all' })
       await qc.invalidateQueries({ queryKey: queryKeys.momentStats, refetchType: 'all' })
+      await qc.invalidateQueries({ queryKey: queryKeys.family, refetchType: 'all' })
 
       if (target === 'existingMoment') {
         setPendingWinePick({ wineId: wine.id, wineName: wine.name, isExistingWine: false })

@@ -208,6 +208,7 @@ export default function NewMomentScreen() {
       qc.invalidateQueries({ queryKey: ['moments'] })
       qc.invalidateQueries({ queryKey: ['wines'] })
       qc.invalidateQueries({ queryKey: queryKeys.profile })
+      qc.invalidateQueries({ queryKey: queryKeys.family })
       router.back()
     } catch (err) {
       console.error(err)
