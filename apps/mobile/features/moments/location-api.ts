@@ -8,6 +8,7 @@ export interface LocationResult {
 }
 
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org/search'
+const NOMINATIM_REVERSE = 'https://nominatim.openstreetmap.org/reverse'
 const USER_AGENT = 'MomentoVino/1.0'
 
 const POPULAR_CITIES: LocationResult[] = [
@@ -80,5 +81,52 @@ export async function searchLocations(query: string): Promise<LocationResult[]> 
     return merged.slice(0, 10)
   } catch {
     return filtered
+  }
+}
+
+interface NominatimReverseResult {
+  place_id: number
+  display_name: string
+  lat: string
+  lon: string
+  address?: NominatimResult['address']
+}
+
+export async function reverseGeocode(
+  latitude: number,
+  longitude: number,
+): Promise<LocationResult | null> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 8_000)
+  try {
+    const url = `${NOMINATIM_REVERSE}?lat=${latitude}&lon=${longitude}&format=jsonv2&zoom=10&addressdetails=1&accept-language=en`
+    const res = await fetch(url, {
+      headers: { 'User-Agent': USER_AGENT },
+      signal: controller.signal,
+    })
+    if (!res.ok) return null
+
+    const data: NominatimReverseResult = await res.json()
+    if (!data || !data.lat || !data.lon) return null
+
+    const city = extractCity(data.address)
+    const country = data.address?.country ?? ''
+    const displayName =
+      city && country
+        ? `${city}, ${country}`
+        : data.display_name.split(',').slice(0, 3).join(',').trim()
+
+    return {
+      id: `nom-rev-${data.place_id}`,
+      displayName,
+      city,
+      country,
+      latitude: parseFloat(data.lat),
+      longitude: parseFloat(data.lon),
+    }
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
   }
 }

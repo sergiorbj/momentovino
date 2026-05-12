@@ -175,6 +175,8 @@
       "locationLabel": "Ubicación",
       "locationSearch": "Buscar ciudad o país…",
       "locationTap": "Toca para buscar una ciudad…",
+      "locationFinding": "Buscando tu ubicación…",
+      "locationPermissionDeniedHint": "Puedes buscar una ciudad abajo.",
       "noResults": "Sin resultados",
       "wineLabel": "Vino",
       "ratingLabel": "Valoración (opcional)",

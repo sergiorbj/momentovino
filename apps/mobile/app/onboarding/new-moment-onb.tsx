@@ -24,6 +24,7 @@ import { z } from 'zod'
 
 import { photoInputSchema, type PhotoInput } from '../../features/moments/schema'
 import { searchLocations, type LocationResult } from '../../features/moments/location-api'
+import { useCurrentLocation } from '../../features/moments/use-current-location'
 import {
   getCapture,
   setCapturedMoment,
@@ -112,6 +113,18 @@ export default function OnboardingNewMomentScreen() {
   const [locationPickerOpen, setLocationPickerOpen] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
   const locationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const { status: gpsStatus, result: gpsResult } = useCurrentLocation()
+  useEffect(() => {
+    if (gpsStatus !== 'ready' || !gpsResult) return
+    if (selectedLocation !== null || locationPickerOpen) return
+    setSelectedLocation(gpsResult.displayName)
+    setValue('locationName', gpsResult.displayName, { shouldValidate: true })
+    setValue('latitude', gpsResult.latitude, { shouldValidate: true })
+    setValue('longitude', gpsResult.longitude, { shouldValidate: true })
+  }, [gpsStatus, gpsResult, selectedLocation, locationPickerOpen, setValue])
+
+  const locationFinding = gpsStatus === 'requesting' || gpsStatus === 'fetching'
 
   const openLocationPicker = useCallback(() => {
     setLocationPickerOpen(true)
@@ -339,13 +352,23 @@ export default function OnboardingNewMomentScreen() {
                 </View>
               ) : (
                 <Pressable style={styles.input} onPress={openLocationPicker}>
+                  {locationFinding && !selectedLocation && (
+                    <ActivityIndicator
+                      size="small"
+                      color={WINE}
+                      style={styles.locInputSpinner}
+                    />
+                  )}
                   <Text
                     style={{
                       color: selectedLocation ? INK : '#A98B7E',
                       fontFamily: 'DMSans_400Regular',
                     }}
                   >
-                    {selectedLocation ?? t('onboarding.newMoment.locationTap')}
+                    {selectedLocation ??
+                      (locationFinding
+                        ? t('onboarding.newMoment.locationFinding')
+                        : t('onboarding.newMoment.locationTap'))}
                   </Text>
                 </Pressable>
               )}
@@ -635,5 +658,11 @@ const styles = StyleSheet.create({
     color: SUBTLE,
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  locInputSpinner: {
+    position: 'absolute',
+    right: 14,
+    top: '50%',
+    marginTop: -8,
   },
 })

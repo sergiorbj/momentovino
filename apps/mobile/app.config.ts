@@ -55,6 +55,15 @@ const config: ExpoConfig = {
         recordAudioAndroid: false,
       },
     ],
+    [
+      'expo-location',
+      {
+        locationWhenInUsePermission:
+          'Allow MomentoVino to use your location to tag where you tasted this wine.',
+        isIosBackgroundLocationEnabled: false,
+        isAndroidBackgroundLocationEnabled: false,
+      },
+    ],
     ...(googleSignInPlugin ? [googleSignInPlugin] : []),
   ],
   scheme: 'momentovino',

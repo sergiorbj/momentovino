@@ -27,6 +27,8 @@ import { queryKeys } from '../../lib/query-keys'
 import { takePendingWinePick } from '../../features/moments/wine-picker-handoff'
 import { momentFormSchema, type MomentFormValues, type PhotoInput } from '../../features/moments/schema'
 import { searchLocations, type LocationResult } from '../../features/moments/location-api'
+import { useCurrentLocation } from '../../features/moments/use-current-location'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -40,6 +42,7 @@ function todayIso(): string {
 export default function NewMomentScreen() {
   const params = useLocalSearchParams<{ wineId?: string; wineName?: string }>()
   const qc = useQueryClient()
+  const { t } = useTranslation()
   const [submitting, setSubmitting] = useState(false)
   const [wineLabel, setWineLabel] = useState<string | null>(params.wineName ?? null)
 
@@ -99,6 +102,23 @@ export default function NewMomentScreen() {
   const [locationPickerOpen, setLocationPickerOpen] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
   const locationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Auto-fill from device GPS on first open. The user can tap the field to
+  // override via the existing autocomplete search.
+  const { status: gpsStatus, result: gpsResult } = useCurrentLocation()
+  useEffect(() => {
+    if (gpsStatus !== 'ready' || !gpsResult) return
+    if (selectedLocation !== null || locationPickerOpen) return
+    setSelectedLocation(gpsResult.displayName)
+    setValue('locationName', gpsResult.displayName, { shouldValidate: true })
+    setValue('latitude', gpsResult.latitude, { shouldValidate: true })
+    setValue('longitude', gpsResult.longitude, { shouldValidate: true })
+  }, [gpsStatus, gpsResult, selectedLocation, locationPickerOpen, setValue])
+
+  const locationFinding = gpsStatus === 'requesting' || gpsStatus === 'fetching'
+  const locationPlaceholder = locationFinding
+    ? t('onboarding.newMoment.locationFinding')
+    : t('onboarding.newMoment.locationTap')
 
   const openLocationPicker = useCallback(() => {
     setLocationPickerOpen(true)
@@ -262,7 +282,10 @@ export default function NewMomentScreen() {
               />
             </Field>
 
-            <Field label="Location" error={formState.errors.locationName?.message}>
+            <Field
+              label={t('onboarding.newMoment.locationLabel')}
+              error={formState.errors.locationName?.message}
+            >
               {locationPickerOpen ? (
                 <View>
                   <View style={styles.locSearchWrap}>
@@ -271,7 +294,7 @@ export default function NewMomentScreen() {
                       style={styles.locSearchInput}
                       value={locationQuery}
                       onChangeText={setLocationQuery}
-                      placeholder="Search city or country…"
+                      placeholder={t('onboarding.newMoment.locationSearch')}
                       placeholderTextColor="#A98B7E"
                       autoFocus
                     />
@@ -283,7 +306,7 @@ export default function NewMomentScreen() {
                   <View style={styles.locResults}>
                     <ScrollView nestedScrollEnabled style={styles.locList} keyboardShouldPersistTaps="handled">
                       {locationResults.length === 0 && !locationLoading && (
-                        <Text style={styles.locEmpty}>No results found</Text>
+                        <Text style={styles.locEmpty}>{t('onboarding.newMoment.noResults')}</Text>
                       )}
                       {locationResults.map((item, index) => (
                         <View key={item.id}>
@@ -305,13 +328,20 @@ export default function NewMomentScreen() {
                 </View>
               ) : (
                 <Pressable style={styles.input} onPress={openLocationPicker}>
+                  {locationFinding && !selectedLocation && (
+                    <ActivityIndicator
+                      size="small"
+                      color={WINE}
+                      style={styles.locInputSpinner}
+                    />
+                  )}
                   <Text
                     style={{
                       color: selectedLocation ? INK : '#A98B7E',
                       fontFamily: 'DMSans_400Regular',
                     }}
                   >
-                    {selectedLocation ?? 'Tap to search a city…'}
+                    {selectedLocation ?? locationPlaceholder}
                   </Text>
                 </Pressable>
               )}
@@ -584,5 +614,11 @@ const styles = StyleSheet.create({
     color: SUBTLE,
     textAlign: 'center',
     paddingVertical: 20,
+  },
+  locInputSpinner: {
+    position: 'absolute',
+    right: 14,
+    top: '50%',
+    marginTop: -8,
   },
 })
