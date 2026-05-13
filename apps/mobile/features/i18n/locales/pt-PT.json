@@ -2,7 +2,15 @@
   "common": {
     "back": "Voltar",
     "cancel": "Cancelar",
-    "save": "Guardar"
+    "save": "Guardar",
+    "wineTypes": {
+      "RED": "Tinto",
+      "WHITE": "Branco",
+      "ROSE": "Rosé",
+      "SPARKLING": "Espumante",
+      "DESSERT": "Sobremesa",
+      "FORTIFIED": "Fortificado"
+    }
   },
   "login": {
     "title": "Bem-vindo(a) de volta.",

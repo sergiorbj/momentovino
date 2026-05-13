@@ -2,7 +2,15 @@
   "common": {
     "back": "Indietro",
     "cancel": "Annulla",
-    "save": "Salva"
+    "save": "Salva",
+    "wineTypes": {
+      "RED": "Rosso",
+      "WHITE": "Bianco",
+      "ROSE": "Rosato",
+      "SPARKLING": "Spumante",
+      "DESSERT": "Dolce",
+      "FORTIFIED": "Liquoroso"
+    }
   },
   "login": {
     "title": "Bentornato.",

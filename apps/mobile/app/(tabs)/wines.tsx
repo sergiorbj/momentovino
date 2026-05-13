@@ -17,6 +17,7 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 
 import { WineRowAvatar } from '../../components/WineRowAvatar'
+import { useTranslation, wineTypeLabel } from '../../features/i18n/hooks'
 import {
   useDeleteWines,
   useWinesCount,
@@ -40,6 +41,7 @@ type DeleteModalState =
   | { mode: 'quantity'; cluster: WineCluster }
 
 export default function WinesScreen() {
+  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
 
@@ -172,7 +174,9 @@ export default function WinesScreen() {
                       ) : null}
                     </View>
                     <Text style={styles.rowMeta}>
-                      {[w.producer, w.vintage, w.country, w.type].filter(Boolean).join(' · ')}
+                      {[w.producer, w.vintage, w.country, w.type ? wineTypeLabel(w.type, t) : null]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </Text>
                   </View>
                   <TouchableOpacity

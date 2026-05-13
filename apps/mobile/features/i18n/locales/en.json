@@ -2,7 +2,15 @@
   "common": {
     "back": "Back",
     "cancel": "Cancel",
-    "save": "Save"
+    "save": "Save",
+    "wineTypes": {
+      "RED": "Red",
+      "WHITE": "White",
+      "ROSE": "Rosé",
+      "SPARKLING": "Sparkling",
+      "DESSERT": "Dessert",
+      "FORTIFIED": "Fortified"
+    }
   },
   "login": {
     "title": "Welcome back.",

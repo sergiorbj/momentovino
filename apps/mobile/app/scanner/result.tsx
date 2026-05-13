@@ -18,6 +18,7 @@ import { attachWineLabelPhoto } from '../../features/scanner/api'
 import { useCreateWineViaApi } from '../../features/scanner/hooks'
 import { takeLabelPhotoForResult, type PendingLabelPhoto } from '../../features/scanner/pending-label-photo'
 import { setPendingWinePick } from '../../features/moments/wine-picker-handoff'
+import { useTranslation, wineTypeLabel } from '../../features/i18n/hooks'
 import { queryKeys } from '../../lib/query-keys'
 import { emitScannerReset } from '../../lib/scanner-reset'
 
@@ -28,6 +29,7 @@ const BG = '#F5EBE0'
 const BROWN = '#5C4033'
 
 export default function ScanResultScreen() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const params = useLocalSearchParams<{
     name: string
@@ -146,7 +148,12 @@ export default function ScanResultScreen() {
             {params.producer ? <InfoRow label="Producer" value={params.producer} /> : null}
             <InfoRow label="Region" value={params.region?.trim() ? params.region : 'Not set'} />
             <InfoRow label="Country" value={params.country?.trim() ? params.country : 'Not set'} />
-            {params.type ? <InfoRow label="Type" value={params.type} /> : null}
+            {params.type ? (
+              <InfoRow
+                label={t('onboarding.scanResult.labels.type')}
+                value={wineTypeLabel(params.type, t)}
+              />
+            ) : null}
           </View>
         </ScrollView>
 

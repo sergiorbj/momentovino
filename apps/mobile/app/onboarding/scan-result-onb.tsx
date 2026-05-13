@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
 import { getCapture } from '../../features/onboarding/onboarding-capture'
-import { useTranslation } from '../../features/i18n/hooks'
+import { useTranslation, wineTypeLabel } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -81,7 +81,10 @@ export default function OnboardingScanResultScreen() {
               value={wine.country?.trim() ? wine.country : t('onboarding.scanResult.notSet')}
             />
             {wine.type ? (
-              <InfoRow label={t('onboarding.scanResult.labels.type')} value={wine.type} />
+              <InfoRow
+                label={t('onboarding.scanResult.labels.type')}
+                value={wineTypeLabel(wine.type, t)}
+              />
             ) : null}
           </View>
         </View>
