@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
   Alert,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -147,11 +146,7 @@ export default function PaywallScreen() {
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <ProgressBar step={5} total={6} />
 
-        <ScrollView
-          style={styles.scrollFlex}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.content}>
           <View style={styles.copy}>
             <Text style={styles.headline}>{t('onboarding.paywall.headline')}</Text>
             <Text style={styles.sub}>{t('onboarding.paywall.subtitle')}</Text>
@@ -242,7 +237,7 @@ export default function PaywallScreen() {
               </View>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
 
         <View style={styles.footer}>
           <TouchableOpacity
@@ -276,12 +271,10 @@ export default function PaywallScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   safe: { flex: 1 },
-  scrollFlex: { flex: 1 },
-  scrollContent: {
+  content: {
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 16,
-    flexGrow: 1,
   },
   copy: { alignItems: 'center', gap: 10, marginBottom: 14 },
   headline: {

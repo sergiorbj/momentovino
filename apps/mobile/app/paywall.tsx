@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
   Alert,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -161,11 +160,7 @@ export default function PaywallScreen() {
             <Ionicons name="close" size={26} color={INK} />
           </TouchableOpacity>
         </View>
-        <ScrollView
-          style={styles.scrollFlex}
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.content}>
           <View style={styles.copy}>
             <Text style={styles.eyebrow}>MOMENTOVINO PRO</Text>
             <Text style={styles.headline}>Your subscription plan ended.</Text>
@@ -250,7 +245,7 @@ export default function PaywallScreen() {
               </View>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
 
         <View style={styles.footer}>
           <TouchableOpacity
@@ -301,12 +296,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BORDER,
   },
-  scrollFlex: { flex: 1 },
-  scroll: {
+  content: {
     paddingHorizontal: 24,
     paddingTop: 4,
     paddingBottom: 24,
-    flexGrow: 1,
   },
   copy: { alignItems: 'center', gap: 10, marginBottom: 14 },
   eyebrow: {
