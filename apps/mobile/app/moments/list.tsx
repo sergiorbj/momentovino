@@ -42,8 +42,9 @@ function Stars({ rating }: { rating: number }) {
 }
 
 function MomentCard({ item }: { item: MomentWithWines }) {
-  const firstWine = item.wines[0]
-  const extraWines = item.wines.length - 1
+  const uniqueWines = Array.from(new Map(item.wines.map((w) => [w.id, w])).values())
+  const firstWine = uniqueWines[0]
+  const extraWines = uniqueWines.length - 1
 
   return (
     <TouchableOpacity

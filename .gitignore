@@ -72,3 +72,6 @@ env/
 # Claude
 /.claude/
 .mcp.json
+
+# App Store Connect copy-paste assets (local-only ASO notes)
+/apple-store-connect/
