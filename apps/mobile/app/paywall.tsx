@@ -145,30 +145,24 @@ export default function PaywallScreen() {
       ? 'Billed annually. Cancel renewal anytime in Settings.'
       : 'Billed monthly. Cancel renewal anytime in Settings.'
 
-  const onClose = () => {
-    // Modal-style dismiss: slide back down to the login screen when we were
-    // pushed over it (post-sign-in path). On the cold-boot redirect path
-    // there's nothing behind, so fall through to login.
-    if (router.canGoBack()) {
-      router.back()
-    } else {
-      router.replace('/login')
-    }
-  }
-
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <SafeAreaView style={styles.safe}>
-        <TouchableOpacity
-          style={styles.closeBtn}
-          onPress={onClose}
-          activeOpacity={0.7}
-          hitSlop={12}
-        >
-          <Ionicons name="close" size={26} color={INK} />
-        </TouchableOpacity>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.closeBtn}
+            onPress={() => router.replace('/login')}
+            activeOpacity={0.7}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel="Close and go to sign in"
+          >
+            <Ionicons name="close" size={26} color={INK} />
+          </TouchableOpacity>
+        </View>
         <ScrollView
+          style={styles.scrollFlex}
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
@@ -290,19 +284,31 @@ export default function PaywallScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   safe: { flex: 1 },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingBottom: 2,
+  },
   closeBtn: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    zIndex: 10,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: BORDER,
   },
-  scroll: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 16 },
-  copy: { alignItems: 'center', gap: 10, marginBottom: 22 },
+  scrollFlex: { flex: 1 },
+  scroll: {
+    paddingHorizontal: 24,
+    paddingTop: 4,
+    paddingBottom: 24,
+    flexGrow: 1,
+  },
+  copy: { alignItems: 'center', gap: 10, marginBottom: 14 },
   eyebrow: {
     fontSize: 12,
     fontFamily: 'DMSans_700Bold',
@@ -323,7 +329,7 @@ const styles = StyleSheet.create({
     color: INK,
     textAlign: 'center',
   },
-  benefits: { gap: 10, marginBottom: 24 },
+  benefits: { gap: 10, marginBottom: 2 },
   benefitRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -342,7 +348,7 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     color: INK,
   },
-  plans: { gap: 14 },
+  plans: { gap: 2, paddingTop: 10 },
   planCard: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
@@ -350,8 +356,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 16,
+    overflow: 'visible',
   },
-  planCardYearly: { marginTop: 8 },
+  planCardYearly: { marginTop: 12 },
   planCardSelected: { borderColor: WINE, borderWidth: 2 },
   planBadge: {
     position: 'absolute',
@@ -405,7 +412,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioSelected: { backgroundColor: WINE, borderColor: WINE },
-  footer: { paddingHorizontal: 24, paddingBottom: 14, gap: 12 },
+  footer: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 8,
+    gap: 10,
+  },
   cta: {
     backgroundColor: WINE,
     borderRadius: 50,
@@ -430,6 +442,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
   },
   tinyLink: {

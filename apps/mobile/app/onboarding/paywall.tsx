@@ -144,11 +144,12 @@ export default function PaywallScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <ProgressBar step={5} total={6} />
 
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          style={styles.scrollFlex}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.copy}>
@@ -275,8 +276,14 @@ export default function PaywallScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   safe: { flex: 1 },
-  scroll: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 16 },
-  copy: { alignItems: 'center', gap: 10, marginBottom: 22 },
+  scrollFlex: { flex: 1 },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 16,
+    flexGrow: 1,
+  },
+  copy: { alignItems: 'center', gap: 10, marginBottom: 14 },
   headline: {
     fontSize: 30,
     lineHeight: 36,
@@ -285,13 +292,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sub: {
-    fontSize: 16,
-    lineHeight: 22,
+    fontSize: 15,
+    lineHeight: 21,
     fontFamily: 'DMSans_400Regular',
     color: INK,
     textAlign: 'center',
   },
-  benefits: { gap: 10, marginBottom: 24 },
+  benefits: { gap: 10, marginBottom: 2 },
   benefitRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -310,7 +317,7 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     color: INK,
   },
-  plans: { gap: 14 },
+  plans: { gap: 2, paddingTop: 10 },
   planCard: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
@@ -318,8 +325,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 16,
+    overflow: 'visible',
   },
-  planCardYearly: { marginTop: 8 },
+  planCardYearly: { marginTop: 18, paddingTop: 22 },
   planCardSelected: { borderColor: WINE, borderWidth: 2 },
   planBadge: {
     position: 'absolute',
@@ -377,7 +385,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioSelected: { backgroundColor: WINE, borderColor: WINE },
-  footer: { paddingHorizontal: 24, paddingBottom: 14, gap: 12 },
+  footer: {
+    paddingHorizontal: 24,
+    paddingTop: 6,
+    paddingBottom: 2,
+    gap: 8,
+  },
   cta: {
     backgroundColor: WINE,
     borderRadius: 50,
@@ -402,6 +415,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
   },
   tinyLink: {
