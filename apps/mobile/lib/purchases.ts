@@ -14,24 +14,39 @@ const IOS_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY
 
 let configured = false
 
-export async function configurePurchases(userId: string): Promise<void> {
+function ensureConfigured(): void {
+  if (configured) return
   if (Platform.OS !== 'ios') return
   if (!IOS_API_KEY) {
     console.warn('EXPO_PUBLIC_REVENUECAT_IOS_KEY missing — skipping RevenueCat init')
     return
   }
-
-  if (!configured) {
+  try {
     if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.WARN)
-    Purchases.configure({ apiKey: IOS_API_KEY, appUserID: userId })
+    Purchases.configure({ apiKey: IOS_API_KEY })
     configured = true
-    return
+  } catch (err) {
+    // react-native-purchases is a native module — it throws inside Expo Go
+    // ("native store is not available"). Swallow so the rest of the app boots;
+    // dev builds and TestFlight have the native module and configure normally.
+    console.warn('RevenueCat not available (likely Expo Go) — skipping', err)
   }
+}
 
+// Fire at module load so the singleton is ready before any screen
+// (e.g. the onboarding paywall) calls into RevenueCat. The real userId is
+// aliased in via `Purchases.logIn` once the Supabase session resolves.
+ensureConfigured()
+
+export async function configurePurchases(userId: string): Promise<void> {
+  ensureConfigured()
+  if (!configured) return
   await Purchases.logIn(userId)
 }
 
 export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
+  ensureConfigured()
+  if (!configured) return null
   const offerings = await Purchases.getOfferings()
   return offerings.current ?? null
 }
