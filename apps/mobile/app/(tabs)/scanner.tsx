@@ -19,6 +19,7 @@ import * as FileSystem from 'expo-file-system/legacy'
 import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
 import { scanWineImage } from '../../features/scanner/api'
+import { prepareImageForWineScan } from '../../features/scanner/prepare-image-for-scan'
 import { setPendingLabelPhoto } from '../../features/scanner/pending-label-photo'
 import { isScanError } from '../../features/scanner/types'
 import { subscribeScannerReset } from '../../lib/scanner-reset'
@@ -111,11 +112,12 @@ export default function ScannerScreen() {
 
     try {
       setScanning(true)
-      const base64 = await FileSystem.readAsStringAsync(image.uri, {
+      const prepared = await prepareImageForWineScan(image.uri)
+      const base64 = await FileSystem.readAsStringAsync(prepared.uri, {
         encoding: 'base64',
       })
 
-      const result = await scanWineImage(base64, image.mimeType)
+      const result = await scanWineImage(base64, prepared.mimeType)
 
       if (isScanError(result)) {
         clearImage()

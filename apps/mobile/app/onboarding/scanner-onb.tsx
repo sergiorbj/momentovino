@@ -19,6 +19,7 @@ import * as FileSystem from 'expo-file-system/legacy'
 import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
 import { scanWineImage } from '../../features/scanner/api'
+import { prepareImageForWineScan } from '../../features/scanner/prepare-image-for-scan'
 import { isScanError } from '../../features/scanner/types'
 import { setCapturedWine } from '../../features/onboarding/onboarding-capture'
 import { useTranslation } from '../../features/i18n/hooks'
@@ -108,8 +109,9 @@ export default function OnboardingScannerScreen() {
     if (!image) return
     try {
       setScanning(true)
-      const base64 = await FileSystem.readAsStringAsync(image.uri, { encoding: 'base64' })
-      const result = await scanWineImage(base64, image.mimeType)
+      const prepared = await prepareImageForWineScan(image.uri)
+      const base64 = await FileSystem.readAsStringAsync(prepared.uri, { encoding: 'base64' })
+      const result = await scanWineImage(base64, prepared.mimeType)
 
       if (isScanError(result)) {
         clearImage()

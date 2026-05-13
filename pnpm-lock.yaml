@@ -80,6 +80,9 @@ importers:
       expo-gl:
         specifier: ^16.0.10
         version: 16.0.10(expo@54.0.33)(react-dom@19.2.3)(react-native-reanimated@4.1.7)(react-native@0.81.5)(react@19.1.0)
+      expo-image-manipulator:
+        specifier: ~14.0.8
+        version: 14.0.8(expo@54.0.33)
       expo-image-picker:
         specifier: ~17.0.10
         version: 17.0.10(expo@54.0.33)
@@ -4460,6 +4463,15 @@ packages:
       expo: '*'
     dependencies:
       expo: 54.0.33(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.23)(react-native@0.81.5)(react@19.1.0)(typescript@5.9.3)
+    dev: false
+
+  /expo-image-manipulator@14.0.8(expo@54.0.33):
+    resolution: {integrity: sha512-sXsXjm7rIxLWZe0j2A41J/Ph53PpFJRdyzJ3EQ/qetxLUvS2m3K1sP5xy37px43qCf0l79N/i6XgFgenFV36/Q==}
+    peerDependencies:
+      expo: '*'
+    dependencies:
+      expo: 54.0.33(@babel/core@7.28.5)(@expo/metro-runtime@6.1.2)(expo-router@6.0.23)(react-native@0.81.5)(react@19.1.0)(typescript@5.9.3)
+      expo-image-loader: 6.0.0(expo@54.0.33)
     dev: false
 
   /expo-image-picker@17.0.10(expo@54.0.33):
