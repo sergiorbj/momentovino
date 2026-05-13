@@ -342,8 +342,10 @@ def _load_member_avatars(url: str, key: str, user_ids: list[str]) -> dict[str, O
 
 def _load_member_stats(url: str, key: str, user_ids: list[str]) -> dict[str, dict[str, int]]:
     """Per-user totals for the family dashboard: moments, wines, distinct countries
-    (derived from each moment's associated wine.country). Two PostgREST round-trips
-    using `in.(uid1,uid2,…)` rather than one per member, so cost is O(1) per family."""
+    (unioned across every wine tasted at every moment — a moment can reference
+    multiple wines via the `moment_wines` junction since migration 0014). Two
+    PostgREST round-trips using `in.(uid1,uid2,…)` rather than one per member,
+    so cost is O(1) per family."""
     if not user_ids:
         return {}
     in_list = ",".join(user_ids)
@@ -351,7 +353,9 @@ def _load_member_stats(url: str, key: str, user_ids: list[str]) -> dict[str, dic
         f"{url}/rest/v1/moments",
         params={
             "user_id": f"in.({in_list})",
-            "select": "user_id,wines(country)",
+            # Embed every linked wine via the junction. PostgREST returns
+            # `moment_wines` as an array of `{ wines: { country } }` objects.
+            "select": "user_id,moment_wines(wines(country))",
         },
         headers={"Authorization": f"Bearer {key}", "apikey": key},
         timeout=30,
@@ -377,10 +381,16 @@ def _load_member_stats(url: str, key: str, user_ids: list[str]) -> dict[str, dic
             if uid not in agg:
                 continue
             agg[uid]["moments_count"] += 1
-            wine = row.get("wines")
-            country = wine.get("country") if isinstance(wine, dict) else None
-            if country:
-                agg[uid]["_countries"].add(country)
+            links = row.get("moment_wines")
+            if not isinstance(links, list):
+                continue
+            for link in links:
+                if not isinstance(link, dict):
+                    continue
+                wine = link.get("wines")
+                country = wine.get("country") if isinstance(wine, dict) else None
+                if country:
+                    agg[uid]["_countries"].add(country)
     if wines_resp.status_code == 200:
         rows = wines_resp.json() if isinstance(wines_resp.json(), list) else []
         for row in rows:

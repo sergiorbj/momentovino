@@ -24,7 +24,7 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { createMoment } from '../../features/moments/api'
 import { queryKeys } from '../../lib/query-keys'
-import { takePendingWinePick } from '../../features/moments/wine-picker-handoff'
+import { takePendingWinePicks } from '../../features/moments/wine-picker-handoff'
 import { momentFormSchema, type MomentFormValues, type PhotoInput } from '../../features/moments/schema'
 import { searchLocations, type LocationResult } from '../../features/moments/location-api'
 import { useCurrentLocation } from '../../features/moments/use-current-location'
@@ -35,6 +35,16 @@ const INK = '#3F2A2E'
 const SUBTLE = '#C2703E'
 const BG = '#F5EBE0'
 
+type WineEntry = {
+  id: string
+  label: string
+  /**
+   * True when the wine was selected from the cellar via the picker (clone-on-
+   * pick policy → API will duplicate the row on save). False for fresh scans.
+   */
+  fromExisting: boolean
+}
+
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10)
 }
@@ -44,10 +54,14 @@ export default function NewMomentScreen() {
   const qc = useQueryClient()
   const { t } = useTranslation()
   const [submitting, setSubmitting] = useState(false)
-  const [wineLabel, setWineLabel] = useState<string | null>(params.wineName ?? null)
-  // Wines entering via `params` come from the scanner (fresh row already created),
-  // so they don't need cloning. Picker selections flip this to `true` below.
-  const [wineFromExisting, setWineFromExisting] = useState(false)
+  // Source of truth for the wines attached to this moment. Stays in sync with
+  // the form's `wineIds` via `syncWineIds`. Each entry remembers its origin so
+  // submit can flag the picker-selected ones for cloning.
+  const [wineEntries, setWineEntries] = useState<WineEntry[]>(
+    params.wineId && params.wineName
+      ? [{ id: params.wineId, label: params.wineName, fromExisting: false }]
+      : [],
+  )
 
   const { control, handleSubmit, setValue, watch, formState } = useForm<MomentFormValues>({
     resolver: zodResolver(momentFormSchema),
@@ -58,22 +72,65 @@ export default function NewMomentScreen() {
       locationName: '',
       latitude: undefined as unknown as number,
       longitude: undefined as unknown as number,
-      wineId: params.wineId ?? '',
+      wineIds: params.wineId ? [params.wineId] : [],
       rating: undefined,
       photos: [],
     },
   })
 
+  const syncWineIds = useCallback(
+    (entries: WineEntry[]) => {
+      setWineEntries(entries)
+      setValue(
+        'wineIds',
+        entries.map((e) => e.id),
+        { shouldValidate: true },
+      )
+    },
+    [setValue],
+  )
+
   useFocusEffect(
     useCallback(() => {
-      const pick = takePendingWinePick()
-      if (pick) {
-        setValue('wineId', pick.wineId, { shouldValidate: true })
-        setWineLabel(pick.wineName)
-        setWineFromExisting(pick.isExistingWine === true)
-      }
-    }, [setValue])
+      const picks = takePendingWinePicks()
+      if (picks.length === 0) return
+      setWineEntries((current) => {
+        const seen = new Set(current.map((e) => e.id))
+        const additions: WineEntry[] = []
+        for (const pick of picks) {
+          if (seen.has(pick.wineId)) continue
+          seen.add(pick.wineId)
+          additions.push({
+            id: pick.wineId,
+            label: pick.wineName,
+            fromExisting: pick.isExistingWine === true,
+          })
+        }
+        if (additions.length === 0) return current
+        const next = [...current, ...additions]
+        setValue(
+          'wineIds',
+          next.map((e) => e.id),
+          { shouldValidate: true },
+        )
+        return next
+      })
+    }, [setValue]),
   )
+
+  const removeWine = useCallback(
+    (wineId: string) => {
+      syncWineIds(wineEntries.filter((e) => e.id !== wineId))
+    },
+    [syncWineIds, wineEntries],
+  )
+
+  const openWinePicker = useCallback(() => {
+    router.push({
+      pathname: '/moments/wine-picker',
+      params: { excludeWineIds: wineEntries.map((e) => e.id).join(',') },
+    })
+  }, [wineEntries])
 
   const photos = watch('photos')
   const rating = watch('rating')
@@ -204,7 +261,10 @@ export default function NewMomentScreen() {
   const onSubmit = async (values: MomentFormValues) => {
     try {
       setSubmitting(true)
-      await createMoment(values, { cloneWineFromExisting: wineFromExisting })
+      const cloneFromExistingWineIds = wineEntries
+        .filter((e) => e.fromExisting)
+        .map((e) => e.id)
+      await createMoment(values, { cloneFromExistingWineIds })
       qc.invalidateQueries({ queryKey: ['moments'] })
       qc.invalidateQueries({ queryKey: ['wines'] })
       qc.invalidateQueries({ queryKey: queryKeys.profile })
@@ -295,15 +355,24 @@ export default function NewMomentScreen() {
                 <View>
                   <View style={styles.locSearchWrap}>
                     <Ionicons name="search" size={16} color={SUBTLE} />
-                    <TextInput
-                      style={styles.locSearchInput}
-                      value={locationQuery}
-                      onChangeText={setLocationQuery}
-                      placeholder={t('onboarding.newMoment.locationSearch')}
-                      placeholderTextColor="#A98B7E"
-                      autoFocus
-                    />
-                    {locationLoading && <ActivityIndicator size="small" color={WINE} />}
+                    <View style={styles.locSearchField}>
+                      <TextInput
+                        style={[
+                          styles.locSearchInput,
+                          locationLoading ? styles.locSearchInputWithSpinner : null,
+                        ]}
+                        value={locationQuery}
+                        onChangeText={setLocationQuery}
+                        placeholder={t('onboarding.newMoment.locationSearch')}
+                        placeholderTextColor="#A98B7E"
+                        autoFocus
+                      />
+                      {locationLoading ? (
+                        <View style={styles.locSearchSpinner} pointerEvents="none">
+                          <ActivityIndicator size="small" color={WINE} />
+                        </View>
+                      ) : null}
+                    </View>
                     <TouchableOpacity onPress={() => setLocationPickerOpen(false)}>
                       <Ionicons name="close-circle" size={20} color={SUBTLE} />
                     </TouchableOpacity>
@@ -332,35 +401,61 @@ export default function NewMomentScreen() {
                   </View>
                 </View>
               ) : (
-                <Pressable style={styles.input} onPress={openLocationPicker}>
-                  {locationFinding && !selectedLocation && (
-                    <ActivityIndicator
-                      size="small"
-                      color={WINE}
-                      style={styles.locInputSpinner}
-                    />
-                  )}
+                <Pressable style={[styles.input, styles.locTapInput]} onPress={openLocationPicker}>
                   <Text
                     style={{
                       color: selectedLocation ? INK : '#A98B7E',
                       fontFamily: 'DMSans_400Regular',
+                      paddingRight:
+                        locationFinding && !selectedLocation ? 36 : 0,
                     }}
                   >
                     {selectedLocation ?? locationPlaceholder}
                   </Text>
+                  {locationFinding && !selectedLocation ? (
+                    <View style={styles.locInputSpinnerWrap} pointerEvents="none">
+                      <ActivityIndicator size="small" color={WINE} />
+                    </View>
+                  ) : null}
                 </Pressable>
               )}
             </Field>
 
-            <Field label="Wine" error={formState.errors.wineId?.message}>
-              <Pressable
-                style={styles.input}
-                onPress={() => router.push('/moments/wine-picker')}
+            <Field label="Wines" error={formState.errors.wineIds?.message as string | undefined}>
+              {wineEntries.length > 0 ? (
+                <View style={styles.wineList}>
+                  {wineEntries.map((entry, idx) => (
+                    <View key={entry.id} style={styles.wineRow}>
+                      <Image
+                        source={require('../../assets/glass.png')}
+                        style={styles.wineRowIcon}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.wineRowLabel} numberOfLines={1}>
+                        {entry.label}
+                      </Text>
+                      <Text style={styles.wineRowIndex}>#{idx + 1}</Text>
+                      <TouchableOpacity
+                        onPress={() => removeWine(entry.id)}
+                        hitSlop={8}
+                        style={styles.wineRowRemove}
+                      >
+                        <Ionicons name="close" size={16} color={WINE} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              <TouchableOpacity
+                style={styles.wineAddBtn}
+                onPress={openWinePicker}
+                activeOpacity={0.85}
               >
-                <Text style={{ color: wineLabel ? INK : '#A98B7E', fontFamily: 'DMSans_400Regular' }}>
-                  {wineLabel ?? 'Select or create a wine'}
+                <Ionicons name="add" size={18} color={WINE} />
+                <Text style={styles.wineAddBtnText}>
+                  {wineEntries.length === 0 ? 'Add a wine' : 'Add another wine'}
                 </Text>
-              </Pressable>
+              </TouchableOpacity>
             </Field>
 
             <Field label="Rating (optional)">
@@ -503,6 +598,53 @@ const styles = StyleSheet.create({
   },
   stars: { flexDirection: 'row', gap: 8 },
   starBtn: { padding: 4 },
+  wineList: { gap: 8, marginBottom: 10 },
+  wineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  wineRowIcon: { width: 18, height: 18, tintColor: WINE },
+  wineRowLabel: {
+    flex: 1,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: INK,
+  },
+  wineRowIndex: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    color: SUBTLE,
+  },
+  wineRowRemove: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FDF2F4',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wineAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: WINE,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  wineAddBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: WINE,
+  },
   photosRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   photoWrap: { position: 'relative' },
   photo: { width: 96, height: 96, borderRadius: 12, backgroundColor: '#E5D5C5' },
@@ -579,12 +721,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
+  locSearchField: {
+    flex: 1,
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+    minHeight: 22,
+  },
   locSearchInput: {
     flex: 1,
     fontSize: 15,
     fontFamily: 'DMSans_400Regular',
     color: INK,
     padding: 0,
+    minWidth: 0,
+  },
+  locSearchInputWithSpinner: {
+    paddingRight: 30,
+  },
+  locSearchSpinner: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   locResults: {
     marginTop: 6,
@@ -620,10 +783,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 20,
   },
-  locInputSpinner: {
+  locTapInput: {
+    position: 'relative',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  locInputSpinnerWrap: {
     position: 'absolute',
     right: 14,
-    top: '50%',
-    marginTop: -8,
+    top: 0,
+    bottom: 0,
+    width: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 })

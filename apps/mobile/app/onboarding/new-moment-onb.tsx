@@ -36,7 +36,7 @@ const INK = '#3F2A2E'
 const SUBTLE = '#C2703E'
 const BG = '#F5EBE0'
 
-// Same shape as `momentFormSchema` minus `wineId` (the wine row doesn't exist
+// Same shape as `momentFormSchema` minus `wineIds` (the wine row doesn't exist
 // yet — it gets created in `finalizeAccount` post-auth) and with photos
 // relaxed to optional, since onboarding accepts a moment without photos.
 function buildOnboardingMomentSchema(t: (key: string) => string) {
@@ -308,15 +308,24 @@ export default function OnboardingNewMomentScreen() {
                 <View>
                   <View style={styles.locSearchWrap}>
                     <Ionicons name="search" size={16} color={SUBTLE} />
-                    <TextInput
-                      style={styles.locSearchInput}
-                      value={locationQuery}
-                      onChangeText={setLocationQuery}
-                      placeholder={t('onboarding.newMoment.locationSearch')}
-                      placeholderTextColor="#A98B7E"
-                      autoFocus
-                    />
-                    {locationLoading && <ActivityIndicator size="small" color={WINE} />}
+                    <View style={styles.locSearchField}>
+                      <TextInput
+                        style={[
+                          styles.locSearchInput,
+                          locationLoading ? styles.locSearchInputWithSpinner : null,
+                        ]}
+                        value={locationQuery}
+                        onChangeText={setLocationQuery}
+                        placeholder={t('onboarding.newMoment.locationSearch')}
+                        placeholderTextColor="#A98B7E"
+                        autoFocus
+                      />
+                      {locationLoading ? (
+                        <View style={styles.locSearchSpinner} pointerEvents="none">
+                          <ActivityIndicator size="small" color={WINE} />
+                        </View>
+                      ) : null}
+                    </View>
                     <TouchableOpacity onPress={() => setLocationPickerOpen(false)}>
                       <Ionicons name="close-circle" size={20} color={SUBTLE} />
                     </TouchableOpacity>
@@ -351,18 +360,13 @@ export default function OnboardingNewMomentScreen() {
                   </View>
                 </View>
               ) : (
-                <Pressable style={styles.input} onPress={openLocationPicker}>
-                  {locationFinding && !selectedLocation && (
-                    <ActivityIndicator
-                      size="small"
-                      color={WINE}
-                      style={styles.locInputSpinner}
-                    />
-                  )}
+                <Pressable style={[styles.input, styles.locTapInput]} onPress={openLocationPicker}>
                   <Text
                     style={{
                       color: selectedLocation ? INK : '#A98B7E',
                       fontFamily: 'DMSans_400Regular',
+                      paddingRight:
+                        locationFinding && !selectedLocation ? 36 : 0,
                     }}
                   >
                     {selectedLocation ??
@@ -370,13 +374,23 @@ export default function OnboardingNewMomentScreen() {
                         ? t('onboarding.newMoment.locationFinding')
                         : t('onboarding.newMoment.locationTap'))}
                   </Text>
+                  {locationFinding && !selectedLocation ? (
+                    <View style={styles.locInputSpinnerWrap} pointerEvents="none">
+                      <ActivityIndicator size="small" color={WINE} />
+                    </View>
+                  ) : null}
                 </Pressable>
               )}
             </Field>
 
             <Field label={t('onboarding.newMoment.wineLabel')}>
-              <View style={styles.wineLocked}>
-                <Text style={styles.wineLockedText} numberOfLines={1}>
+              <View
+                style={styles.wineLocked}
+                accessibilityRole="text"
+                accessibilityState={{ disabled: true }}
+                accessibilityLabel={`${t('onboarding.newMoment.wineLabel')}: ${wine.name}`}
+              >
+                <Text style={styles.wineLockedText} numberOfLines={2}>
                   {wine.name}
                 </Text>
                 <Ionicons name="lock-closed" size={14} color={SUBTLE} />
@@ -525,10 +539,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 13,
   },
-  // Locked-display variant of `input` for the wine row.
+  // Locked-display variant of `input` for the wine row (no TextInput — onboarding is one bottle only).
   wineLocked: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F0EB',
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8DDD4',
     paddingHorizontal: 14,
     paddingVertical: 12,
     flexDirection: 'row',
@@ -618,12 +634,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
+  locSearchField: {
+    flex: 1,
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+    minHeight: 22,
+  },
   locSearchInput: {
     flex: 1,
     fontSize: 15,
     fontFamily: 'DMSans_400Regular',
     color: INK,
     padding: 0,
+    minWidth: 0,
+  },
+  locSearchInputWithSpinner: {
+    paddingRight: 30,
+  },
+  locSearchSpinner: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   locResults: {
     marginTop: 6,
@@ -659,10 +696,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 20,
   },
-  locInputSpinner: {
+  locTapInput: {
+    position: 'relative',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  locInputSpinnerWrap: {
     position: 'absolute',
     right: 14,
-    top: '50%',
-    marginTop: -8,
+    top: 0,
+    bottom: 0,
+    width: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 })

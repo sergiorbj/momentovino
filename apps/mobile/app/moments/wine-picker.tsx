@@ -14,6 +14,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 
 import { WineRowAvatar } from '../../components/WineRowAvatar'
 import { setPendingWinePick } from '../../features/moments/wine-picker-handoff'
+import { useTranslation, wineTypeLabel } from '../../features/i18n/hooks'
 import { useWinesCount, useWinesSearch } from '../../features/wines/hooks'
 import {
   bestLabelPhotoInCluster,
@@ -27,10 +28,16 @@ const SUBTLE = '#C2703E'
 const BG = '#F5EBE0'
 
 export default function WinePickerScreen() {
+  const { t } = useTranslation()
   // `editMomentId` is set only when the picker was opened from the moment edit
   // screen; it's forwarded to the scanner so a "scan a new wine" return knows to
   // dismiss back to the edit screen rather than `/moments/new`.
-  const { editMomentId } = useLocalSearchParams<{ editMomentId?: string }>()
+  // `excludeWineIds` is a comma-separated list of wineIds already attached to
+  // the in-progress moment draft, so the picker can suppress duplicates.
+  const { editMomentId, excludeWineIds } = useLocalSearchParams<{
+    editMomentId?: string
+    excludeWineIds?: string
+  }>()
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
 
@@ -46,7 +53,19 @@ export default function WinePickerScreen() {
   const totalWines = countQuery.data ?? null
   const loading = winesQuery.isFetching
 
-  const clusters = useMemo(() => clusterWinesForDisplay(results), [results])
+  const excludedClusterIds = useMemo(() => {
+    if (!excludeWineIds) return new Set<string>()
+    return new Set(excludeWineIds.split(',').filter(Boolean))
+  }, [excludeWineIds])
+
+  const clusters = useMemo(() => {
+    const all = clusterWinesForDisplay(results)
+    if (excludedClusterIds.size === 0) return all
+    // A cluster is hidden only if its canonical wine is already in the draft —
+    // members of the same cluster can still be picked individually because the
+    // clone-on-pick policy means each pick produces a distinct wine row.
+    return all.filter((c) => !excludedClusterIds.has(c.canonical.id))
+  }, [results, excludedClusterIds])
 
   const emptyLabel = useMemo(() => {
     if (loading) return ''
@@ -146,7 +165,9 @@ export default function WinePickerScreen() {
                       ) : null}
                     </View>
                     <Text style={styles.rowMeta}>
-                      {[w.producer, w.vintage, w.country, w.type].filter(Boolean).join(' · ')}
+                      {[w.producer, w.vintage, w.country, w.type ? wineTypeLabel(w.type, t) : null]
+                        .filter(Boolean)
+                        .join(' · ')}
                     </Text>
                   </View>
                 </TouchableOpacity>

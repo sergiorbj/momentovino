@@ -34,6 +34,7 @@ function fallbackDesiredFromUser(meta: Record<string, unknown>, email: string | 
 async function persistOnboardingCapture(): Promise<void> {
   const { wine, moment } = getCapture()
   if (!wine || !moment) return
+  // Onboarding funnel is strictly one scanned bottle → one persisted wine row.
 
   const wineRow = await createWineViaApi({
     name: wine.name,
@@ -55,7 +56,7 @@ async function persistOnboardingCapture(): Promise<void> {
     }
   }
 
-  await createMoment({ ...moment, wineId: wineRow.id })
+  await createMoment({ ...moment, wineIds: [wineRow.id] })
 }
 
 /**

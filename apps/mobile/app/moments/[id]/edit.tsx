@@ -28,7 +28,7 @@ import {
   type PhotoInput,
 } from '../../../features/moments/schema'
 import { searchLocations, type LocationResult } from '../../../features/moments/location-api'
-import { takePendingWinePick } from '../../../features/moments/wine-picker-handoff'
+import { takePendingWinePicks } from '../../../features/moments/wine-picker-handoff'
 import { useTranslation } from '../../../features/i18n/hooks'
 
 const WINE = '#722F37'
@@ -36,11 +36,22 @@ const INK = '#3F2A2E'
 const SUBTLE = '#C2703E'
 const BG = '#F5EBE0'
 
+type WineEntry = {
+  id: string
+  label: string
+  /**
+   * True when this entry was added during the current edit session via the
+   * picker (clone-on-pick → API clones the wine row on save). The hydrated
+   * entries already in the moment stay `false`, as do scanner-added picks.
+   */
+  fromExisting: boolean
+}
+
 export default function EditMomentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const momentId = id ?? ''
   const { t } = useTranslation()
-  const { moment, wine, photos: existingPhotos, loading } = useMomentDetail(momentId)
+  const { moment, wines, photos: existingPhotos, loading } = useMomentDetail(momentId)
   const { submit, submitting } = useUpdateMoment(momentId)
 
   const { control, handleSubmit, setValue, watch, reset, formState } = useForm<MomentFormValues>({
@@ -52,7 +63,7 @@ export default function EditMomentScreen() {
       locationName: '',
       latitude: undefined as unknown as number,
       longitude: undefined as unknown as number,
-      wineId: '',
+      wineIds: [],
       rating: undefined,
       photos: [],
     },
@@ -60,17 +71,30 @@ export default function EditMomentScreen() {
 
   const [hydrated, setHydrated] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
-  const [wineLabel, setWineLabel] = useState<string | null>(null)
-  // Flips to true when the user swaps the wine via the picker (existing cellar
-  // pick → clone on save). Stays false for the initial hydrated wine and for
-  // scanner returns (the scanner already inserted a fresh row).
-  const [wineFromExisting, setWineFromExisting] = useState(false)
+  const [wineEntries, setWineEntries] = useState<WineEntry[]>([])
+
+  const syncWineIds = useCallback(
+    (entries: WineEntry[]) => {
+      setWineEntries(entries)
+      setValue(
+        'wineIds',
+        entries.map((e) => e.id),
+        { shouldValidate: true },
+      )
+    },
+    [setValue],
+  )
 
   useEffect(() => {
     if (!moment || hydrated) return
     const hydratedPhotos: PhotoInput[] = existingPhotos.map((p) => ({
       uri: p.url,
       isCover: p.is_cover,
+    }))
+    const initialEntries: WineEntry[] = wines.map((w) => ({
+      id: w.id,
+      label: w.name,
+      fromExisting: false,
     }))
     reset({
       title: moment.title,
@@ -79,25 +103,59 @@ export default function EditMomentScreen() {
       locationName: moment.location_name,
       latitude: moment.latitude,
       longitude: moment.longitude,
-      wineId: moment.wine_id ?? '',
+      wineIds: initialEntries.map((e) => e.id),
       rating: moment.rating ?? undefined,
       photos: hydratedPhotos,
     })
     setSelectedLocation(moment.location_name)
-    setWineLabel(wine?.name ?? null)
+    setWineEntries(initialEntries)
     setHydrated(true)
-  }, [moment, existingPhotos, hydrated, reset, wine])
+  }, [moment, existingPhotos, hydrated, reset, wines])
 
   useFocusEffect(
     useCallback(() => {
-      const pick = takePendingWinePick()
-      if (pick) {
-        setValue('wineId', pick.wineId, { shouldValidate: true })
-        setWineLabel(pick.wineName)
-        setWineFromExisting(pick.isExistingWine === true)
-      }
+      const picks = takePendingWinePicks()
+      if (picks.length === 0) return
+      setWineEntries((current) => {
+        const seen = new Set(current.map((e) => e.id))
+        const additions: WineEntry[] = []
+        for (const pick of picks) {
+          if (seen.has(pick.wineId)) continue
+          seen.add(pick.wineId)
+          additions.push({
+            id: pick.wineId,
+            label: pick.wineName,
+            fromExisting: pick.isExistingWine === true,
+          })
+        }
+        if (additions.length === 0) return current
+        const next = [...current, ...additions]
+        setValue(
+          'wineIds',
+          next.map((e) => e.id),
+          { shouldValidate: true },
+        )
+        return next
+      })
     }, [setValue]),
   )
+
+  const removeWine = useCallback(
+    (wineId: string) => {
+      syncWineIds(wineEntries.filter((e) => e.id !== wineId))
+    },
+    [syncWineIds, wineEntries],
+  )
+
+  const openWinePicker = useCallback(() => {
+    router.push({
+      pathname: '/moments/wine-picker',
+      params: {
+        editMomentId: momentId,
+        excludeWineIds: wineEntries.map((e) => e.id).join(','),
+      },
+    })
+  }, [momentId, wineEntries])
 
   const photos = watch('photos')
   const rating = watch('rating')
@@ -206,7 +264,10 @@ export default function EditMomentScreen() {
   }
 
   const onSubmit = (values: MomentFormValues) => {
-    void submit(values, { cloneWineFromExisting: wineFromExisting })
+    const cloneFromExistingWineIds = wineEntries
+      .filter((e) => e.fromExisting)
+      .map((e) => e.id)
+    void submit(values, { cloneFromExistingWineIds })
   }
 
   if (loading || !moment) {
@@ -309,15 +370,24 @@ export default function EditMomentScreen() {
                 <View>
                   <View style={styles.locSearchWrap}>
                     <Ionicons name="search" size={16} color={SUBTLE} />
-                    <TextInput
-                      style={styles.locSearchInput}
-                      value={locationQuery}
-                      onChangeText={setLocationQuery}
-                      placeholder={t('onboarding.newMoment.locationSearch')}
-                      placeholderTextColor="#A98B7E"
-                      autoFocus
-                    />
-                    {locationLoading && <ActivityIndicator size="small" color={WINE} />}
+                    <View style={styles.locSearchField}>
+                      <TextInput
+                        style={[
+                          styles.locSearchInput,
+                          locationLoading ? styles.locSearchInputWithSpinner : null,
+                        ]}
+                        value={locationQuery}
+                        onChangeText={setLocationQuery}
+                        placeholder={t('onboarding.newMoment.locationSearch')}
+                        placeholderTextColor="#A98B7E"
+                        autoFocus
+                      />
+                      {locationLoading ? (
+                        <View style={styles.locSearchSpinner} pointerEvents="none">
+                          <ActivityIndicator size="small" color={WINE} />
+                        </View>
+                      ) : null}
+                    </View>
                     <TouchableOpacity onPress={() => setLocationPickerOpen(false)}>
                       <Ionicons name="close-circle" size={20} color={SUBTLE} />
                     </TouchableOpacity>
@@ -367,26 +437,42 @@ export default function EditMomentScreen() {
 
             <Field
               label={t('onboarding.newMoment.wineLabel')}
-              error={formState.errors.wineId?.message}
+              error={formState.errors.wineIds?.message as string | undefined}
             >
-              <Pressable
-                style={styles.input}
-                onPress={() =>
-                  router.push({
-                    pathname: '/moments/wine-picker',
-                    params: { editMomentId: momentId },
-                  })
-                }
+              {wineEntries.length > 0 ? (
+                <View style={styles.wineList}>
+                  {wineEntries.map((entry, idx) => (
+                    <View key={entry.id} style={styles.wineRow}>
+                      <Image
+                        source={require('../../../assets/glass.png')}
+                        style={styles.wineRowIcon}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.wineRowLabel} numberOfLines={1}>
+                        {entry.label}
+                      </Text>
+                      <Text style={styles.wineRowIndex}>#{idx + 1}</Text>
+                      <TouchableOpacity
+                        onPress={() => removeWine(entry.id)}
+                        hitSlop={8}
+                        style={styles.wineRowRemove}
+                      >
+                        <Ionicons name="close" size={16} color={WINE} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+              <TouchableOpacity
+                style={styles.wineAddBtn}
+                onPress={openWinePicker}
+                activeOpacity={0.85}
               >
-                <Text
-                  style={{
-                    color: wineLabel ? INK : '#A98B7E',
-                    fontFamily: 'DMSans_400Regular',
-                  }}
-                >
-                  {wineLabel ?? t('onboarding.newMoment.wineLabel')}
+                <Ionicons name="add" size={18} color={WINE} />
+                <Text style={styles.wineAddBtnText}>
+                  {wineEntries.length === 0 ? 'Add a wine' : 'Add another wine'}
                 </Text>
-              </Pressable>
+              </TouchableOpacity>
             </Field>
 
             <Field label={t('onboarding.newMoment.ratingLabel')}>
@@ -541,6 +627,53 @@ const styles = StyleSheet.create({
   },
   stars: { flexDirection: 'row', gap: 8 },
   starBtn: { padding: 4 },
+  wineList: { gap: 8, marginBottom: 10 },
+  wineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  wineRowIcon: { width: 18, height: 18, tintColor: WINE },
+  wineRowLabel: {
+    flex: 1,
+    fontFamily: 'DMSans_500Medium',
+    fontSize: 14,
+    color: INK,
+  },
+  wineRowIndex: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 12,
+    color: SUBTLE,
+  },
+  wineRowRemove: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#FDF2F4',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wineAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: WINE,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  wineAddBtnText: {
+    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 14,
+    color: WINE,
+  },
   photosRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   photoWrap: { position: 'relative' },
   photo: { width: 96, height: 96, borderRadius: 12, backgroundColor: '#E5D5C5' },
@@ -616,12 +749,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
+  locSearchField: {
+    flex: 1,
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+    minHeight: 22,
+  },
   locSearchInput: {
     flex: 1,
     fontSize: 15,
     fontFamily: 'DMSans_400Regular',
     color: INK,
     padding: 0,
+    minWidth: 0,
+  },
+  locSearchInputWithSpinner: {
+    paddingRight: 30,
+  },
+  locSearchSpinner: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   locResults: {
     marginTop: 6,

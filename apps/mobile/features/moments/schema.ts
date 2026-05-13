@@ -32,7 +32,7 @@ export const momentFormSchema = z.object({
   locationName: z.string().min(2, 'Pick a location'),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
-  wineId: z.string().uuid('Pick a wine'),
+  wineIds: z.array(z.string().uuid()).min(1, 'Add at least one wine').max(8),
   rating: z.number().int().min(1).max(5).optional(),
   photos: z.array(photoInputSchema).min(1, 'Add at least one photo').max(3),
 })

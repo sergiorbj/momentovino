@@ -155,6 +155,42 @@ export type Database = {
           },
         ]
       }
+      moment_wines: {
+        Row: {
+          created_at: string
+          moment_id: string
+          position: number
+          wine_id: string
+        }
+        Insert: {
+          created_at?: string
+          moment_id: string
+          position?: number
+          wine_id: string
+        }
+        Update: {
+          created_at?: string
+          moment_id?: string
+          position?: number
+          wine_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moment_wines_moment_id_fkey"
+            columns: ["moment_id"]
+            isOneToOne: false
+            referencedRelation: "moments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moment_wines_wine_id_fkey"
+            columns: ["wine_id"]
+            isOneToOne: false
+            referencedRelation: "wines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       moments: {
         Row: {
           cover_photo_url: string | null
@@ -169,7 +205,6 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
-          wine_id: string | null
         }
         Insert: {
           cover_photo_url?: string | null
@@ -184,7 +219,6 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
-          wine_id?: string | null
         }
         Update: {
           cover_photo_url?: string | null
@@ -199,17 +233,8 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
-          wine_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "moments_wine_id_fkey"
-            columns: ["wine_id"]
-            isOneToOne: false
-            referencedRelation: "wines"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {

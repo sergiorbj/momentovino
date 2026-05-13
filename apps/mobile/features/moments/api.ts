@@ -7,11 +7,18 @@ type WineRow = Database['public']['Tables']['wines']['Row']
 type MomentRow = Database['public']['Tables']['moments']['Row']
 type MomentPhotoRow = Database['public']['Tables']['moment_photos']['Row']
 
-export type MomentWithWine = MomentRow & { wine_name: string | null }
+/**
+ * A moment as shown in lists: includes the ordered set of wines tasted
+ * (ordered by the junction's `position`). Multi-wine UIs surface the first
+ * wine plus a "+N" chip; single-wine moments behave identically to before.
+ */
+export type MomentWithWines = MomentRow & {
+  wines: { id: string; name: string }[]
+}
 
 export interface MomentDetail {
   moment: MomentRow
-  wine: WineRow | null
+  wines: WineRow[]
   photos: MomentPhotoRow[]
 }
 
@@ -136,7 +143,7 @@ export async function cloneWineForReuse(sourceWineId: string): Promise<WineRow> 
   return clone
 }
 
-/** Deletes wine rows owned by the current user. Moments keep `wine_id` null via FK. */
+/** Deletes wine rows owned by the current user. The `moment_wines` FK cascades. */
 export async function deleteWinesByIds(ids: string[]): Promise<void> {
   if (ids.length === 0) return
   const { data: userData, error: userErr } = await supabase.auth.getUser()
@@ -179,12 +186,48 @@ async function uploadPhoto(
 
 export interface CreateMomentOptions {
   /**
-   * When the wine was selected via the picker (i.e. it already exists in the user's
-   * cellar), clone the wine row first so that logging another moment for it bumps
-   * both the per-wine `×N` badge and the total wine count — same as re-scanning.
-   * Leave false/undefined when the wine was just created by the scanner.
+   * Subset of `values.wineIds` that came from the cellar via the picker and
+   * therefore need cloning before linking (so the cellar `×N` and total wine
+   * count both go up — same semantics as re-scanning). Wines added by the
+   * scanner are already fresh rows, so they shouldn't be listed here.
    */
-  cloneWineFromExisting?: boolean
+  cloneFromExistingWineIds?: string[]
+}
+
+async function resolveWineIdsForLinking(
+  wineIds: string[],
+  cloneFromExistingWineIds: string[] | undefined,
+): Promise<string[]> {
+  // Maintains the form-ordered list of wineIds, but swaps in clones for any
+  // wineId flagged as "fromExisting". Each clone keeps clone-on-pick semantics
+  // (per-bottle row in the cellar).
+  if (!cloneFromExistingWineIds || cloneFromExistingWineIds.length === 0) {
+    return wineIds.slice()
+  }
+  const toClone = new Set(cloneFromExistingWineIds)
+  const out: string[] = []
+  for (const id of wineIds) {
+    if (toClone.has(id)) {
+      const clone = await cloneWineForReuse(id)
+      out.push(clone.id)
+    } else {
+      out.push(id)
+    }
+  }
+  return out
+}
+
+async function insertMomentWines(momentId: string, wineIds: string[]): Promise<void> {
+  if (wineIds.length === 0) return
+  const rows = wineIds.map((wine_id, position) => ({
+    moment_id: momentId,
+    wine_id,
+    position,
+  }))
+  const { error } = await supabase.from('moment_wines').insert(rows)
+  if (error) {
+    throw new Error(`[moment_wines.insert] ${error.message}`)
+  }
 }
 
 export async function createMoment(
@@ -195,17 +238,15 @@ export async function createMoment(
   if (userErr || !userData.user) throw userErr ?? new Error('No authenticated user')
   const userId = userData.user.id
 
-  let wineIdForMoment = values.wineId
-  if (options?.cloneWineFromExisting && values.wineId) {
-    const clone = await cloneWineForReuse(values.wineId)
-    wineIdForMoment = clone.id
-  }
+  const linkedWineIds = await resolveWineIdsForLinking(
+    values.wineIds,
+    options?.cloneFromExistingWineIds,
+  )
 
   const { data: moment, error: insertErr } = await supabase
     .from('moments')
     .insert({
       user_id: userId,
-      wine_id: wineIdForMoment,
       title: values.title,
       description: values.description ?? null,
       happened_at: values.happenedAt,
@@ -218,8 +259,10 @@ export async function createMoment(
     .single()
   if (insertErr || !moment) {
     const detail = insertErr?.message ?? 'unknown'
-    throw new Error(`[moments.insert] ${detail} (uid=${userId.slice(0, 8)} wine=${wineIdForMoment.slice(0, 8)})`)
+    throw new Error(`[moments.insert] ${detail} (uid=${userId.slice(0, 8)} wines=${linkedWineIds.length})`)
   }
+
+  await insertMomentWines(moment.id, linkedWineIds)
 
   let coverUrl: string | null = null
   for (let i = 0; i < values.photos.length; i++) {
@@ -263,12 +306,11 @@ export async function createMoment(
 
 export interface UpdateMomentOptions {
   /**
-   * Mirrors `CreateMomentOptions.cloneWineFromExisting`: when the user swaps the
-   * moment's wine to one that already exists in the cellar (picker selection), we
-   * clone that row so the cellar `×N` reflects an additional bottle. Scanner swaps
-   * leave this false because the scanner already inserted a fresh wine row.
+   * Mirrors `CreateMomentOptions.cloneFromExistingWineIds`: wineIds in the new
+   * list that came from the picker (already in the cellar) and therefore need
+   * cloning before being linked to the moment.
    */
-  cloneWineFromExisting?: boolean
+  cloneFromExistingWineIds?: string[]
 }
 
 export async function updateMoment(
@@ -280,12 +322,21 @@ export async function updateMoment(
   if (userErr || !userData.user) throw userErr ?? new Error('No authenticated user')
   const userId = userData.user.id
 
-  // Snapshot the previous wine_id so we can adjust the cellar count if the user
-  // swaps wines. We re-query here instead of trusting form state because the
-  // form's wineId is the *new* selection.
+  // Snapshot the previous wine link set so we can diff and clean up orphans.
+  const { data: existingLinks, error: existingLinksErr } = await supabase
+    .from('moment_wines')
+    .select('wine_id')
+    .eq('moment_id', id)
+  if (existingLinksErr) {
+    throw new Error(`[moment_wines.fetch] ${existingLinksErr.message}`)
+  }
+  const previousWineIds = (existingLinks ?? []).map((r) => r.wine_id)
+
+  // Validate that the parent moment exists and is owned by us before we mutate
+  // anything (cheap UX guard; RLS would block writes anyway).
   const { data: existingMoment, error: existingMomentErr } = await supabase
     .from('moments')
-    .select('wine_id')
+    .select('id')
     .eq('id', id)
     .eq('user_id', userId)
     .single()
@@ -293,16 +344,27 @@ export async function updateMoment(
     const detail = existingMomentErr?.message ?? 'moment not found'
     throw new Error(`[moments.fetch] ${detail}`)
   }
-  const previousWineId = existingMoment.wine_id
 
-  // If swapping to another existing wine, clone it so the cellar `×N` grows
-  // (matches the create-moment behaviour and what `cloneWineForReuse` documents).
-  let finalWineId = values.wineId
-  const wineChanged = previousWineId !== values.wineId
-  if (wineChanged && options?.cloneWineFromExisting && values.wineId) {
-    const clone = await cloneWineForReuse(values.wineId)
-    finalWineId = clone.id
+  // Clone any newly-picked existing wines before we rebuild the junction. We
+  // only clone wines that are present in `cloneFromExistingWineIds` AND were
+  // not already linked (re-saving an unchanged wine shouldn't bump `×N`).
+  const previousSet = new Set(previousWineIds)
+  const cloneRequest = (options?.cloneFromExistingWineIds ?? []).filter(
+    (wid) => !previousSet.has(wid),
+  )
+  const linkedWineIds = await resolveWineIdsForLinking(values.wineIds, cloneRequest)
+
+  // Replace the junction: drop all current rows then insert the new ordered
+  // set. Doing this in two statements is fine because RLS scopes the deletes
+  // to this moment and the insert is atomic from the client's POV.
+  const { error: clearErr } = await supabase
+    .from('moment_wines')
+    .delete()
+    .eq('moment_id', id)
+  if (clearErr) {
+    throw new Error(`[moment_wines.clear] ${clearErr.message}`)
   }
+  await insertMomentWines(id, linkedWineIds)
 
   const { data: existingPhotos, error: existingErr } = await supabase
     .from('moment_photos')
@@ -361,7 +423,6 @@ export async function updateMoment(
   const { data: updated, error: updErr } = await supabase
     .from('moments')
     .update({
-      wine_id: finalWineId,
       title: values.title,
       description: values.description ?? null,
       happened_at: values.happenedAt,
@@ -381,18 +442,18 @@ export async function updateMoment(
     throw new Error(`[moments.update] ${detail}`)
   }
 
-  // Decrement the cellar count for the previous wine: delete the row IFF no other
-  // moment of this user still references it. The FK is ON DELETE SET NULL
-  // (migration 0001), so an unchecked delete would silently null out a legitimate
-  // moment from before the clone-on-pick feature shipped.
-  if (wineChanged && previousWineId) {
+  // Orphan cleanup: any wineId that used to be linked but isn't anymore should
+  // be removed from the cellar IFF no other moment references it. Under the
+  // clone-on-pick policy that's typically every removed wine.
+  const newSet = new Set(linkedWineIds)
+  const removedWineIds = previousWineIds.filter((wid) => !newSet.has(wid))
+  for (const wineId of removedWineIds) {
     const { count, error: countErr } = await supabase
-      .from('moments')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('wine_id', previousWineId)
+      .from('moment_wines')
+      .select('moment_id', { count: 'exact', head: true })
+      .eq('wine_id', wineId)
     if (!countErr && (count ?? 0) === 0) {
-      await supabase.from('wines').delete().eq('id', previousWineId).eq('created_by', userId)
+      await supabase.from('wines').delete().eq('id', wineId).eq('created_by', userId)
     }
   }
 
@@ -403,6 +464,15 @@ export async function deleteMoment(id: string): Promise<void> {
   const { data: userData, error: userErr } = await supabase.auth.getUser()
   if (userErr || !userData.user) throw userErr ?? new Error('No authenticated user')
   const userId = userData.user.id
+
+  // Capture the wines linked to this moment first so we can decrement the
+  // cellar (clone-on-pick reserves a bottle per moment — when the moment
+  // disappears, those bottles should disappear too if nothing else holds them).
+  const { data: links } = await supabase
+    .from('moment_wines')
+    .select('wine_id')
+    .eq('moment_id', id)
+  const linkedWineIds = (links ?? []).map((r) => r.wine_id)
 
   const folder = `${userId}/${id}`
   const { data: storageFiles } = await supabase.storage.from(BUCKET).list(folder)
@@ -417,28 +487,57 @@ export async function deleteMoment(id: string): Promise<void> {
     .eq('id', id)
     .eq('user_id', userId)
   if (deleteErr) throw new Error(`[moments.delete] ${deleteErr.message}`)
+
+  // FK on `moment_wines` cascades to clean up the junction rows. After cascade
+  // each previously-linked wine row may now be orphaned — delete it if so.
+  for (const wineId of linkedWineIds) {
+    const { count, error: countErr } = await supabase
+      .from('moment_wines')
+      .select('moment_id', { count: 'exact', head: true })
+      .eq('wine_id', wineId)
+    if (!countErr && (count ?? 0) === 0) {
+      await supabase.from('wines').delete().eq('id', wineId).eq('created_by', userId)
+    }
+  }
 }
 
-export async function fetchMoments(): Promise<MomentWithWine[]> {
+type MomentListJoinRow = MomentRow & {
+  moment_wines: { position: number; wines: { id: string; name: string } | null }[] | null
+}
+
+export async function fetchMoments(): Promise<MomentWithWines[]> {
   const { data, error } = await supabase
     .from('moments')
-    .select('*, wines(name)')
+    .select('*, moment_wines(position, wines(id, name))')
     .order('happened_at', { ascending: false })
     .order('created_at', { ascending: false })
 
   if (error) throw error
 
-  return (data ?? []).map((row: any) => ({
-    ...row,
-    wine_name: row.wines?.name ?? null,
-    wines: undefined,
-  }))
+  return ((data ?? []) as MomentListJoinRow[]).map((row) => {
+    const links = row.moment_wines ?? []
+    const wines = links
+      .slice()
+      .sort((a, b) => a.position - b.position)
+      .map((l) => l.wines)
+      .filter((w): w is { id: string; name: string } => w != null)
+    const { moment_wines: _ignored, ...rest } = row
+    return { ...rest, wines }
+  })
+}
+
+type MomentStatsJoinRow = {
+  id: string
+  latitude: number
+  longitude: number
+  location_name: string
+  moment_wines: { wines: { country: string | null } | null }[] | null
 }
 
 /**
  * Aggregates everything the Moments tab needs in a single round-trip:
  * pin coordinates for the globe + totals for the stats row. Countries are
- * derived from the associated wine's `country` field.
+ * unioned across every wine tasted at every moment.
  */
 export async function fetchMomentStats(): Promise<MomentStats> {
   const empty: MomentStats = {
@@ -454,11 +553,11 @@ export async function fetchMomentStats(): Promise<MomentStats> {
 
   const { data: moments, error: momentsErr } = await supabase
     .from('moments')
-    .select('id, latitude, longitude, location_name, wines(country)')
+    .select('id, latitude, longitude, location_name, moment_wines(wines(country))')
     .eq('user_id', userId)
   if (momentsErr) throw momentsErr
 
-  const rows = moments ?? []
+  const rows = (moments ?? []) as MomentStatsJoinRow[]
   const pins: MomentPin[] = []
   const countries = new Set<string>()
   for (const row of rows) {
@@ -468,8 +567,10 @@ export async function fetchMomentStats(): Promise<MomentStats> {
       longitude: row.longitude,
       label: row.location_name,
     })
-    const joined = (row as { wines?: { country: string | null } | null }).wines
-    if (joined?.country) countries.add(joined.country)
+    for (const link of row.moment_wines ?? []) {
+      const country = link.wines?.country
+      if (country) countries.add(country)
+    }
   }
 
   const { count: winesCount, error: winesErr } = await supabase
@@ -486,23 +587,24 @@ export async function fetchMomentStats(): Promise<MomentStats> {
   }
 }
 
-export async function fetchMomentDetail(id: string): Promise<MomentDetail> {
-  const { data: moment, error: momentErr } = await supabase
-    .from('moments')
-    .select('*')
-    .eq('id', id)
-    .single()
-  if (momentErr || !moment) throw momentErr ?? new Error('Moment not found')
+type MomentDetailJoinRow = MomentRow & {
+  moment_wines: { position: number; wines: WineRow | null }[] | null
+}
 
-  let wine: WineRow | null = null
-  if (moment.wine_id) {
-    const { data } = await supabase
-      .from('wines')
-      .select('*')
-      .eq('id', moment.wine_id)
-      .single()
-    wine = data ?? null
-  }
+export async function fetchMomentDetail(id: string): Promise<MomentDetail> {
+  const { data: row, error: momentErr } = await supabase
+    .from('moments')
+    .select('*, moment_wines(position, wines(*))')
+    .eq('id', id)
+    .single<MomentDetailJoinRow>()
+  if (momentErr || !row) throw momentErr ?? new Error('Moment not found')
+
+  const { moment_wines: links, ...moment } = row
+  const wines = (links ?? [])
+    .slice()
+    .sort((a, b) => a.position - b.position)
+    .map((l) => l.wines)
+    .filter((w): w is WineRow => w != null)
 
   const { data: photos, error: photosErr } = await supabase
     .from('moment_photos')
@@ -511,5 +613,5 @@ export async function fetchMomentDetail(id: string): Promise<MomentDetail> {
     .order('position', { ascending: true })
   if (photosErr) throw photosErr
 
-  return { moment, wine, photos: photos ?? [] }
+  return { moment, wines, photos: photos ?? [] }
 }

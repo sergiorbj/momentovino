@@ -246,7 +246,7 @@ export function useMomentStats() {
 }
 
 /**
- * Fetches a single moment with its wine and photos.
+ * Fetches a single moment with all linked wines (ordered) and photos.
  */
 export function useMomentDetail(id: string) {
   const query = useQuery({
@@ -256,7 +256,7 @@ export function useMomentDetail(id: string) {
   })
   return {
     moment: query.data?.moment ?? null,
-    wine: query.data?.wine ?? null,
+    wines: query.data?.wines ?? [],
     photos: query.data?.photos ?? [],
     loading: query.isLoading,
   } as const

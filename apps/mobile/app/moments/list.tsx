@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
 import { useMoments } from '../../features/moments/hooks'
-import type { MomentWithWine } from '../../features/moments/api'
+import type { MomentWithWines } from '../../features/moments/api'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -41,7 +41,10 @@ function Stars({ rating }: { rating: number }) {
   )
 }
 
-function MomentCard({ item }: { item: MomentWithWine }) {
+function MomentCard({ item }: { item: MomentWithWines }) {
+  const firstWine = item.wines[0]
+  const extraWines = item.wines.length - 1
+
   return (
     <TouchableOpacity
       style={styles.card}
@@ -64,14 +67,21 @@ function MomentCard({ item }: { item: MomentWithWine }) {
         <Text style={styles.cardMeta} numberOfLines={1}>
           {item.location_name} · {formatDate(item.happened_at)}
         </Text>
-        {item.wine_name && (
-          <View style={styles.wineChip}>
-            <Image
-              source={require('../../assets/glass.png')}
-              style={styles.wineChipIcon}
-              resizeMode="contain"
-            />
-            <Text style={styles.wineChipText} numberOfLines={1}>{item.wine_name}</Text>
+        {firstWine && (
+          <View style={styles.wineChipRow}>
+            <View style={styles.wineChip}>
+              <Image
+                source={require('../../assets/glass.png')}
+                style={styles.wineChipIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.wineChipText} numberOfLines={1}>{firstWine.name}</Text>
+            </View>
+            {extraWines > 0 && (
+              <View style={styles.wineExtraChip}>
+                <Text style={styles.wineExtraChipText}>+{extraWines}</Text>
+              </View>
+            )}
           </View>
         )}
         {item.rating != null && <Stars rating={item.rating} />}
@@ -197,14 +207,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: SUBTLE,
   },
+  wineChipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
   wineChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flexShrink: 1,
   },
   wineChipText: {
     fontFamily: 'DMSans_500Medium',
     fontSize: 12,
+    color: WINE,
+    flexShrink: 1,
+  },
+  wineExtraChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: '#FDF2F4',
+  },
+  wineExtraChipText: {
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 11,
     color: WINE,
   },
   stars: { flexDirection: 'row', gap: 2 },

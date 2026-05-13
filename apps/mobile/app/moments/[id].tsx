@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 
 import { useDeleteMoment, useMomentDetail } from '../../features/moments/hooks'
-import { useTranslation } from '../../features/i18n/hooks'
+import { useTranslation, wineTypeLabel } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -54,7 +54,7 @@ function Stars({ rating }: { rating: number }) {
 export default function MomentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { t } = useTranslation()
-  const { moment, wine, photos, loading } = useMomentDetail(id ?? '')
+  const { moment, wines, photos, loading } = useMomentDetail(id ?? '')
   const { remove, deleting } = useDeleteMoment(id ?? '')
 
   const confirmDelete = () => {
@@ -151,21 +151,30 @@ export default function MomentDetailScreen() {
             </View>
           )}
 
-          {wine && (
-            <View style={styles.wineCard}>
-              <View style={styles.wineHeader}>
-                <Image
-                  source={require('../../assets/glass.png')}
-                  style={styles.wineHeaderIcon}
-                  resizeMode="contain"
-                />
-                <Text style={styles.wineName}>{wine.name}</Text>
-              </View>
-              <View style={styles.wineMeta}>
-                {wine.producer && <Chip label={wine.producer} />}
-                {wine.vintage && <Chip label={String(wine.vintage)} />}
-                {wine.region && <Chip label={wine.region} />}
-                {wine.type && <Chip label={wine.type} />}
+          {wines.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionLabel}>
+                {wines.length === 1 ? 'Wine' : `Wines · ${wines.length}`}
+              </Text>
+              <View style={styles.wineCardList}>
+                {wines.map((wine) => (
+                  <View key={wine.id} style={styles.wineCard}>
+                    <View style={styles.wineHeader}>
+                      <Image
+                        source={require('../../assets/glass.png')}
+                        style={styles.wineHeaderIcon}
+                        resizeMode="contain"
+                      />
+                      <Text style={styles.wineName}>{wine.name}</Text>
+                    </View>
+                    <View style={styles.wineMeta}>
+                      {wine.producer && <Chip label={wine.producer} />}
+                      {wine.vintage && <Chip label={String(wine.vintage)} />}
+                      {wine.region && <Chip label={wine.region} />}
+                      {wine.type && <Chip label={wineTypeLabel(wine.type, t)} />}
+                    </View>
+                  </View>
+                ))}
               </View>
             </View>
           )}
@@ -276,6 +285,7 @@ const styles = StyleSheet.create({
     color: SUBTLE,
     marginLeft: 6,
   },
+  wineCardList: { gap: 10 },
   wineCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,

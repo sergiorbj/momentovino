@@ -10,7 +10,7 @@ export interface MomentPhoto {
 export interface Moment {
   id: string
   userId: string
-  wineId: string | null
+  wineIds: string[]
   title: string
   description: string | null
   happenedAt: string
