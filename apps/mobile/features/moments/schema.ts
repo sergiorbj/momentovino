@@ -34,7 +34,7 @@ export const momentFormSchema = z.object({
   longitude: z.number().min(-180).max(180),
   wineIds: z.array(z.string().uuid()).min(1, 'Add at least one wine').max(8),
   rating: z.number().int().min(1).max(5).optional(),
-  photos: z.array(photoInputSchema).min(1, 'Add at least one photo').max(3),
+  photos: z.array(photoInputSchema).max(3),
 })
 
 export type MomentFormValues = z.infer<typeof momentFormSchema>

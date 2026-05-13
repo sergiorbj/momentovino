@@ -29,6 +29,11 @@ import { momentFormSchema, type MomentFormValues, type PhotoInput } from '../../
 import { searchLocations, type LocationResult } from '../../features/moments/location-api'
 import { useCurrentLocation } from '../../features/moments/use-current-location'
 import { useTranslation } from '../../features/i18n/hooks'
+import {
+  clearNewMomentDraft,
+  readNewMomentDraft,
+  saveNewMomentDraft,
+} from '../../features/moments/moment-draft'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -54,28 +59,38 @@ export default function NewMomentScreen() {
   const qc = useQueryClient()
   const { t } = useTranslation()
   const [submitting, setSubmitting] = useState(false)
+
+  // Saved draft (if any) takes precedence over `params` and defaults — this is
+  // what survives an unmount/remount when the user detours through the scanner
+  // (which pushes /(tabs)/scanner over the moments stack).
+  const initialDraft = useRef(readNewMomentDraft()).current
+
   // Source of truth for the wines attached to this moment. Stays in sync with
   // the form's `wineIds` via `syncWineIds`. Each entry remembers its origin so
   // submit can flag the picker-selected ones for cloning.
   const [wineEntries, setWineEntries] = useState<WineEntry[]>(
-    params.wineId && params.wineName
-      ? [{ id: params.wineId, label: params.wineName, fromExisting: false }]
-      : [],
+    initialDraft
+      ? initialDraft.wineEntries
+      : params.wineId && params.wineName
+        ? [{ id: params.wineId, label: params.wineName, fromExisting: false }]
+        : [],
   )
 
-  const { control, handleSubmit, setValue, watch, formState } = useForm<MomentFormValues>({
+  const { control, handleSubmit, setValue, watch, getValues, formState } = useForm<MomentFormValues>({
     resolver: zodResolver(momentFormSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      happenedAt: todayIso(),
-      locationName: '',
-      latitude: undefined as unknown as number,
-      longitude: undefined as unknown as number,
-      wineIds: params.wineId ? [params.wineId] : [],
-      rating: undefined,
-      photos: [],
-    },
+    defaultValues: initialDraft
+      ? initialDraft.values
+      : {
+          title: '',
+          description: '',
+          happenedAt: todayIso(),
+          locationName: '',
+          latitude: undefined as unknown as number,
+          longitude: undefined as unknown as number,
+          wineIds: params.wineId ? [params.wineId] : [],
+          rating: undefined,
+          photos: [],
+        },
   })
 
   const syncWineIds = useCallback(
@@ -161,11 +176,14 @@ export default function NewMomentScreen() {
   const [locationResults, setLocationResults] = useState<LocationResult[]>([])
   const [locationLoading, setLocationLoading] = useState(false)
   const [locationPickerOpen, setLocationPickerOpen] = useState(false)
-  const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(
+    initialDraft?.selectedLocation ?? null,
+  )
   const locationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Auto-fill from device GPS on first open. The user can tap the field to
-  // override via the existing autocomplete search.
+  // override via the existing autocomplete search. Skipped when a draft is
+  // restored so we don't overwrite the user's previous pick.
   const { status: gpsStatus, result: gpsResult } = useCurrentLocation()
   useEffect(() => {
     if (gpsStatus !== 'ready' || !gpsResult) return
@@ -175,6 +193,25 @@ export default function NewMomentScreen() {
     setValue('latitude', gpsResult.latitude, { shouldValidate: true })
     setValue('longitude', gpsResult.longitude, { shouldValidate: true })
   }, [gpsStatus, gpsResult, selectedLocation, locationPickerOpen, setValue])
+
+  // Persist every form change to the module-level draft. Subscribes to RHF's
+  // change stream so each keystroke/toggle updates the draft, and re-subscribes
+  // whenever wineEntries/selectedLocation change so the closure stays fresh.
+  useEffect(() => {
+    saveNewMomentDraft({
+      values: getValues(),
+      wineEntries,
+      selectedLocation,
+    })
+    const sub = watch((vals) => {
+      saveNewMomentDraft({
+        values: vals as MomentFormValues,
+        wineEntries,
+        selectedLocation,
+      })
+    })
+    return () => sub.unsubscribe()
+  }, [watch, getValues, wineEntries, selectedLocation])
 
   const locationFinding = gpsStatus === 'requesting' || gpsStatus === 'fetching'
   const locationPlaceholder = locationFinding
@@ -258,6 +295,11 @@ export default function NewMomentScreen() {
     setValue('photos', next, { shouldValidate: true })
   }
 
+  const close = useCallback(() => {
+    clearNewMomentDraft()
+    router.back()
+  }, [])
+
   const onSubmit = async (values: MomentFormValues) => {
     try {
       setSubmitting(true)
@@ -269,7 +311,10 @@ export default function NewMomentScreen() {
       qc.invalidateQueries({ queryKey: ['wines'] })
       qc.invalidateQueries({ queryKey: queryKeys.profile })
       qc.invalidateQueries({ queryKey: queryKeys.family })
-      router.back()
+      clearNewMomentDraft()
+      // Land on the moments tab. The user may have taken a detour through the
+      // scanner mid-creation, so the back stack isn't guaranteed to point home.
+      router.replace('/(tabs)/moments')
     } catch (err) {
       console.error(err)
       Alert.alert('Could not save moment', err instanceof Error ? err.message : 'Unknown error')
@@ -282,7 +327,7 @@ export default function NewMomentScreen() {
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+          <TouchableOpacity onPress={close} style={styles.iconBtn}>
             <Ionicons name="close" size={22} color={WINE} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>New Moment</Text>

@@ -29,6 +29,11 @@ import {
 } from '../../../features/moments/schema'
 import { searchLocations, type LocationResult } from '../../../features/moments/location-api'
 import { takePendingWinePicks } from '../../../features/moments/wine-picker-handoff'
+import {
+  clearEditMomentDraft,
+  readEditMomentDraft,
+  saveEditMomentDraft,
+} from '../../../features/moments/moment-draft'
 import { useTranslation } from '../../../features/i18n/hooks'
 
 const WINE = '#722F37'
@@ -54,7 +59,7 @@ export default function EditMomentScreen() {
   const { moment, wines, photos: existingPhotos, loading } = useMomentDetail(momentId)
   const { submit, submitting } = useUpdateMoment(momentId)
 
-  const { control, handleSubmit, setValue, watch, reset, formState } = useForm<MomentFormValues>({
+  const { control, handleSubmit, setValue, watch, reset, getValues, formState } = useForm<MomentFormValues>({
     resolver: zodResolver(momentFormSchema),
     defaultValues: {
       title: '',
@@ -87,6 +92,17 @@ export default function EditMomentScreen() {
 
   useEffect(() => {
     if (!moment || hydrated) return
+    // Saved draft (if any) takes precedence over fresh server data, so a
+    // scanner/picker detour mid-edit doesn't wipe the user's in-progress
+    // changes when the screen remounts.
+    const draft = readEditMomentDraft(momentId)
+    if (draft) {
+      reset(draft.values)
+      setSelectedLocation(draft.selectedLocation)
+      setWineEntries(draft.wineEntries)
+      setHydrated(true)
+      return
+    }
     const hydratedPhotos: PhotoInput[] = existingPhotos.map((p) => ({
       uri: p.url,
       isCover: p.is_cover,
@@ -110,10 +126,34 @@ export default function EditMomentScreen() {
     setSelectedLocation(moment.location_name)
     setWineEntries(initialEntries)
     setHydrated(true)
-  }, [moment, existingPhotos, hydrated, reset, wines])
+  }, [moment, existingPhotos, hydrated, reset, wines, momentId])
+
+  // Persist every form change to the per-momentId draft so a remount can
+  // restore it. Only starts saving after the initial hydration so we never
+  // overwrite a real draft with the empty default values.
+  useEffect(() => {
+    if (!hydrated) return
+    saveEditMomentDraft(momentId, {
+      values: getValues(),
+      wineEntries,
+      selectedLocation,
+    })
+    const sub = watch((vals) => {
+      saveEditMomentDraft(momentId, {
+        values: vals as MomentFormValues,
+        wineEntries,
+        selectedLocation,
+      })
+    })
+    return () => sub.unsubscribe()
+  }, [hydrated, momentId, watch, getValues, wineEntries, selectedLocation])
 
   useFocusEffect(
     useCallback(() => {
+      // Wait until hydration finishes — otherwise an early focus run could
+      // drain the scanner's wine pick into an empty list, which the later
+      // hydration would then overwrite. Re-runs once `hydrated` flips.
+      if (!hydrated) return
       const picks = takePendingWinePicks()
       if (picks.length === 0) return
       setWineEntries((current) => {
@@ -137,7 +177,7 @@ export default function EditMomentScreen() {
         )
         return next
       })
-    }, [setValue]),
+    }, [hydrated, setValue]),
   )
 
   const removeWine = useCallback(
@@ -263,10 +303,16 @@ export default function EditMomentScreen() {
     setValue('photos', next, { shouldValidate: true })
   }
 
+  const close = useCallback(() => {
+    clearEditMomentDraft(momentId)
+    router.back()
+  }, [momentId])
+
   const onSubmit = (values: MomentFormValues) => {
     const cloneFromExistingWineIds = wineEntries
       .filter((e) => e.fromExisting)
       .map((e) => e.id)
+    clearEditMomentDraft(momentId)
     void submit(values, { cloneFromExistingWineIds })
   }
 
@@ -282,7 +328,7 @@ export default function EditMomentScreen() {
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+          <TouchableOpacity onPress={close} style={styles.iconBtn}>
             <Ionicons name="close" size={22} color={WINE} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t('moments.edit.title')}</Text>
