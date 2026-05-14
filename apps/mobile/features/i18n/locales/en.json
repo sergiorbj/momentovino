@@ -14,7 +14,7 @@
   },
   "login": {
     "title": "Welcome back.",
-    "subtitle": "Sign in to pick up your journal — wines, moments, and places, right where you left them.",
+    "subtitle": "Sign in to pick up your journal: wines, moments, and places, right where you left them.",
     "continueEmail": "Continue with email",
     "continueApple": "Continue with Apple",
     "continueGoogle": "Continue with Google",
@@ -119,7 +119,7 @@
     },
     "goal": {
       "headline": "What brings you to MomentoVino?",
-      "subtitle": "Pick all that apply — we'll tailor your journal around them.",
+      "subtitle": "Pick all that apply. We'll tailor your journal around them.",
       "continue": "Continue",
       "options": {
         "remember": "Remember bottles I've loved",
@@ -130,7 +130,7 @@
     },
     "pain": {
       "headline": "Which of these sounds like you?",
-      "subtitle": "Pick all that apply — no wrong answers.",
+      "subtitle": "Pick all that apply. No wrong answers.",
       "continue": "Continue",
       "options": {
         "forget_names": "I forget the name of wines I loved",
@@ -143,9 +143,9 @@
       "headline": "Let's add your first bottle.",
       "subtitle": "The journal starts with a single moment. Three quick steps and your atlas has its first pin.",
       "step1Title": "Scan the label",
-      "step1Body": "Snap or pick the bottle's label — we'll fill in the producer, region and notes for you.",
+      "step1Body": "Snap or pick the bottle's label. We'll fill in the producer, region and notes for you.",
       "step2Title": "Write the moment",
-      "step2Body": "Add a title, the place, the date — even a photo of the night, if you have one.",
+      "step2Body": "Add a title, the place, the date, even a photo of the night, if you have one.",
       "step3Title": "See it on your atlas",
       "step3Body": "Your bottle gets pinned to your personal wine map. The first of many.",
       "cta": "Scan your first bottle"
@@ -219,7 +219,7 @@
     "atlas": {
       "pinning": "Pinning your first memory…",
       "headline": "Your first memory is on your atlas.",
-      "subtitle": "One bottle, one place — the start of your journal.",
+      "subtitle": "One bottle, one place. The start of your journal.",
       "hint": "Tap your moment later to add photos, edit details, or share it with family.",
       "cta": "Save my journal",
       "shareMessage": "I just started my wine atlas on MomentoVino 🍷"
@@ -241,7 +241,7 @@
       "perYear": "per year",
       "badge": "BEST VALUE · SAVE {{percent}}%",
       "ctaStarting": "Starting…",
-      "ctaSubscribeYearly": "Subscribe — {{price}}/year",
+      "ctaSubscribeYearly": "Subscribe for {{price}}/year",
       "ctaTrialMonthly": "Start my 3-day free trial",
       "reassureYearly": "Billed annually. Cancel renewal anytime in Settings.",
       "reassureMonthly": "Free for 3 days, then {{price}}/month. Cancel anytime to avoid being charged.",
@@ -261,7 +261,7 @@
     },
     "saveAccount": {
       "headline": "Save your wine journal.",
-      "subtitle": "Your subscription is yours — pick how you want to sign in so we can keep your moments safe across every device.",
+      "subtitle": "Your subscription is yours. Pick how you want to sign in so we can keep your moments safe across every device.",
       "continueEmail": "Continue with email",
       "continueApple": "Continue with Apple",
       "continueGoogle": "Continue with Google",
@@ -275,7 +275,7 @@
       "saving": "Saving…",
       "saveJournal": "Save my journal",
       "legalEmail": "By creating an account you agree to our Terms and Privacy Policy.",
-      "legalProviders": "By continuing you agree to our Terms and Privacy Policy. Your subscription is already active on this Apple ID — sign in to attach it to your account.",
+      "legalProviders": "By continuing you agree to our Terms and Privacy Policy. Your subscription is already active on this Apple ID. Sign in to attach it to your account.",
       "errors": {
         "setupFailedTitle": "Could not finish setup",
         "setupFailedFallback": "Try again in a moment.",
@@ -284,10 +284,10 @@
         "googleUnavailable": "Google sign-in unavailable",
         "googleFailed": "Google sign-in failed",
         "checkInboxTitle": "Check your inbox",
-        "checkInboxBody": "We sent a confirmation link to {{email}}. Tap it to verify your email — your subscription is already saved on this account.",
+        "checkInboxBody": "We sent a confirmation link to {{email}}. Tap it to verify your email. Your subscription is already saved on this account.",
         "checkInboxContinue": "Continue",
         "alreadyExistsTitle": "You already have an account",
-        "alreadyExistsBody": "This email is already registered. Sign in instead — your purchase will be transferred to that account on this Apple ID.",
+        "alreadyExistsBody": "This email is already registered. Sign in instead. Your purchase will be transferred to that account on this Apple ID.",
         "alreadyExistsCancel": "Cancel",
         "alreadyExistsSignIn": "Sign in",
         "createFailedTitle": "Could not create account",

@@ -202,7 +202,7 @@ def _normalize_username_search_query(q_raw: str) -> tuple[Optional[str], Optiona
     if " " in q or "\t" in q or "\n" in q:
         return None, "Username cannot contain spaces"
     if "@" in q:
-        return None, "Username only — no @ or email addresses"
+        return None, "Username only. No @ or email addresses"
     if len(q) > 32:
         return None, "Username too long"
     if not re.match(r"^[a-z0-9._-]+$", q):
@@ -909,7 +909,7 @@ class handler(BaseHTTPRequestHandler):
 
             fam, _ = _resolve_family(url, key, uid)
             if not fam:
-                send_json(self, 404, {"error": "No family found — create a family first"})
+                send_json(self, 404, {"error": "No family found. Create a family first"})
                 return
             fid = fam["id"]
             if not _is_admin(url, key, uid, fid):
@@ -1002,7 +1002,7 @@ class handler(BaseHTTPRequestHandler):
 
             fam, _ = _resolve_family(url, key, uid)
             if not fam:
-                send_json(self, 404, {"error": "No family found — create a family first"})
+                send_json(self, 404, {"error": "No family found. Create a family first"})
                 return
             fid = fam["id"]
             if not _is_admin(url, key, uid, fid):

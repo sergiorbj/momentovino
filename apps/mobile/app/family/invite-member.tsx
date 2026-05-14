@@ -97,7 +97,7 @@ export default function FamilyInviteMemberScreen() {
       setSearchFinished(true)
       setSearching(false)
       setSearchFormatError(
-        'Username only: letters, numbers, dot, underscore, hyphen. No @ and no email — use invite by email below for that.',
+        'Username only: letters, numbers, dot, underscore, hyphen. No @ and no email. Use invite by email below for that.',
       )
       return
     }

@@ -743,7 +743,7 @@ export default function FamilyScreen() {
                 <View style={styles.membersList}>
                   {dash!.pendingInvitations.map((inv) => (
                     <View key={inv.id} style={styles.pendingRow}>
-                      <Text style={styles.memberName}>{inv.display_name ?? inv.email ?? '—'}</Text>
+                      <Text style={styles.memberName}>{inv.display_name ?? inv.email ?? '-'}</Text>
                       <Text style={styles.memberMeta}>Expires {new Date(inv.expires_at).toLocaleDateString()}</Text>
                     </View>
                   ))}

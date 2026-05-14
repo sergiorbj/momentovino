@@ -14,7 +14,7 @@
   },
   "login": {
     "title": "Bem-vindo(a) de volta.",
-    "subtitle": "Entre para retomar seu diário — vinhos, momentos e lugares, exatamente onde você parou.",
+    "subtitle": "Entre para retomar seu diário: vinhos, momentos e lugares, exatamente onde você parou.",
     "continueEmail": "Continuar com email",
     "continueApple": "Continuar com a Apple",
     "continueGoogle": "Continuar com o Google",
@@ -119,7 +119,7 @@
     },
     "goal": {
       "headline": "O que te traz ao MomentoVino?",
-      "subtitle": "Marque tudo que se aplica — vamos adaptar seu diário a isso.",
+      "subtitle": "Marque tudo que se aplica. Vamos adaptar seu diário a isso.",
       "continue": "Continuar",
       "options": {
         "remember": "Lembrar dos vinhos que amei",
@@ -130,7 +130,7 @@
     },
     "pain": {
       "headline": "Qual destas parece você?",
-      "subtitle": "Marque tudo que se aplica — não há resposta errada.",
+      "subtitle": "Marque tudo que se aplica. Não há resposta errada.",
       "continue": "Continuar",
       "options": {
         "forget_names": "Esqueço o nome dos vinhos que amei",
@@ -143,9 +143,9 @@
       "headline": "Vamos adicionar sua primeira garrafa.",
       "subtitle": "O diário começa com um único momento. Três passos rápidos e seu atlas ganha o primeiro pin.",
       "step1Title": "Escaneie o rótulo",
-      "step1Body": "Tire uma foto ou escolha o rótulo da garrafa — vamos preencher produtor, região e notas para você.",
+      "step1Body": "Tire uma foto ou escolha o rótulo da garrafa. Vamos preencher produtor, região e notas para você.",
       "step2Title": "Escreva o momento",
-      "step2Body": "Adicione um título, o lugar, a data — até uma foto da noite, se tiver.",
+      "step2Body": "Adicione um título, o lugar, a data, até uma foto da noite, se tiver.",
       "step3Title": "Veja no seu atlas",
       "step3Body": "Sua garrafa é fixada no seu mapa pessoal de vinhos. A primeira de muitas.",
       "cta": "Escanear minha primeira garrafa"
@@ -219,7 +219,7 @@
     "atlas": {
       "pinning": "Fixando sua primeira memória…",
       "headline": "Sua primeira memória está no seu atlas.",
-      "subtitle": "Uma garrafa, um lugar — o começo do seu diário.",
+      "subtitle": "Uma garrafa, um lugar. O começo do seu diário.",
       "hint": "Toque no momento depois para adicionar fotos, editar detalhes ou compartilhar com a família.",
       "cta": "Salvar meu diário",
       "shareMessage": "Acabei de começar meu atlas de vinhos no MomentoVino 🍷"
@@ -241,7 +241,7 @@
       "perYear": "por ano",
       "badge": "MELHOR OFERTA · ECONOMIZE {{percent}}%",
       "ctaStarting": "Iniciando…",
-      "ctaSubscribeYearly": "Assinar — {{price}}/ano",
+      "ctaSubscribeYearly": "Assinar por {{price}}/ano",
       "ctaTrialMonthly": "Começar 3 dias grátis",
       "reassureYearly": "Cobrança anual. Cancele a renovação a qualquer momento nas Configurações.",
       "reassureMonthly": "3 dias grátis, depois {{price}}/mês. Cancele a qualquer momento para não ser cobrado.",
@@ -261,7 +261,7 @@
     },
     "saveAccount": {
       "headline": "Salve seu diário de vinhos.",
-      "subtitle": "Sua assinatura é sua — escolha como quer entrar para mantermos seus momentos seguros em todos os dispositivos.",
+      "subtitle": "Sua assinatura é sua. Escolha como quer entrar para mantermos seus momentos seguros em todos os dispositivos.",
       "continueEmail": "Continuar com email",
       "continueApple": "Continuar com a Apple",
       "continueGoogle": "Continuar com o Google",
@@ -275,7 +275,7 @@
       "saving": "Salvando…",
       "saveJournal": "Salvar meu diário",
       "legalEmail": "Ao criar uma conta você concorda com nossos Termos e Política de Privacidade.",
-      "legalProviders": "Ao continuar você concorda com nossos Termos e Política de Privacidade. Sua assinatura já está ativa neste Apple ID — entre para vinculá-la à sua conta.",
+      "legalProviders": "Ao continuar você concorda com nossos Termos e Política de Privacidade. Sua assinatura já está ativa neste Apple ID. Entre para vinculá-la à sua conta.",
       "errors": {
         "setupFailedTitle": "Não foi possível concluir a configuração",
         "setupFailedFallback": "Tente novamente em instantes.",
@@ -284,10 +284,10 @@
         "googleUnavailable": "Login com Google indisponível",
         "googleFailed": "Falha no login com Google",
         "checkInboxTitle": "Verifique sua caixa de entrada",
-        "checkInboxBody": "Enviamos um link de confirmação para {{email}}. Toque nele para verificar seu email — sua assinatura já está salva nesta conta.",
+        "checkInboxBody": "Enviamos um link de confirmação para {{email}}. Toque nele para verificar seu email. Sua assinatura já está salva nesta conta.",
         "checkInboxContinue": "Continuar",
         "alreadyExistsTitle": "Você já tem uma conta",
-        "alreadyExistsBody": "Este email já está cadastrado. Entre nela — sua compra será transferida para essa conta neste Apple ID.",
+        "alreadyExistsBody": "Este email já está cadastrado. Entre nela. Sua compra será transferida para essa conta neste Apple ID.",
         "alreadyExistsCancel": "Cancelar",
         "alreadyExistsSignIn": "Entrar",
         "createFailedTitle": "Não foi possível criar a conta",

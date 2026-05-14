@@ -208,7 +208,7 @@ export default function ProfileScreen() {
                         ) : null}
                         {entData.inBillingRetry ? (
                           <Text style={styles.subscriptionWarn}>
-                            Billing issue — update payment in Settings ▸ Subscriptions.
+                            Billing issue. Update payment in Settings ▸ Subscriptions.
                           </Text>
                         ) : null}
                       </>

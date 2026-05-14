@@ -14,7 +14,7 @@
   },
   "login": {
     "title": "Bentornato.",
-    "subtitle": "Accedi per riprendere il tuo diario — vini, momenti e luoghi, proprio dove li hai lasciati.",
+    "subtitle": "Accedi per riprendere il tuo diario: vini, momenti e luoghi, proprio dove li hai lasciati.",
     "continueEmail": "Continua con email",
     "continueApple": "Continua con Apple",
     "continueGoogle": "Continua con Google",
@@ -119,7 +119,7 @@
     },
     "goal": {
       "headline": "Cosa ti porta su MomentoVino?",
-      "subtitle": "Seleziona tutto ciò che si applica — adatteremo il tuo diario a te.",
+      "subtitle": "Seleziona tutto ciò che si applica. Adatteremo il tuo diario a te.",
       "continue": "Continua",
       "options": {
         "remember": "Ricordare bottiglie che ho amato",
@@ -130,7 +130,7 @@
     },
     "pain": {
       "headline": "Quale di queste ti rispecchia?",
-      "subtitle": "Seleziona tutto ciò che si applica — non ci sono risposte sbagliate.",
+      "subtitle": "Seleziona tutto ciò che si applica. Non ci sono risposte sbagliate.",
       "continue": "Continua",
       "options": {
         "forget_names": "Dimentico il nome dei vini che ho amato",
@@ -143,9 +143,9 @@
       "headline": "Aggiungiamo la tua prima bottiglia.",
       "subtitle": "Il diario inizia con un singolo momento. Tre passi rapidi e il tuo atlante ha il primo segnaposto.",
       "step1Title": "Scannerizza l'etichetta",
-      "step1Body": "Scatta una foto o scegli l'etichetta della bottiglia — compileremo produttore, regione e note per te.",
+      "step1Body": "Scatta una foto o scegli l'etichetta della bottiglia. Compileremo produttore, regione e note per te.",
       "step2Title": "Scrivi il momento",
-      "step2Body": "Aggiungi un titolo, il luogo, la data — anche una foto della serata, se l'hai.",
+      "step2Body": "Aggiungi un titolo, il luogo, la data, anche una foto della serata, se l'hai.",
       "step3Title": "Vedila sul tuo atlante",
       "step3Body": "La tua bottiglia viene fissata sulla tua mappa personale del vino. La prima di molte.",
       "cta": "Scannerizza la mia prima bottiglia"
@@ -219,7 +219,7 @@
     "atlas": {
       "pinning": "Sto fissando il tuo primo ricordo…",
       "headline": "Il tuo primo ricordo è sul tuo atlante.",
-      "subtitle": "Una bottiglia, un luogo — l'inizio del tuo diario.",
+      "subtitle": "Una bottiglia, un luogo. L'inizio del tuo diario.",
       "hint": "Tocca il momento più tardi per aggiungere foto, modificare dettagli o condividerlo con la famiglia.",
       "cta": "Salva il mio diario",
       "shareMessage": "Ho appena iniziato il mio atlante del vino su MomentoVino 🍷"
@@ -241,7 +241,7 @@
       "perYear": "all'anno",
       "badge": "MIGLIORE OFFERTA · RISPARMIA {{percent}}%",
       "ctaStarting": "Avvio…",
-      "ctaSubscribeYearly": "Abbonati — {{price}}/anno",
+      "ctaSubscribeYearly": "Abbonati per {{price}}/anno",
       "ctaTrialMonthly": "Inizia 3 giorni gratis",
       "reassureYearly": "Fatturazione annuale. Annulla il rinnovo quando vuoi nelle Impostazioni.",
       "reassureMonthly": "3 giorni gratis, poi {{price}}/mese. Annulla in qualsiasi momento per non essere addebitato.",
@@ -261,7 +261,7 @@
     },
     "saveAccount": {
       "headline": "Salva il tuo diario del vino.",
-      "subtitle": "Il tuo abbonamento è tuo — scegli come accedere per mantenere i tuoi momenti al sicuro su tutti i dispositivi.",
+      "subtitle": "Il tuo abbonamento è tuo. Scegli come accedere per mantenere i tuoi momenti al sicuro su tutti i dispositivi.",
       "continueEmail": "Continua con email",
       "continueApple": "Continua con Apple",
       "continueGoogle": "Continua con Google",
@@ -275,7 +275,7 @@
       "saving": "Salvataggio…",
       "saveJournal": "Salva il mio diario",
       "legalEmail": "Creando un account accetti i nostri Termini e l'Informativa sulla Privacy.",
-      "legalProviders": "Continuando accetti i nostri Termini e l'Informativa sulla Privacy. Il tuo abbonamento è già attivo su questo Apple ID — accedi per collegarlo al tuo account.",
+      "legalProviders": "Continuando accetti i nostri Termini e l'Informativa sulla Privacy. Il tuo abbonamento è già attivo su questo Apple ID. Accedi per collegarlo al tuo account.",
       "errors": {
         "setupFailedTitle": "Impossibile completare la configurazione",
         "setupFailedFallback": "Riprova tra un momento.",
@@ -284,10 +284,10 @@
         "googleUnavailable": "Accesso con Google non disponibile",
         "googleFailed": "Errore nell'accesso con Google",
         "checkInboxTitle": "Controlla la posta",
-        "checkInboxBody": "Abbiamo inviato un link di conferma a {{email}}. Toccalo per verificare l'email — il tuo abbonamento è già salvato su questo account.",
+        "checkInboxBody": "Abbiamo inviato un link di conferma a {{email}}. Toccalo per verificare l'email. Il tuo abbonamento è già salvato su questo account.",
         "checkInboxContinue": "Continua",
         "alreadyExistsTitle": "Hai già un account",
-        "alreadyExistsBody": "Questa email è già registrata. Accedi — il tuo acquisto sarà trasferito su quell'account in questo Apple ID.",
+        "alreadyExistsBody": "Questa email è già registrata. Accedi. Il tuo acquisto sarà trasferito su quell'account in questo Apple ID.",
         "alreadyExistsCancel": "Annulla",
         "alreadyExistsSignIn": "Accedi",
         "createFailedTitle": "Impossibile creare l'account",
