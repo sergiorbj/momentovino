@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Switch,
   Image,
   ActivityIndicator,
   Alert,
@@ -19,7 +18,7 @@ import { router } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { useEntitlement } from '../../features/entitlement/hooks'
-import { useProfile, useUpdateSettings } from '../../features/profile/hooks'
+import { useProfile } from '../../features/profile/hooks'
 import {
   hasProEntitlement,
   restorePurchases,
@@ -39,8 +38,6 @@ export default function ProfileScreen() {
   const { data, isLoading } = useProfile()
   const profile = data?.profile ?? null
   const loading = isLoading && !data
-
-  const updateSettingsMutation = useUpdateSettings()
 
   const onRestorePurchases = async () => {
     if (Platform.OS !== 'ios') {
@@ -67,17 +64,6 @@ export default function ProfileScreen() {
     } finally {
       setRestoring(false)
     }
-  }
-
-  const toggleNotifications = (value: boolean) => {
-    updateSettingsMutation.mutate(
-      { notifications_enabled: value },
-      {
-        onError: (e) => {
-          Alert.alert('Error', e instanceof Error ? e.message : 'Could not update notifications')
-        },
-      },
-    )
   }
 
   const signOut = () => {
@@ -111,9 +97,13 @@ export default function ProfileScreen() {
     .toUpperCase()
     .slice(0, 2)
 
-  type SettingsItem =
-    | { icon: IoniconsName; label: string; iconColor: string; type: 'nav'; onPress: () => void }
-    | { icon: IoniconsName; label: string; iconColor: string; type: 'toggle'; value: boolean; onToggle: (v: boolean) => void }
+  type SettingsItem = {
+    icon: IoniconsName
+    label: string
+    iconColor: string
+    type: 'nav'
+    onPress: () => void
+  }
 
   const settingsItems: SettingsItem[] = [
     {
@@ -123,24 +113,8 @@ export default function ProfileScreen() {
       type: 'nav',
       onPress: () => router.push('/profile/edit'),
     },
-    {
-      icon: 'notifications-outline',
-      label: 'Notifications',
-      iconColor: '#D4A574',
-      type: 'toggle',
-      value: profile?.notifications_enabled ?? true,
-      onToggle: toggleNotifications,
-    },
-    // Re-enable once the tabs / moments / wines / family / profile screens
-    // are translated — until then switching language only affects onboarding +
-    // auth, which is confusing for the user.
-    // {
-    //   icon: 'globe-outline',
-    //   label: 'Language',
-    //   iconColor: '#2D6A4F',
-    //   type: 'nav',
-    //   onPress: () => router.push('/profile/language'),
-    // },
+    // Language switch is hidden until the tabs / moments / wines / family / profile screens
+    // are translated. Until then switching language only affects onboarding + auth.
     {
       icon: 'chatbubble-ellipses-outline',
       label: 'Talk to Us',
@@ -243,24 +217,14 @@ export default function ProfileScreen() {
                     styles.settingsRow,
                     index < settingsItems.length - 1 && styles.settingsRowBorder,
                   ]}
-                  activeOpacity={item.type === 'toggle' ? 1 : 0.7}
-                  onPress={item.type === 'nav' ? item.onPress : undefined}
-                  disabled={item.type === 'toggle'}
+                  activeOpacity={0.7}
+                  onPress={item.onPress}
                 >
                   <View style={[styles.settingsIconWrapper, { backgroundColor: `${item.iconColor}18` }]}>
                     <Ionicons name={item.icon} size={18} color={item.iconColor} />
                   </View>
                   <Text style={styles.settingsLabel}>{item.label}</Text>
-                  {item.type === 'toggle' ? (
-                    <Switch
-                      value={item.value}
-                      onValueChange={item.onToggle}
-                      trackColor={{ false: '#E0D6CC', true: '#722F3780' }}
-                      thumbColor={item.value ? WINE : '#FFFFFF'}
-                    />
-                  ) : (
-                    <Ionicons name="chevron-forward" size={16} color="#C4B5A5" />
-                  )}
+                  <Ionicons name="chevron-forward" size={16} color="#C4B5A5" />
                 </TouchableOpacity>
               ))}
             </View>

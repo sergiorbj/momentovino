@@ -47,6 +47,7 @@ const config: ExpoConfig = {
     'expo-font',
     'expo-localization',
     'expo-apple-authentication',
+    'expo-notifications',
     '@react-native-community/datetimepicker',
     [
       'expo-camera',

@@ -244,10 +244,14 @@
       "ctaSubscribeYearly": "Suscribirme por {{price}}/año",
       "ctaTrialMonthly": "Empezar 3 días gratis",
       "reassureYearly": "Facturación anual. Cancela la renovación cuando quieras en Ajustes.",
-      "reassureMonthly": "3 días gratis, luego {{price}}/mes. Cancela cuando quieras para no ser cobrado.",
+      "reassureMonthly": "3 días gratis, luego {{price}}/mes. Te avisamos 1 día antes por si quieres cancelar.",
       "restore": "Restaurar compras",
       "terms": "Términos",
       "privacy": "Privacidad",
+      "trialReminder": {
+        "title": "Tu prueba de MomentoVino termina en 1 día",
+        "body": "Sigue guardando tus momentos y botellas, o cancela en Ajustes."
+      },
       "errors": {
         "unavailableTitle": "Suscripción no disponible",
         "unavailableBody": "No se pudieron cargar las opciones. Inténtalo de nuevo.",

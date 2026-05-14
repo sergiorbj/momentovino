@@ -244,10 +244,14 @@
       "ctaSubscribeYearly": "Subscribe for {{price}}/year",
       "ctaTrialMonthly": "Start my 3-day free trial",
       "reassureYearly": "Billed annually. Cancel renewal anytime in Settings.",
-      "reassureMonthly": "Free for 3 days, then {{price}}/month. Cancel anytime to avoid being charged.",
+      "reassureMonthly": "Free for 3 days, then {{price}}/month. We'll remind you the day before so you can cancel if you'd like.",
       "restore": "Restore purchases",
       "terms": "Terms",
       "privacy": "Privacy",
+      "trialReminder": {
+        "title": "Your MomentoVino trial ends in 1 day",
+        "body": "Keep saving your moments and bottles, or cancel anytime in Settings."
+      },
       "errors": {
         "unavailableTitle": "Subscription unavailable",
         "unavailableBody": "Could not load subscription options. Please try again.",

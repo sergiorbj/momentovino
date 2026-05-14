@@ -23,6 +23,8 @@ import {
   restorePurchases,
 } from '../lib/purchases'
 import { queryKeys } from '../lib/query-keys'
+import { scheduleTrialReminder } from '../lib/notifications/trial-reminder'
+import { useTranslation } from '../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -52,6 +54,7 @@ type PlanId = 'yearly' | 'monthly'
  *  - No back button / swipe-back gesture.
  */
 export default function PaywallScreen() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [purchasing, setPurchasing] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('yearly')
@@ -97,6 +100,14 @@ export default function PaywallScreen() {
             `Configured entitlements: [${allEntitlements.join(', ') || 'none'}]. ` +
             `appUserID: ${customerInfo.originalAppUserId ?? 'unknown'}`,
         )
+      }
+      const ent = customerInfo.entitlements.active[PRO_ENTITLEMENT_ID]
+      if (ent?.periodType === 'TRIAL' && ent.expirationDate) {
+        await scheduleTrialReminder({
+          trialEndsAt: new Date(ent.expirationDate),
+          title: t('onboarding.paywall.trialReminder.title'),
+          body: t('onboarding.paywall.trialReminder.body'),
+        })
       }
       await qc.invalidateQueries({ queryKey: queryKeys.entitlement })
       router.replace('/(tabs)/moments')
