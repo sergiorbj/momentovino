@@ -16,6 +16,7 @@ import { router } from 'expo-router'
 import type { FamilyInviteUserMatch } from '../../features/family/api'
 import { searchFamilyInviteTargets } from '../../features/family/api'
 import { useInviteMemberByEmail, useInviteMemberByUsername } from '../../features/family/hooks'
+import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -198,7 +199,7 @@ export default function FamilyInviteMemberScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Send invite',
-          onPress: () => void sendUsernameInvite(user),
+          onPress: () => void requireOnline(() => sendUsernameInvite(user)),
         },
       ],
     )
@@ -293,7 +294,7 @@ export default function FamilyInviteMemberScreen() {
               />
               <TouchableOpacity
                 style={[styles.cta, saving && styles.ctaDisabled]}
-                onPress={() => void runInviteByEmail(inviteEmail)}
+                onPress={() => void requireOnline(() => runInviteByEmail(inviteEmail))}
                 disabled={saving}
                 activeOpacity={0.85}
               >

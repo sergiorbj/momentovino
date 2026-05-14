@@ -25,6 +25,7 @@ import { signInWithGoogle } from '../../lib/auth/google'
 import { signUpWithEmail } from '../../lib/auth/email'
 import { finalizeAccount } from '../../features/onboarding/finalize-account'
 import { useTranslation } from '../../features/i18n/hooks'
+import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -200,7 +201,7 @@ export default function SaveAccountScreen() {
                 {Platform.OS === 'ios' ? (
                   <TouchableOpacity
                     style={[styles.authBtn, styles.authApple]}
-                    onPress={onApple}
+                    onPress={() => requireOnline(onApple)}
                     disabled={busy}
                     activeOpacity={0.85}
                   >
@@ -213,7 +214,7 @@ export default function SaveAccountScreen() {
 
                 <TouchableOpacity
                   style={[styles.authBtn, styles.authGoogle]}
-                  onPress={onGoogle}
+                  onPress={() => requireOnline(onGoogle)}
                   disabled={busy}
                   activeOpacity={0.85}
                 >
@@ -287,7 +288,7 @@ export default function SaveAccountScreen() {
             <View style={styles.footer}>
               <TouchableOpacity
                 style={[styles.cta, !canSubmitEmail && styles.ctaDisabled]}
-                onPress={onEmailSubmit}
+                onPress={() => requireOnline(onEmailSubmit)}
                 disabled={!canSubmitEmail}
                 activeOpacity={0.85}
               >

@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons'
 
 import { sendPasswordResetEmail } from '../lib/auth/email'
 import { useTranslation } from '../features/i18n/hooks'
+import { requireOnline } from '../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -102,7 +103,7 @@ export default function ForgotPasswordScreen() {
           <View style={styles.footer}>
             <TouchableOpacity
               style={[styles.cta, !canSubmit && styles.ctaDisabled]}
-              onPress={submit}
+              onPress={() => requireOnline(submit)}
               disabled={!canSubmit}
               activeOpacity={0.85}
             >

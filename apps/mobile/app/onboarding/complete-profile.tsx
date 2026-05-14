@@ -23,6 +23,7 @@ import { finalizeAccount } from '../../features/onboarding/finalize-account'
 import { privacyPolicyUrl, termsOfServiceUrl } from '../../lib/marketing-urls'
 import { supabase } from '../../lib/supabase'
 import { useTranslation } from '../../features/i18n/hooks'
+import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -181,7 +182,7 @@ export default function CompleteProfileScreen() {
         <View style={styles.footer}>
           <TouchableOpacity
             style={[styles.cta, !canContinue && styles.ctaDisabled]}
-            onPress={onContinue}
+            onPress={() => requireOnline(onContinue)}
             disabled={!canContinue}
             activeOpacity={0.85}
           >

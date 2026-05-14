@@ -35,6 +35,7 @@ import {
 } from '../../features/family/hooks'
 import { uploadFamilyCoverPhoto } from '../../features/family/cover-upload'
 import { supabase } from '../../lib/supabase'
+import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -420,16 +421,17 @@ export default function FamilyScreen() {
           {
             text: 'Decline',
             style: 'destructive',
-            onPress: async () => {
-              setPendingInvitationId(invitationId)
-              try {
-                await declineInvitationMutation.mutateAsync(invitationId)
-              } catch (e) {
-                Alert.alert('Error', e instanceof Error ? e.message : 'Could not decline invitation')
-              } finally {
-                setPendingInvitationId(null)
-              }
-            },
+            onPress: () =>
+              void requireOnline(async () => {
+                setPendingInvitationId(invitationId)
+                try {
+                  await declineInvitationMutation.mutateAsync(invitationId)
+                } catch (e) {
+                  Alert.alert('Error', e instanceof Error ? e.message : 'Could not decline invitation')
+                } finally {
+                  setPendingInvitationId(null)
+                }
+              }),
           },
         ],
       )
@@ -448,19 +450,20 @@ export default function FamilyScreen() {
           {
             text: 'Remove',
             style: 'destructive',
-            onPress: async () => {
-              setPendingRemoveUid(member.user_id)
-              try {
-                await removeMemberMutation.mutateAsync(member.user_id)
-              } catch (e) {
-                Alert.alert(
-                  'Error',
-                  e instanceof Error ? e.message : 'Could not remove member',
-                )
-              } finally {
-                setPendingRemoveUid(null)
-              }
-            },
+            onPress: () =>
+              void requireOnline(async () => {
+                setPendingRemoveUid(member.user_id)
+                try {
+                  await removeMemberMutation.mutateAsync(member.user_id)
+                } catch (e) {
+                  Alert.alert(
+                    'Error',
+                    e instanceof Error ? e.message : 'Could not remove member',
+                  )
+                } finally {
+                  setPendingRemoveUid(null)
+                }
+              }),
           },
         ],
       )
@@ -571,7 +574,7 @@ export default function FamilyScreen() {
                   <IncomingInvitationCard
                     key={inv.id}
                     invitation={inv}
-                    onAccept={() => void handleAcceptInvitation(inv.id)}
+                    onAccept={() => void requireOnline(() => handleAcceptInvitation(inv.id))}
                     onDecline={() => handleDeclineInvitation(inv.id)}
                     busy={pendingInvitationId === inv.id}
                   />
@@ -606,7 +609,7 @@ export default function FamilyScreen() {
                 {dash!.isOwner ? (
                   <TouchableOpacity
                     style={styles.bannerEditFab}
-                    onPress={pickCoverPhoto}
+                    onPress={() => requireOnline(pickCoverPhoto)}
                     disabled={uploadingPhoto}
                     activeOpacity={0.85}
                     accessibilityLabel="Change family cover photo"
@@ -654,7 +657,7 @@ export default function FamilyScreen() {
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.inlineBtn, styles.inlineBtnPrimary, savingDetails && styles.inlineBtnDisabled]}
-                        onPress={() => void saveEditDetails()}
+                        onPress={() => void requireOnline(saveEditDetails)}
                         disabled={savingDetails}
                       >
                         {savingDetails ? (

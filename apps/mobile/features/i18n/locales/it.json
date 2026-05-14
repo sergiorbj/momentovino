@@ -1,4 +1,13 @@
 {
+  "noConnection": {
+    "title": "Sei offline",
+    "body": "Non siamo riusciti a completare l'azione perché la tua connessione è giù. Riprova quando torni online.",
+    "waiting": "In attesa di segnale",
+    "retry": "Riprova",
+    "retrying": "Verifica in corso…",
+    "openSettings": "Apri impostazioni del dispositivo",
+    "close": "Chiudi"
+  },
   "common": {
     "back": "Indietro",
     "cancel": "Annulla",

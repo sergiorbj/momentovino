@@ -26,6 +26,7 @@ import {
 import { queryKeys } from '../../lib/query-keys'
 import { scheduleTrialReminder } from '../../lib/notifications/trial-reminder'
 import { useTranslation } from '../../features/i18n/hooks'
+import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -251,7 +252,7 @@ export default function PaywallScreen() {
         <View style={styles.footer}>
           <TouchableOpacity
             style={[styles.cta, purchasing && styles.ctaDisabled]}
-            onPress={subscribe}
+            onPress={() => requireOnline(subscribe)}
             disabled={purchasing}
             activeOpacity={0.85}
           >
@@ -259,7 +260,7 @@ export default function PaywallScreen() {
           </TouchableOpacity>
           <Text style={styles.reassure}>{reassureText}</Text>
           <View style={styles.tinyRow}>
-            <TouchableOpacity onPress={restore} activeOpacity={0.7}>
+            <TouchableOpacity onPress={() => requireOnline(restore)} activeOpacity={0.7}>
               <Text style={styles.tinyLink}>{t('onboarding.paywall.restore')}</Text>
             </TouchableOpacity>
             <Text style={styles.tinyDot}>·</Text>

@@ -102,6 +102,10 @@ export default function RootLayout() {
           name="paywall"
           options={{ presentation: 'modal', gestureEnabled: false }}
         />
+        <Stack.Screen
+          name="no-connection"
+          options={{ presentation: 'modal', gestureEnabled: false }}
+        />
         <Stack.Screen name="moments" />
         <Stack.Screen name="scanner" />
         <Stack.Screen name="family" />

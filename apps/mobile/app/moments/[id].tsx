@@ -15,6 +15,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 
 import { useDeleteMoment, useMomentDetail } from '../../features/moments/hooks'
 import { useTranslation, wineTypeLabel } from '../../features/i18n/hooks'
+import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -66,7 +67,7 @@ export default function MomentDetailScreen() {
         {
           text: t('moments.delete.confirm'),
           style: 'destructive',
-          onPress: () => void remove(),
+          onPress: () => void requireOnline(remove),
         },
       ],
     )

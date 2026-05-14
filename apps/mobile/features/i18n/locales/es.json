@@ -1,4 +1,13 @@
 {
+  "noConnection": {
+    "title": "Estás sin conexión",
+    "body": "No pudimos completar esa acción porque tu internet está caída. Inténtalo de nuevo cuando vuelvas a estar en línea.",
+    "waiting": "Esperando señal",
+    "retry": "Reintentar",
+    "retrying": "Comprobando…",
+    "openSettings": "Abrir ajustes del dispositivo",
+    "close": "Cerrar"
+  },
   "common": {
     "back": "Volver",
     "cancel": "Cancelar",

@@ -21,6 +21,7 @@ import { setPendingWinePick } from '../../features/moments/wine-picker-handoff'
 import { useTranslation, wineTypeLabel } from '../../features/i18n/hooks'
 import { queryKeys } from '../../lib/query-keys'
 import { emitScannerReset } from '../../lib/scanner-reset'
+import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -161,7 +162,7 @@ export default function ScanResultScreen() {
           {forMoment ? (
             <TouchableOpacity
               style={styles.btnPrimary}
-              onPress={() => saveWine('existingMoment')}
+              onPress={() => requireOnline(() => saveWine('existingMoment'))}
               disabled={saving}
               activeOpacity={0.85}
             >
@@ -178,7 +179,7 @@ export default function ScanResultScreen() {
             <>
               <TouchableOpacity
                 style={styles.btnPrimary}
-                onPress={() => saveWine('wines')}
+                onPress={() => requireOnline(() => saveWine('wines'))}
                 disabled={saving}
                 activeOpacity={0.85}
               >
@@ -194,7 +195,7 @@ export default function ScanResultScreen() {
 
               <TouchableOpacity
                 style={styles.btnSecondary}
-                onPress={() => saveWine('newMoment')}
+                onPress={() => requireOnline(() => saveWine('newMoment'))}
                 disabled={saving}
                 activeOpacity={0.85}
               >

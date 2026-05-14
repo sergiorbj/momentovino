@@ -29,6 +29,7 @@ import {
 } from '../../features/profile/hooks'
 import { uploadAvatar } from '../../features/profile/avatar-upload'
 import { supabase } from '../../lib/supabase'
+import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -260,7 +261,7 @@ export default function EditProfileScreen() {
           {/* Save */}
           <TouchableOpacity
             style={[styles.cta, saving && styles.ctaDisabled]}
-            onPress={save}
+            onPress={() => requireOnline(save)}
             disabled={saving}
             activeOpacity={0.85}
           >

@@ -26,6 +26,7 @@ import { resetSelections } from '../features/onboarding/selections'
 import { invalidateTabCachesAndPrefetch } from '../lib/prefetch'
 import { isProActive } from '../lib/purchases'
 import { useTranslation } from '../features/i18n/hooks'
+import { requireOnline } from '../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -177,7 +178,7 @@ export default function LoginScreen() {
                 {Platform.OS === 'ios' ? (
                   <TouchableOpacity
                     style={[styles.authBtn, styles.authApple]}
-                    onPress={onApple}
+                    onPress={() => requireOnline(onApple)}
                     disabled={submitting}
                     activeOpacity={0.85}
                   >
@@ -188,7 +189,7 @@ export default function LoginScreen() {
 
                 <TouchableOpacity
                   style={[styles.authBtn, styles.authGoogle]}
-                  onPress={onGoogle}
+                  onPress={() => requireOnline(onGoogle)}
                   disabled={submitting}
                   activeOpacity={0.85}
                 >
@@ -245,7 +246,7 @@ export default function LoginScreen() {
             <View style={styles.footer}>
               <TouchableOpacity
                 style={[styles.cta, !canSubmit && styles.ctaDisabled]}
-                onPress={signIn}
+                onPress={() => requireOnline(signIn)}
                 disabled={!canSubmit}
                 activeOpacity={0.85}
               >

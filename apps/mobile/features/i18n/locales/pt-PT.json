@@ -1,4 +1,13 @@
 {
+  "noConnection": {
+    "title": "Estás offline",
+    "body": "Não conseguimos concluir essa ação porque a tua internet está em baixo. Tenta novamente quando voltares a estar online.",
+    "waiting": "À espera de sinal",
+    "retry": "Tentar novamente",
+    "retrying": "A verificar…",
+    "openSettings": "Abrir definições do dispositivo",
+    "close": "Fechar"
+  },
   "common": {
     "back": "Voltar",
     "cancel": "Cancelar",

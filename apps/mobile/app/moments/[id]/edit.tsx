@@ -35,6 +35,7 @@ import {
   saveEditMomentDraft,
 } from '../../../features/moments/moment-draft'
 import { useTranslation } from '../../../features/i18n/hooks'
+import { requireOnline } from '../../../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -583,7 +584,7 @@ export default function EditMomentScreen() {
           <View style={styles.footer}>
             <TouchableOpacity
               style={[styles.submit, submitting && styles.submitDisabled]}
-              onPress={handleSubmit(onSubmit)}
+              onPress={() => requireOnline(handleSubmit(onSubmit))}
               disabled={submitting}
               activeOpacity={0.85}
             >

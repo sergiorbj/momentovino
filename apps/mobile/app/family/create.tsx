@@ -18,6 +18,7 @@ import { router } from 'expo-router'
 import { useCreateFamily, useUpdateFamily } from '../../features/family/hooks'
 import { uploadFamilyCoverPhoto } from '../../features/family/cover-upload'
 import { supabase } from '../../lib/supabase'
+import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -140,7 +141,7 @@ export default function FamilyCreateScreen() {
 
           <TouchableOpacity
             style={[styles.cta, saving && styles.ctaDisabled]}
-            onPress={submit}
+            onPress={() => requireOnline(submit)}
             disabled={saving}
             activeOpacity={0.85}
           >

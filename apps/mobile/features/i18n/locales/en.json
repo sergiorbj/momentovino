@@ -1,4 +1,13 @@
 {
+  "noConnection": {
+    "title": "You're offline",
+    "body": "We couldn't complete that action because your internet is down. Try again once you're back online.",
+    "waiting": "Waiting for signal",
+    "retry": "Try again",
+    "retrying": "Checking…",
+    "openSettings": "Open device settings",
+    "close": "Close"
+  },
   "common": {
     "back": "Back",
     "cancel": "Cancel",

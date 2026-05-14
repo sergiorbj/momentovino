@@ -23,6 +23,7 @@ import {
   restorePurchases,
 } from '../lib/purchases'
 import { queryKeys } from '../lib/query-keys'
+import { requireOnline } from '../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -250,7 +251,7 @@ export default function PaywallScreen() {
         <View style={styles.footer}>
           <TouchableOpacity
             style={[styles.cta, purchasing && styles.ctaDisabled]}
-            onPress={subscribe}
+            onPress={() => requireOnline(subscribe)}
             disabled={purchasing}
             activeOpacity={0.85}
           >
@@ -258,7 +259,7 @@ export default function PaywallScreen() {
           </TouchableOpacity>
           <Text style={styles.reassure}>{reassureText}</Text>
           <View style={styles.tinyRow}>
-            <TouchableOpacity onPress={restore} activeOpacity={0.7} disabled={purchasing}>
+            <TouchableOpacity onPress={() => requireOnline(restore)} activeOpacity={0.7} disabled={purchasing}>
               <Text style={styles.tinyLink}>Restore purchases</Text>
             </TouchableOpacity>
             <Text style={styles.tinyDot}>·</Text>

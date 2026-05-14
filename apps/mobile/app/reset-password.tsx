@@ -25,6 +25,7 @@ import { queryClient } from '../lib/query-client'
 import { ensureAnonymousSession } from '../lib/session'
 import { supabase } from '../lib/supabase'
 import { useTranslation } from '../features/i18n/hooks'
+import { requireOnline } from '../lib/connection/require-online'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -239,7 +240,7 @@ export default function ResetPasswordScreen() {
                   />
 
                   <TouchableOpacity
-                    onPress={onResendCode}
+                    onPress={() => requireOnline(onResendCode)}
                     activeOpacity={0.7}
                     disabled={resending}
                     style={styles.resendLink}
@@ -297,7 +298,7 @@ export default function ResetPasswordScreen() {
             {step === 'code' ? (
               <TouchableOpacity
                 style={[styles.cta, !canSubmitCode && styles.ctaDisabled]}
-                onPress={onSubmitCode}
+                onPress={() => requireOnline(onSubmitCode)}
                 disabled={!canSubmitCode}
                 activeOpacity={0.85}
               >
@@ -310,7 +311,7 @@ export default function ResetPasswordScreen() {
             ) : (
               <TouchableOpacity
                 style={[styles.cta, !canSubmitPassword && styles.ctaDisabled]}
-                onPress={onSubmitPassword}
+                onPress={() => requireOnline(onSubmitPassword)}
                 disabled={!canSubmitPassword}
                 activeOpacity={0.85}
               >

@@ -25,6 +25,7 @@ import {
 } from '../../lib/purchases'
 import { queryKeys } from '../../lib/query-keys'
 import { supabase } from '../../lib/supabase'
+import { requireOnline } from '../../lib/connection/require-online'
 
 type IoniconsName = ComponentProps<typeof Ionicons>['name']
 
@@ -194,7 +195,7 @@ export default function ProfileScreen() {
                 {!entLoading && !entData?.isPro ? (
                   <TouchableOpacity
                     style={[styles.restoreBtn, restoring && styles.restoreBtnDisabled]}
-                    onPress={onRestorePurchases}
+                    onPress={() => requireOnline(onRestorePurchases)}
                     disabled={restoring}
                     activeOpacity={0.85}
                   >

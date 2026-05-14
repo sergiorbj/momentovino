@@ -23,6 +23,7 @@ import { prepareImageForWineScan } from '../../features/scanner/prepare-image-fo
 import { isScanError } from '../../features/scanner/types'
 import { setCapturedWine } from '../../features/onboarding/onboarding-capture'
 import { useTranslation } from '../../features/i18n/hooks'
+import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
 const BG_DARK = '#1C1510'
@@ -278,7 +279,7 @@ export default function OnboardingScannerScreen() {
           {image ? (
             <TouchableOpacity
               style={styles.scanBtn}
-              onPress={handleScan}
+              onPress={() => requireOnline(handleScan)}
               disabled={scanning}
               activeOpacity={0.85}
             >
