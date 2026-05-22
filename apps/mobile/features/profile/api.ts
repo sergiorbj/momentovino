@@ -121,6 +121,34 @@ export type UpdateSettingsInput = {
 const SETTINGS_LANGUAGES: ReadonlySet<LanguageCode> = new Set(SUPPORTED_LANGUAGES)
 
 /**
+ * Permanently deletes the signed-in user's account via the Python
+ * `DELETE /api/profile` route. The server purges the user's storage objects
+ * and then removes the `auth.users` row, which cascades away the profile,
+ * wines, moments, photos, family data, and every linked auth identity
+ * (email, Google, Apple) — so it works the same regardless of how the
+ * account was created.
+ */
+export async function deleteAccount(appleAuthorizationCode?: string): Promise<void> {
+  const token = await getAccessToken()
+  const hasAppleCode =
+    typeof appleAuthorizationCode === 'string' && appleAuthorizationCode.length > 0
+  const res = await fetch(`${getApiBaseUrl()}/profile`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(hasAppleCode ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: hasAppleCode
+      ? JSON.stringify({ apple_authorization_code: appleAuthorizationCode })
+      : undefined,
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error((body as { error?: string }).error ?? `Could not delete account (${res.status})`)
+  }
+}
+
+/**
  * Updates `profiles.language` and/or `profiles.notifications_enabled` via Supabase
  * (RLS), not the Python `/api/profile/settings` route — avoids 404 when the
  * app points `EXPO_PUBLIC_API_URL` at Next (`:3000`) instead of the Flask shim

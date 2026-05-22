@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   View,
   Text,
@@ -18,7 +18,8 @@ import { router } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { useEntitlement } from '../../features/entitlement/hooks'
-import { useProfile } from '../../features/profile/hooks'
+import { useDeleteAccount, useProfile } from '../../features/profile/hooks'
+import { resetOnboardingState } from '../../features/onboarding/state'
 import {
   hasProEntitlement,
   restorePurchases,
@@ -26,6 +27,7 @@ import {
 import { queryKeys } from '../../lib/query-keys'
 import { supabase } from '../../lib/supabase'
 import { requireOnline } from '../../lib/connection/require-online'
+import { getAppleAuthCodeForDeletion } from '../../lib/auth/apple'
 
 type IoniconsName = ComponentProps<typeof Ionicons>['name']
 
@@ -37,8 +39,33 @@ export default function ProfileScreen() {
   const { data: entData, isLoading: entLoading } = useEntitlement()
   const [restoring, setRestoring] = useState(false)
   const { data, isLoading } = useProfile()
+  const deleteAccountMutation = useDeleteAccount()
   const profile = data?.profile ?? null
   const loading = isLoading && !data
+  const deletingAccount = deleteAccountMutation.isPending
+
+  // Guest (anonymous) sessions have no real account to delete, and Apple-linked
+  // accounts need their Apple tokens revoked on deletion. Both are read from the
+  // locally cached session — no network round-trip on mount.
+  const [accountMeta, setAccountMeta] = useState<{
+    isAnonymous: boolean
+    isAppleLinked: boolean
+  } | null>(null)
+
+  useEffect(() => {
+    let active = true
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return
+      const user = data.session?.user
+      setAccountMeta({
+        isAnonymous: !!user?.is_anonymous,
+        isAppleLinked: !!user?.identities?.some((i) => i.provider === 'apple'),
+      })
+    })
+    return () => {
+      active = false
+    }
+  }, [])
 
   const onRestorePurchases = async () => {
     if (Platform.OS !== 'ios') {
@@ -65,6 +92,61 @@ export default function ProfileScreen() {
     } finally {
       setRestoring(false)
     }
+  }
+
+  const runDeleteAccount = async () => {
+    try {
+      // Sign in with Apple: grab a fresh authorization code so the server can
+      // revoke the user's Apple tokens (App Store Guideline 5.1.1(v)). The
+      // Apple sheet also acts as a final "confirm it's you" gate.
+      let appleAuthorizationCode: string | undefined
+      if (accountMeta?.isAppleLinked) {
+        const outcome = await getAppleAuthCodeForDeletion()
+        if (outcome.kind === 'cancelled') return // user backed out — keep the account
+        if (outcome.kind === 'success') appleAuthorizationCode = outcome.authorizationCode
+        // 'error' → proceed without revocation; deletion itself must not be blocked
+      }
+      await deleteAccountMutation.mutateAsync(appleAuthorizationCode)
+      // Server sessions are already cascade-deleted with the auth.users row;
+      // only clear the local session — a global sign-out would be a pointless
+      // round-trip against a user that no longer exists.
+      await supabase.auth.signOut({ scope: 'local' })
+      // Clear the local "onboarding completed" flag so the app genuinely
+      // restarts at onboarding step 1. Without this, a later cold start would
+      // read the stale flag and skip straight to the paywall / tabs.
+      await resetOnboardingState()
+      router.replace('/onboarding')
+    } catch (e) {
+      Alert.alert('Error', e instanceof Error ? e.message : 'Could not delete account')
+    }
+  }
+
+  const deleteAccount = () => {
+    Alert.alert(
+      'Delete account',
+      'This permanently deletes your MomentoVino account, profile, wines, moments, photos, and family memberships. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Continue',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Are you sure?',
+              'Your account and all associated data will be removed permanently.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete account',
+                  style: 'destructive',
+                  onPress: () => requireOnline(runDeleteAccount),
+                },
+              ],
+            )
+          },
+        },
+      ],
+    )
   }
 
   const signOut = () => {
@@ -230,9 +312,26 @@ export default function ProfileScreen() {
               ))}
             </View>
 
-            {/* Sign out */}
+            {accountMeta && !accountMeta.isAnonymous ? (
+              <TouchableOpacity
+                style={[styles.deleteAccountBtn, deletingAccount && styles.deleteAccountBtnDisabled]}
+                activeOpacity={0.7}
+                onPress={() => requireOnline(deleteAccount)}
+                disabled={deletingAccount}
+              >
+                {deletingAccount ? (
+                  <ActivityIndicator color="#C0392B" />
+                ) : (
+                  <>
+                    <Ionicons name="trash-outline" size={18} color="#C0392B" />
+                    <Text style={styles.deleteAccountText}>Delete Account</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            ) : null}
+
             <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.7} onPress={signOut}>
-              <Ionicons name="log-out-outline" size={18} color="#C0392B" />
+              <Ionicons name="log-out-outline" size={18} color="#5C4033" />
               <Text style={styles.signOutText}>Sign Out</Text>
             </TouchableOpacity>
           </ScrollView>
@@ -409,7 +508,26 @@ const styles = StyleSheet.create({
     color: '#1C1C1E',
   },
 
-  // Sign out
+  deleteAccountBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    height: 50,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  deleteAccountBtnDisabled: { opacity: 0.6 },
+  deleteAccountText: {
+    fontSize: 15,
+    fontFamily: 'DMSans_600SemiBold',
+    color: '#C0392B',
+  },
   signOutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -426,6 +544,6 @@ const styles = StyleSheet.create({
   signOutText: {
     fontSize: 15,
     fontFamily: 'DMSans_600SemiBold',
-    color: '#C0392B',
+    color: '#5C4033',
   },
 })

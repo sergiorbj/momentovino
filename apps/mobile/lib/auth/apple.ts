@@ -110,3 +110,37 @@ export async function signInWithApple(): Promise<AppleSignInOutcome> {
     return { kind: 'error', message }
   }
 }
+
+export type AppleReauthOutcome =
+  | { kind: 'success'; authorizationCode: string }
+  | { kind: 'cancelled' }
+  | { kind: 'error'; message: string }
+
+/**
+ * Re-runs the native Sign in with Apple prompt purely to obtain a fresh,
+ * single-use `authorizationCode`. The backend exchanges and revokes it during
+ * account deletion — App Store Guideline 5.1.1(v) requires apps using Sign in
+ * with Apple to revoke the user's tokens when their account is deleted.
+ *
+ * Doubles as a re-authentication gate: the user must clear the Apple sheet
+ * before deletion proceeds. `cancelled` means they backed out.
+ */
+export async function getAppleAuthCodeForDeletion(): Promise<AppleReauthOutcome> {
+  if (Platform.OS !== 'ios') {
+    return { kind: 'error', message: 'Sign in with Apple only works on iOS.' }
+  }
+  try {
+    const credential = await AppleAuthentication.signInAsync()
+    if (!credential.authorizationCode) {
+      return { kind: 'error', message: 'Apple did not return an authorization code.' }
+    }
+    return { kind: 'success', authorizationCode: credential.authorizationCode }
+  } catch (err) {
+    const code = (err as { code?: string }).code
+    if (code === 'ERR_REQUEST_CANCELED') return { kind: 'cancelled' }
+    return {
+      kind: 'error',
+      message: err instanceof Error ? err.message : 'Apple re-authentication failed',
+    }
+  }
+}

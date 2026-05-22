@@ -54,6 +54,72 @@ def _get_profile(url: str, key: str, uid: str) -> Optional[dict[str, Any]]:
     return None
 
 
+def _storage_headers(url: str, key: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {key}",
+        "apikey": key,
+        "Content-Type": "application/json",
+    }
+
+
+def _storage_list(url: str, key: str, bucket: str, prefix: str) -> list[dict[str, Any]]:
+    r = requests.post(
+        f"{url}/storage/v1/object/list/{bucket}",
+        headers=_storage_headers(url, key),
+        json={"prefix": prefix, "limit": 1000, "offset": 0},
+        timeout=60,
+    )
+    if r.status_code != 200:
+        return []
+    data = r.json()
+    return data if isinstance(data, list) else []
+
+
+def _storage_remove(url: str, key: str, bucket: str, paths: list[str]) -> None:
+    if not paths:
+        return
+    for i in range(0, len(paths), 1000):
+        chunk = paths[i : i + 1000]
+        requests.delete(
+            f"{url}/storage/v1/object/{bucket}",
+            headers=_storage_headers(url, key),
+            json=chunk,
+            timeout=60,
+        )
+
+
+def _collect_moment_photo_paths(url: str, key: str, uid: str) -> list[str]:
+    bucket = "moment-photos"
+    paths: list[str] = []
+    for entry in _storage_list(url, key, bucket, uid):
+        name = (entry.get("name") or "").strip()
+        if not name:
+            continue
+        moment_prefix = f"{uid}/{name}"
+        for photo in _storage_list(url, key, bucket, moment_prefix):
+            photo_name = (photo.get("name") or "").strip()
+            if photo_name:
+                paths.append(f"{moment_prefix}/{photo_name}")
+    return paths
+
+
+def _collect_flat_storage_paths(url: str, key: str, bucket: str, uid: str) -> list[str]:
+    paths: list[str] = []
+    for entry in _storage_list(url, key, bucket, uid):
+        name = (entry.get("name") or "").strip()
+        if name:
+            paths.append(f"{uid}/{name}")
+    return paths
+
+
+def _purge_user_storage(url: str, key: str, uid: str) -> None:
+    moment_paths = _collect_moment_photo_paths(url, key, uid)
+    _storage_remove(url, key, "moment-photos", moment_paths)
+    for bucket in ("wine-labels", "family-covers", "avatars"):
+        flat_paths = _collect_flat_storage_paths(url, key, bucket, uid)
+        _storage_remove(url, key, bucket, flat_paths)
+
+
 def _ensure_profile(url: str, key: str, uid: str) -> Optional[dict[str, Any]]:
     """Get profile, auto-creating if missing (backfill for existing users)."""
     profile = _get_profile(url, key, uid)
@@ -94,6 +160,53 @@ def _ensure_profile(url: str, key: str, uid: str) -> Optional[dict[str, Any]]:
 
 
 class handler(BaseHTTPRequestHandler):
+    def do_DELETE(self):
+        path = _norm_path(self)
+        if path != "/api/profile":
+            send_json(self, 404, {"error": "Not found"})
+            return
+
+        uid, err = auth_bearer_user_id(self)
+        if err:
+            send_json(self, err[0], err[1])
+            return
+
+        url, key = supabase_config()
+        if not url or not key:
+            send_json(self, 500, {"error": "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"})
+            return
+
+        # Sign in with Apple: when the client supplies a fresh authorization
+        # code, revoke the user's Apple tokens before removing the account
+        # (App Store Guideline 5.1.1(v)). Best-effort — a failure here must
+        # never block the deletion itself.
+        body = _read_json(self)
+        apple_code = body.get("apple_authorization_code")
+        if isinstance(apple_code, str) and apple_code.strip():
+            try:
+                from _apple import revoke_apple_tokens
+
+                revoke_apple_tokens(apple_code)
+            except Exception:
+                pass
+
+        try:
+            _purge_user_storage(url, key, uid)
+        except Exception:
+            pass
+
+        r = requests.delete(
+            f"{url}/auth/v1/admin/users/{uid}",
+            headers={"Authorization": f"Bearer {key}", "apikey": key},
+            timeout=30,
+        )
+        if r.status_code not in (200, 204):
+            detail = r.text or "Failed to delete account"
+            send_json(self, 500, {"error": detail})
+            return
+
+        send_json(self, 200, {"ok": True})
+
     def do_GET(self):
         path = _norm_path(self)
         if path != "/api/profile":

@@ -1,1 +1,5 @@
 requests==2.31.0
+
+# Sign in with Apple token revocation on account deletion (_apple.py)
+pyjwt==2.8.0
+cryptography==42.0.5

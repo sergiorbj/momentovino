@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { queryKeys } from '../../lib/query-keys'
 import {
+  deleteAccount,
   getProfile,
   setUsername,
   updateProfile,
@@ -59,6 +60,16 @@ export function useSetUsername() {
     mutationFn: (newUsername: string) => setUsername(newUsername),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.profile })
+    },
+  })
+}
+
+export function useDeleteAccount() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (appleAuthorizationCode?: string) => deleteAccount(appleAuthorizationCode),
+    onSuccess: () => {
+      qc.clear()
     },
   })
 }

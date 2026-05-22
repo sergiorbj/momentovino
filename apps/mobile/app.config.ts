@@ -29,7 +29,7 @@ const config: ExpoConfig = {
     supportsTablet: true,
     bundleIdentifier: 'com.momentovino.app',
     usesAppleSignIn: true,
-    buildNumber: '37',
+    buildNumber: '38',
     config: { usesNonExemptEncryption: false },
   },
   android: {
@@ -50,9 +50,17 @@ const config: ExpoConfig = {
     'expo-notifications',
     '@react-native-community/datetimepicker',
     [
+      'expo-image-picker',
+      {
+        photosPermission:
+          'MomentoVino uses your photo library so you can choose existing wine label photos when scanning a bottle, add pictures to your tasting moments, set your profile photo, and pick a family cover image.',
+      },
+    ],
+    [
       'expo-camera',
       {
-        cameraPermission: 'Allow MomentoVino to use the camera to scan wine labels.',
+        cameraPermission:
+          'MomentoVino uses the camera so you can scan the label on a wine bottle. The app reads the label to identify the wine and add it to your collection.',
         recordAudioAndroid: false,
       },
     ],
