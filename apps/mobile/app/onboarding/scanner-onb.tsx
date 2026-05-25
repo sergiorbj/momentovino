@@ -1,8 +1,9 @@
-import { useCallback, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -54,6 +55,15 @@ export default function OnboardingScannerScreen() {
       return () => setFocused(false)
     }, []),
   )
+
+  // First-time visitors get the native iOS permission popup straight away.
+  // If the user previously denied, `canAskAgain` is false and we fall through
+  // to the "Open Settings" card below instead.
+  useEffect(() => {
+    if (permission && !permission.granted && permission.canAskAgain) {
+      requestPermission()
+    }
+  }, [permission, requestPermission])
 
   const cameraActive = focused && !image
 
@@ -246,7 +256,7 @@ export default function OnboardingScannerScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        ) : !permission?.granted ? (
+        ) : permission && !permission.granted && !permission.canAskAgain ? (
           <View style={styles.permissionWrap}>
             <View style={styles.permissionCard}>
               <Ionicons name="camera-outline" size={40} color="#FFFFFF" />
@@ -256,7 +266,7 @@ export default function OnboardingScannerScreen() {
               </Text>
               <TouchableOpacity
                 style={styles.permissionBtn}
-                onPress={requestPermission}
+                onPress={() => Linking.openSettings()}
                 activeOpacity={0.85}
               >
                 <Text style={styles.permissionBtnText}>{t('onboarding.scanner.allowCamera')}</Text>

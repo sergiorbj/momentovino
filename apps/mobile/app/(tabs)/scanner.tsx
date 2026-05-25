@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -62,6 +63,15 @@ export default function ScannerScreen() {
       setScanning(false)
     })
   }, [])
+
+  // First-time visitors get the native iOS permission popup straight away.
+  // If the user previously denied, `canAskAgain` is false and we fall through
+  // to the "Open Settings" card below instead.
+  useEffect(() => {
+    if (permission && !permission.granted && permission.canAskAgain) {
+      requestPermission()
+    }
+  }, [permission, requestPermission])
 
   const cameraActive = tabFocused && !image
 
@@ -248,16 +258,20 @@ export default function ScannerScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        ) : !permission?.granted ? (
+        ) : permission && !permission.granted && !permission.canAskAgain ? (
           <View style={styles.permissionWrap}>
             <View style={styles.permissionCard}>
               <Ionicons name="camera-outline" size={40} color="#FFFFFF" />
-              <Text style={styles.permissionTitle}>Camera access</Text>
+              <Text style={styles.permissionTitle}>Camera access needed</Text>
               <Text style={styles.permissionText}>
-                The scanner opens the camera so you can photograph the label in one tap.
+                Enable camera access in Settings to scan wine labels.
               </Text>
-              <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission} activeOpacity={0.85}>
-                <Text style={styles.permissionBtnText}>Continue</Text>
+              <TouchableOpacity
+                style={styles.permissionBtn}
+                onPress={() => Linking.openSettings()}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.permissionBtnText}>Open Settings</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.permissionGallery} onPress={pickFromGallery} activeOpacity={0.85}>
                 <Ionicons name="images-outline" size={20} color={WINE} />
