@@ -257,7 +257,7 @@ export default function ScannerScreen() {
                 The scanner opens the camera so you can photograph the label in one tap.
               </Text>
               <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission} activeOpacity={0.85}>
-                <Text style={styles.permissionBtnText}>Allow camera</Text>
+                <Text style={styles.permissionBtnText}>Continue</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.permissionGallery} onPress={pickFromGallery} activeOpacity={0.85}>
                 <Ionicons name="images-outline" size={20} color={WINE} />

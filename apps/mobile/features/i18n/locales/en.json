@@ -166,7 +166,7 @@
       "identifying": "Identifying wine...",
       "permissionTitle": "Camera access",
       "permissionBody": "We open the camera so you can photograph the label in one tap.",
-      "allowCamera": "Allow camera",
+      "allowCamera": "Continue",
       "galleryAlt": "Choose from gallery instead",
       "galleryShort": "Gallery",
       "takePhotoLabel": "Take photo",
