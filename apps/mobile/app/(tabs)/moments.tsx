@@ -432,9 +432,8 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   loadingGlass: {
-    width: 96,
-    height: 96,
-    marginBottom: 24,
+    width: 240,
+    height: 240,
     resizeMode: 'contain',
   },
   loadingText: {
@@ -442,5 +441,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     color: '#5C4033',
     letterSpacing: 0.4,
+    marginTop: -50,
   },
 })

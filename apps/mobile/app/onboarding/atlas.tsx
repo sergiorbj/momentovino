@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  ActivityIndicator,
+  Animated,
   Dimensions,
   Image,
   Share,
@@ -33,6 +33,7 @@ const BORDER = '#E8DDD4'
 
 const { width } = Dimensions.get('window')
 const GLOBE_SIZE = Math.min(width * 0.85, 300)
+const GLASS_SIZE = 260
 
 type Phase = 'processing' | 'reveal'
 
@@ -49,11 +50,14 @@ export default function AtlasScreen() {
   useEffect(() => {
     if (!wine || !moment) {
       router.replace('/onboarding/intro-create')
-      return
     }
-    const t = setTimeout(() => setPhase('reveal'), 1800)
-    return () => clearTimeout(t)
   }, [wine, moment])
+
+  const loadingPhrases = [
+    t('onboarding.atlas.loadingPreferences'),
+    t('onboarding.atlas.loadingMoment'),
+    t('onboarding.atlas.loadingJournal'),
+  ]
 
   useEffect(() => {
     if (phase !== 'reveal') return
@@ -96,12 +100,11 @@ export default function AtlasScreen() {
         <SafeAreaView style={styles.safe}>
           <ProgressBar step={4} total={6} />
           <View style={styles.processing}>
-            <WireframeGlobe
-              pins={pins}
-              config={{ size: GLOBE_SIZE, rotationSpeed: 0.012 }}
+            <SwayingGlass />
+            <TypewriterPhrases
+              phrases={loadingPhrases}
+              onComplete={() => setPhase('reveal')}
             />
-            <Text style={styles.processingText}>{t('onboarding.atlas.pinning')}</Text>
-            <ActivityIndicator color={WINE} />
           </View>
         </SafeAreaView>
       </View>
@@ -151,6 +154,89 @@ export default function AtlasScreen() {
   )
 }
 
+function SwayingGlass() {
+  const sway = useRef(new Animated.Value(0)).current
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(sway, { toValue: 1, duration: 1400, useNativeDriver: true }),
+        Animated.timing(sway, { toValue: -1, duration: 1400, useNativeDriver: true }),
+        Animated.timing(sway, { toValue: 0, duration: 700, useNativeDriver: true }),
+      ]),
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [sway])
+
+  const rotate = sway.interpolate({
+    inputRange: [-1, 1],
+    outputRange: ['-6deg', '6deg'],
+  })
+
+  return (
+    <Animated.View style={[styles.glassWrap, { transform: [{ rotate }] }]}>
+      <Image
+        source={require('../../assets/glass-vino.png')}
+        style={styles.glassImg}
+        resizeMode="contain"
+      />
+    </Animated.View>
+  )
+}
+
+function TypewriterPhrases({
+  phrases,
+  onComplete,
+}: {
+  phrases: string[]
+  onComplete: () => void
+}) {
+  const [text, setText] = useState('')
+  const [phraseIndex, setPhraseIndex] = useState(0)
+  const [mode, setMode] = useState<'typing' | 'pausing' | 'erasing'>('typing')
+  const completedRef = useRef(false)
+
+  useEffect(() => {
+    const current = phrases[phraseIndex]
+    if (!current) return
+
+    if (mode === 'typing') {
+      if (text.length >= current.length) {
+        const tid = setTimeout(() => setMode('pausing'), 310)
+        return () => clearTimeout(tid)
+      }
+      const tid = setTimeout(() => setText(current.slice(0, text.length + 1)), 20)
+      return () => clearTimeout(tid)
+    }
+
+    if (mode === 'pausing') {
+      const isLast = phraseIndex === phrases.length - 1
+      if (isLast) {
+        const tid = setTimeout(() => {
+          if (completedRef.current) return
+          completedRef.current = true
+          onComplete()
+        }, 200)
+        return () => clearTimeout(tid)
+      }
+      const tid = setTimeout(() => setMode('erasing'), 250)
+      return () => clearTimeout(tid)
+    }
+
+    if (mode === 'erasing') {
+      if (text.length === 0) {
+        setPhraseIndex((i) => i + 1)
+        setMode('typing')
+        return
+      }
+      const tid = setTimeout(() => setText(text.slice(0, -1)), 11)
+      return () => clearTimeout(tid)
+    }
+  }, [text, mode, phraseIndex, phrases, onComplete])
+
+  return <Text style={styles.typewriterText}>{text}</Text>
+}
+
 function MomentCard({ moment, wine }: { moment: CapturedMoment; wine: CapturedWine }) {
   const cover = moment.photos.find((p) => p.isCover) ?? moment.photos[0]
   const thumbUri = cover?.uri ?? wine.labelPhoto?.uri ?? null
@@ -197,13 +283,26 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 20,
     padding: 24,
   },
-  processingText: {
-    fontSize: 16,
+  glassWrap: {
+    width: GLASS_SIZE,
+    height: GLASS_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  glassImg: {
+    width: '100%',
+    height: '100%',
+  },
+  typewriterText: {
+    fontSize: 18,
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
+    textAlign: 'center',
+    minHeight: 26,
+    paddingHorizontal: 20,
+    marginTop: -50,
   },
   revealContent: {
     flex: 1,

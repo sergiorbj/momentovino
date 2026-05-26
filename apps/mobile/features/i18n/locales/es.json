@@ -226,7 +226,9 @@
       }
     },
     "atlas": {
-      "pinning": "Fijando tu primer recuerdo…",
+      "loadingPreferences": "Guardando tus preferencias...",
+      "loadingMoment": "Guardando tu momento en el atlas...",
+      "loadingJournal": "Preparando tu diario de vinos...",
       "headline": "Tu primer recuerdo está en tu atlas.",
       "subtitle": "Una botella, un lugar. El inicio de tu diario.",
       "hint": "Toca el momento más tarde para añadir fotos, editar detalles o compartirlo con la familia.",

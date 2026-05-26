@@ -226,7 +226,9 @@
       }
     },
     "atlas": {
-      "pinning": "A fixar a sua primeira memória…",
+      "loadingPreferences": "A guardar as tuas preferências...",
+      "loadingMoment": "A guardar o teu momento no atlas...",
+      "loadingJournal": "A preparar o teu diário de vinhos...",
       "headline": "A sua primeira memória está no atlas.",
       "subtitle": "Uma garrafa, um lugar. O início do seu diário.",
       "hint": "Toque no momento mais tarde para adicionar fotos, editar detalhes ou partilhar com a família.",

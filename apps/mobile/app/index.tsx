@@ -81,11 +81,10 @@ const styles = StyleSheet.create({
     backgroundColor: BG,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 18,
   },
   logoWrap: {
-    width: 110,
-    height: 110,
+    width: 240,
+    height: 240,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -99,6 +98,7 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
     letterSpacing: 0.3,
+    marginTop: -50,
   },
   wordmarkAccent: {
     color: VINO_ACCENT,

@@ -226,7 +226,9 @@
       }
     },
     "atlas": {
-      "pinning": "Pinning your first memory…",
+      "loadingPreferences": "Storing your preferences...",
+      "loadingMoment": "Saving your moment to the atlas...",
+      "loadingJournal": "Preparing your wine journal...",
       "headline": "Your first memory is on your atlas.",
       "subtitle": "One bottle, one place. The start of your journal.",
       "hint": "Tap your moment later to add photos, edit details, or share it with family.",
