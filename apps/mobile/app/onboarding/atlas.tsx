@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import * as StoreReview from 'expo-store-review'
 
 import { ProgressBar } from '../../components/onboarding/ProgressBar'
 import WireframeGlobe from '../../components/globe/WireframeGlobe'
@@ -53,6 +54,18 @@ export default function AtlasScreen() {
     const t = setTimeout(() => setPhase('reveal'), 1800)
     return () => clearTimeout(t)
   }, [wine, moment])
+
+  useEffect(() => {
+    if (phase !== 'reveal') return
+    const t = setTimeout(async () => {
+      try {
+        if (await StoreReview.isAvailableAsync()) {
+          await StoreReview.requestReview()
+        }
+      } catch {}
+    }, 3000)
+    return () => clearTimeout(t)
+  }, [phase])
 
   if (!wine || !moment) return null
 
