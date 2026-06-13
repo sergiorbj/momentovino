@@ -130,6 +130,11 @@ export function getYearlyDiscountPercent(
  * or when migration isn't applied yet.
  *
  * Non‑iOS / missing API key → treat as Pro so dev/Android aren't blocked.
+ *
+ * When the server says not-Pro we invalidate the RC client cache before
+ * checking. A trial → paid conversion can land Apple-side seconds before the
+ * RC webhook reaches Supabase; without an explicit invalidation the local RC
+ * cache may report the trial as expired and lock a paying user out.
  */
 export async function isProActive(): Promise<boolean> {
   if (Platform.OS !== 'ios') return true
@@ -137,6 +142,11 @@ export async function isProActive(): Promise<boolean> {
   try {
     const server = await fetchEntitlement()
     if (server.isPro) return true
+    try {
+      await Purchases.invalidateCustomerInfoCache()
+    } catch (err) {
+      console.warn('isProActive: invalidateCustomerInfoCache failed', err)
+    }
     const info = await getCustomerInfo()
     return hasProEntitlement(info)
   } catch (err) {
