@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Scanner tab is built around **live camera capture**: when the user opens the tab, the back camera preview fills the screen with a wine-colored frame (viewfinder) so they can align the label before shooting. A single **shutter** control captures the photo; **Gallery** is a secondary option for choosing an existing photo. The image is sent to a Next.js API route that uses **Google Gemini 2.5 Flash** to identify the wine and extract structured metadata. The result is displayed on a dedicated screen with two actions: save the wine to the user's collection, or save it and immediately create a moment with that wine pre-selected.
+The Scanner tab is built around **live camera capture**: when the user opens the tab, the back camera preview fills the screen with a wine-colored frame (viewfinder) so they can align the label before shooting. A single **shutter** control captures the photo; **Gallery** is a secondary option for choosing an existing photo. The image is sent to a Next.js API route that uses **Google Gemini 3.1 Flash Lite** to identify the wine and extract structured metadata. The result is displayed on a dedicated screen with two actions: save the wine to the user's collection, or save it and immediately create a moment with that wine pre-selected.
 
 ## Architecture
 
@@ -20,7 +20,7 @@ Mobile Scanner Tab
         │
   Next.js API Route (apps/web/app/api/scan-wine/route.ts)
         │
-        ▼  Gemini 2.5 Flash vision analysis
+        ▼  Gemini 3.1 Flash Lite vision analysis
         │
   JSON response → { name, producer, vintage, region, country, type, description }
         │
@@ -51,7 +51,7 @@ Helper: `apps/web/lib/auth.ts`
 ### POST /api/scan-wine
 
 - **Input**: `{ image: string (base64), mimeType: "image/jpeg" | "image/png" }`
-- **Process**: Sends image to Gemini 2.5 Flash with a structured prompt requesting wine metadata as JSON
+- **Process**: Sends image to Gemini 3.1 Flash Lite with a structured prompt requesting wine metadata as JSON
 - **Output**: `{ name, producer, vintage, region, country, type, description }` or `{ error: string }`
 - Uses `responseMimeType: "application/json"` for reliable structured output
 
