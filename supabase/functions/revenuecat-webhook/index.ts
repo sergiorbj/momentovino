@@ -54,6 +54,7 @@ type RcEvent = {
   original_transaction_id?: string | null
   transferred_from?: string[] | null
   transferred_to?: string[] | null
+  aliases?: string[] | null
 }
 
 const ENTITLEMENT_ID = Deno.env.get('PRO_ENTITLEMENT_ID') ?? 'momentovino_pro'
@@ -109,8 +110,71 @@ async function handleTransfer(ev: RcEvent, eventAt: string) {
   if (error) throw error
 }
 
+type CandidateRow = {
+  user_id: string
+  is_anonymous: boolean
+  last_sign_in_at: string | null
+}
+
+// A purchase made while anonymous stays anchored on the anon app_user_id even
+// after Purchases.logIn aliases it to the authenticated account — RC keeps
+// sending RENEWAL/EXPIRATION/etc. with the anon id and never fires TRANSFER.
+// The payload's `aliases` array carries every id of the subscriber, so route
+// the event to the authenticated account when one exists, and remember which
+// anon aliases are left holding a stale mirror.
+async function resolveTargetUser(
+  ev: RcEvent,
+): Promise<{ target: string | null; staleAnonIds: string[] }> {
+  const fallback = [ev.app_user_id, ev.original_app_user_id].find(uuidLike) ?? null
+  const candidates = [
+    ...new Set(
+      [ev.app_user_id, ev.original_app_user_id, ...(ev.aliases ?? [])].filter(uuidLike),
+    ),
+  ] as string[]
+  if (candidates.length <= 1) return { target: fallback, staleAnonIds: [] }
+
+  const { data, error } = await supabase.rpc('resolve_entitlement_candidates', {
+    p_candidates: candidates,
+  })
+  if (error || !data?.length) {
+    if (error) console.warn('[rc-webhook] candidate resolution failed', error.message)
+    return { target: fallback, staleAnonIds: [] }
+  }
+
+  const rows = data as CandidateRow[]
+  const authed = rows
+    .filter((r) => !r.is_anonymous)
+    .sort((a, b) => (b.last_sign_in_at ?? '').localeCompare(a.last_sign_in_at ?? ''))
+  const target = authed[0]?.user_id ?? fallback
+  const staleAnonIds = rows
+    .filter((r) => r.is_anonymous && r.user_id !== target)
+    .map((r) => r.user_id)
+  return { target, staleAnonIds }
+}
+
+async function clearStaleAnonMirrors(ids: string[]) {
+  if (ids.length === 0) return
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      pro_active: false,
+      pro_expires_at: null,
+      pro_will_renew: false,
+      pro_in_grace_period: false,
+      pro_in_billing_retry: false,
+      pro_period_type: null,
+      pro_store: null,
+      pro_product_id: null,
+      pro_original_transaction_id: null,
+      pro_environment: null,
+    })
+    .in('id', ids)
+    .eq('pro_active', true)
+  if (error) console.warn('[rc-webhook] failed to clear stale anon mirrors', error.message)
+}
+
 async function handleStandard(ev: RcEvent, eventAt: string) {
-  const userId = ev.app_user_id ?? ev.original_app_user_id ?? null
+  const { target: userId, staleAnonIds } = await resolveTargetUser(ev)
   if (!uuidLike(userId)) {
     console.warn('[rc-webhook] non-uuid app_user_id, skipping', { id: ev.id, userId })
     return
@@ -150,6 +214,8 @@ async function handleStandard(ev: RcEvent, eventAt: string) {
     p_event_at: eventAt,
   })
   if (error) throw error
+
+  await clearStaleAnonMirrors(staleAnonIds)
 }
 
 Deno.serve(async (req) => {
