@@ -125,12 +125,16 @@ type CandidateRow = {
 async function resolveTargetUser(
   ev: RcEvent,
 ): Promise<{ target: string | null; staleAnonIds: string[] }> {
-  const fallback = [ev.app_user_id, ev.original_app_user_id].find(uuidLike) ?? null
   const candidates = [
     ...new Set(
       [ev.app_user_id, ev.original_app_user_id, ...(ev.aliases ?? [])].filter(uuidLike),
     ),
   ] as string[]
+  // Once RC reassigns the subscriber to a new anonymous primary id,
+  // `app_user_id`/`original_app_user_id` stop being UUIDs — the real
+  // Supabase user only shows up inside `aliases`. Fall back to it instead
+  // of silently dropping the event.
+  const fallback = candidates[0] ?? null
   if (candidates.length <= 1) return { target: fallback, staleAnonIds: [] }
 
   const { data, error } = await supabase.rpc('resolve_entitlement_candidates', {

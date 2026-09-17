@@ -125,30 +125,20 @@ export function getYearlyDiscountPercent(
 }
 
 /**
- * Boot-time gate: prefers server-mirrored entitlement (`profiles` via
- * `user_entitlement`), falls back to RevenueCat while the webhook catches up
- * or when migration isn't applied yet.
+ * Boot-time gate: the server-mirrored entitlement (`profiles` via
+ * `user_entitlement`) is the only source of truth. The RC webhook is
+ * responsible for keeping it in sync — this never falls back to querying
+ * RevenueCat/Apple directly, so a stale local StoreKit/RC cache can't
+ * log a paying user out or show them the paywall.
  *
  * Non‑iOS / missing API key → treat as Pro so dev/Android aren't blocked.
- *
- * When the server says not-Pro we invalidate the RC client cache before
- * checking. A trial → paid conversion can land Apple-side seconds before the
- * RC webhook reaches Supabase; without an explicit invalidation the local RC
- * cache may report the trial as expired and lock a paying user out.
  */
 export async function isProActive(): Promise<boolean> {
   if (Platform.OS !== 'ios') return true
   if (!IOS_API_KEY) return true
   try {
     const server = await fetchEntitlement()
-    if (server.isPro) return true
-    try {
-      await Purchases.invalidateCustomerInfoCache()
-    } catch (err) {
-      console.warn('isProActive: invalidateCustomerInfoCache failed', err)
-    }
-    const info = await getCustomerInfo()
-    return hasProEntitlement(info)
+    return server.isPro
   } catch (err) {
     console.warn('Failed to check entitlement', err)
     return false
