@@ -38,10 +38,26 @@ function ensureConfigured(): void {
 // aliased in via `Purchases.logIn` once the Supabase session resolves.
 ensureConfigured()
 
+/**
+ * `Purchases.logIn` only auto-transfers a device's active subscription onto
+ * `userId` when that id has never been seen by RC before. If `userId`
+ * already exists as a customer (e.g. this same account, on a fresh install
+ * after the local RC cache was wiped), logIn just switches to it — the
+ * subscription stays orphaned on whatever anonymous id currently holds the
+ * App Store receipt. `syncPurchasesForResult` forces a non-interactive
+ * receipt reconciliation, which is what actually fires RC's TRANSFER and
+ * keeps the Supabase entitlement mirror correct after a reinstall.
+ * https://www.revenuecat.com/docs/getting-started/restoring-purchases
+ */
 export async function configurePurchases(userId: string): Promise<void> {
   ensureConfigured()
   if (!configured) return
   await Purchases.logIn(userId)
+  try {
+    await Purchases.syncPurchasesForResult()
+  } catch (err) {
+    console.warn('configurePurchases: syncPurchasesForResult failed', err)
+  }
 }
 
 export async function getCurrentOffering(): Promise<PurchasesOffering | null> {
