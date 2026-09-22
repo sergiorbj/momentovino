@@ -128,13 +128,13 @@
     },
     "goal": {
       "headline": "What brings you to MomentoVino?",
-      "subtitle": "Pick all that apply. We'll tailor your journal around them.",
+      "subtitle": "Most people have more than one reason.",
       "continue": "Continue",
       "options": {
         "remember": "Remember bottles I've loved",
-        "travels": "Build a journal of my wine travels",
+        "travels": "Pin every place wine has taken me",
         "share": "Share wine memories with family & friends",
-        "discover": "Discover new wines worth remembering"
+        "discover": "Turn new bottles into moments that I'll keep"
       }
     },
     "pain": {

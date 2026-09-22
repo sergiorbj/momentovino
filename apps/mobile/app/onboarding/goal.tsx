@@ -11,7 +11,10 @@ import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
+const SUBTLE = '#C2703E'
 const BG = '#F5EBE0'
+
+const BRAND = 'MomentoVino'
 
 type GoalOption = { key: OnboardingGoal; emoji: string }
 
@@ -19,7 +22,7 @@ const OPTIONS: GoalOption[] = [
   { key: 'remember', emoji: '📖' },
   { key: 'travels', emoji: '🌍' },
   { key: 'share', emoji: '🍷' },
-  { key: 'discover', emoji: '🍇' },
+  { key: 'discover', emoji: '📸' },
 ]
 
 export default function GoalScreen() {
@@ -36,6 +39,7 @@ export default function GoalScreen() {
   }
 
   const canContinue = selected.size > 0
+  const [beforeBrand, afterBrand] = t('onboarding.goal.headline').split(BRAND)
 
   const cont = () => {
     if (!canContinue) return
@@ -51,7 +55,12 @@ export default function GoalScreen() {
 
         <View style={styles.body}>
           <View style={styles.copy}>
-            <Text style={styles.headline}>{t('onboarding.goal.headline')}</Text>
+            <Text style={styles.headline}>
+              {beforeBrand}
+              Momento
+              <Text style={styles.brandAccent}>Vino</Text>
+              {afterBrand}
+            </Text>
             <Text style={styles.sub}>{t('onboarding.goal.subtitle')}</Text>
           </View>
 
@@ -95,6 +104,7 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
   },
+  brandAccent: { color: SUBTLE },
   sub: {
     fontSize: 15,
     fontFamily: 'DMSans_400Regular',

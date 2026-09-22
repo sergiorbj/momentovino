@@ -128,13 +128,13 @@
     },
     "goal": {
       "headline": "O que te traz ao MomentoVino?",
-      "subtitle": "Marque tudo que se aplica. Vamos adaptar seu diário a isso.",
+      "subtitle": "A maioria das pessoas tem mais de um motivo.",
       "continue": "Continuar",
       "options": {
         "remember": "Lembrar dos vinhos que amei",
-        "travels": "Construir um diário das minhas viagens com vinho",
+        "travels": "Marcar cada lugar aonde o vinho me levou",
         "share": "Compartilhar memórias de vinho com família e amigos",
-        "discover": "Descobrir novos vinhos para lembrar"
+        "discover": "Transformar garrafas novas em momentos que vou guardar"
       }
     },
     "pain": {
