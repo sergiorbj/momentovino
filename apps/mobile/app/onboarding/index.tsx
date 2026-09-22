@@ -132,6 +132,7 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSerifDisplay_400Regular',
     color: WINE,
     textAlign: 'center',
+    maxWidth: 260,
   },
   sub: {
     fontSize: 15,
@@ -139,6 +140,7 @@ const styles = StyleSheet.create({
     color: INK,
     textAlign: 'center',
     lineHeight: 22,
+    maxWidth: 280,
   },
   footer: {
     paddingHorizontal: 24,
