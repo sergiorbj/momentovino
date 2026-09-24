@@ -19,7 +19,7 @@ const BRAND = 'MomentoVino'
 type GoalOption = { key: OnboardingGoal; emoji: string }
 
 const OPTIONS: GoalOption[] = [
-  { key: 'remember', emoji: '📖' },
+  { key: 'remember', emoji: '💭' },
   { key: 'travels', emoji: '🌍' },
   { key: 'share', emoji: '🍷' },
   { key: 'discover', emoji: '📸' },
