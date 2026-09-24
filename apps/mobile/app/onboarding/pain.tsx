@@ -16,7 +16,7 @@ const BG = '#F5EBE0'
 type PainOption = { key: OnboardingPain; emoji: string }
 
 const OPTIONS: PainOption[] = [
-  { key: 'forget_names', emoji: '🤔' },
+  { key: 'forget_names', emoji: '🛒' },
   { key: 'buried_photos', emoji: '📸' },
   { key: 'friend_asks', emoji: '💬' },
   { key: 'trip_blur', emoji: '✈️' },

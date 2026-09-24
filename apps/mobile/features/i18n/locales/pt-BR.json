@@ -139,11 +139,11 @@
     },
     "pain": {
       "headline": "Qual destas parece você?",
-      "subtitle": "Marque tudo que se aplica. Não há resposta errada.",
+      "subtitle": "Sinceramente? As quatro também são a nossa cara.",
       "continue": "Continuar",
       "options": {
-        "forget_names": "Esqueço o nome dos vinhos que amei",
-        "buried_photos": "Minhas fotos de vinho ficam perdidas no rolo da câmera",
+        "forget_names": "Vivemos recomprando vinhos que ninguém gostou de verdade",
+        "buried_photos": "As fotos de família ficam perdidas no rolo da câmera",
         "friend_asks": "Quando um amigo pergunta \"qual era aquele vinho?\", dou branco",
         "trip_blur": "Não lembro o que bebi naquela viagem do ano passado"
       }

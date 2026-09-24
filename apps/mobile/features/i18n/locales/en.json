@@ -139,11 +139,11 @@
     },
     "pain": {
       "headline": "Which of these sounds like you?",
-      "subtitle": "Pick all that apply. No wrong answers.",
+      "subtitle": "Honestly? All four sound like us too.",
       "continue": "Continue",
       "options": {
-        "forget_names": "I forget the name of wines I loved",
-        "buried_photos": "My wine photos are buried in my camera roll",
+        "forget_names": "We keep rebuying wines nobody actually liked",
+        "buried_photos": "Family photos are buried in my camera roll",
         "friend_asks": "When a friend asks \"what was that wine?\", I go blank",
         "trip_blur": "I can't remember what I drank on that trip last year"
       }

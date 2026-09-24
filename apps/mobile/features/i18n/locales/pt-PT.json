@@ -139,11 +139,11 @@
     },
     "pain": {
       "headline": "Qual destas se parece consigo?",
-      "subtitle": "Selecione tudo o que se aplica. Não há respostas erradas.",
+      "subtitle": "Sinceramente? As quatro também nos descrevem.",
       "continue": "Continuar",
       "options": {
-        "forget_names": "Esqueço-me do nome de vinhos que adorei",
-        "buried_photos": "As minhas fotos de vinho perdem-se no rolo da câmara",
+        "forget_names": "Voltamos sempre a comprar vinhos de que ninguém gostou",
+        "buried_photos": "As fotos de família perdem-se no rolo da câmara",
         "friend_asks": "Quando um amigo pergunta \"qual era aquele vinho?\", fico em branco",
         "trip_blur": "Não me lembro do que bebi naquela viagem do ano passado"
       }

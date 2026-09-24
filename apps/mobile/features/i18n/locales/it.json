@@ -139,11 +139,11 @@
     },
     "pain": {
       "headline": "Quale di queste ti rispecchia?",
-      "subtitle": "Seleziona tutto ciò che si applica. Non ci sono risposte sbagliate.",
+      "subtitle": "Onestamente? Tutte e quattro descrivono anche noi.",
       "continue": "Continua",
       "options": {
-        "forget_names": "Dimentico il nome dei vini che ho amato",
-        "buried_photos": "Le mie foto di vino sono sepolte nella galleria",
+        "forget_names": "Ricompriamo sempre vini che non sono piaciuti a nessuno",
+        "buried_photos": "Le foto di famiglia sono sepolte nella galleria",
         "friend_asks": "Quando un amico chiede \"qual era quel vino?\", vado in bianco",
         "trip_blur": "Non ricordo cosa ho bevuto in quel viaggio l'anno scorso"
       }

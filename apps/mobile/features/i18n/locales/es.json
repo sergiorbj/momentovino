@@ -139,11 +139,11 @@
     },
     "pain": {
       "headline": "¿Cuál de estas te suena?",
-      "subtitle": "Marca todas las que apliquen. No hay respuestas erróneas.",
+      "subtitle": "¿La verdad? Las cuatro también nos describen.",
       "continue": "Continuar",
       "options": {
-        "forget_names": "Olvido el nombre de los vinos que me encantaron",
-        "buried_photos": "Mis fotos de vino están perdidas en mi galería",
+        "forget_names": "Volvemos a comprar vinos que no le gustaron a nadie",
+        "buried_photos": "Las fotos de familia están perdidas en mi galería",
         "friend_asks": "Cuando un amigo pregunta \"¿cuál era ese vino?\", me quedo en blanco",
         "trip_blur": "No recuerdo qué bebí en ese viaje del año pasado"
       }
