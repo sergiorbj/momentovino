@@ -149,15 +149,15 @@
       }
     },
     "introCreate": {
-      "headline": "Vamos adicionar sua primeira garrafa.",
-      "subtitle": "O diário começa com um único momento. Três passos rápidos e seu atlas ganha o primeiro pin.",
-      "step1Title": "Escaneie o rótulo",
-      "step1Body": "Tire uma foto ou escolha o rótulo da garrafa. Vamos preencher produtor, região e notas para você.",
-      "step2Title": "Escreva o momento",
-      "step2Body": "Adicione um título, o lugar, a data, até uma foto da noite, se tiver.",
-      "step3Title": "Veja no seu atlas",
-      "step3Body": "Sua garrafa é fixada no seu mapa pessoal de vinhos. A primeira de muitas.",
-      "cta": "Escanear minha primeira garrafa"
+      "headline": "Vamos registrar seu primeiro momento.",
+      "subtitle": "Todo vinho tem uma história. Três passos rápidos para guardar a sua primeira.",
+      "step1Title": "Escreva o momento",
+      "step1Body": "Adicione um título, o lugar, a data, até uma foto da noite, se tiver.",
+      "step2Title": "Adicione sua garrafa",
+      "step2Body": "Escaneie o rótulo ou escolha uma foto da galeria.",
+      "step3Title": "Veja no seu atlas de vinhos",
+      "step3Body": "Seu momento é marcado no seu mapa pessoal de vinhos. O primeiro de muitos.",
+      "cta": "Criar meu primeiro momento"
     },
     "scanner": {
       "title": "Escaneie o rótulo",
@@ -191,7 +191,7 @@
         "type": "Tipo"
       },
       "notSet": "Não definido",
-      "createMoment": "Criar meu momento"
+      "addToMoment": "Adicionar ao momento"
     },
     "newMoment": {
       "headerTitle": "Novo momento",
@@ -210,6 +210,8 @@
       "locationPermissionDeniedHint": "Você ainda pode buscar uma cidade abaixo.",
       "noResults": "Nenhum resultado",
       "wineLabel": "Vinho",
+      "addBottle": "Adicionar garrafa",
+      "changeBottle": "Trocar",
       "ratingLabel": "Avaliação (opcional)",
       "photosLabel": "Fotos",
       "cover": "Capa",
@@ -218,7 +220,8 @@
       "validation": {
         "titleRequired": "Título é obrigatório",
         "dateRequired": "Data é obrigatória",
-        "locationRequired": "Escolha um local"
+        "locationRequired": "Escolha um local",
+        "wineRequired": "Adicione a garrafa que você bebeu"
       },
       "errors": {
         "permissionNeededTitle": "Permissão necessária",

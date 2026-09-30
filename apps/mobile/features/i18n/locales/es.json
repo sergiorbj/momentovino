@@ -149,15 +149,15 @@
       }
     },
     "introCreate": {
-      "headline": "Añadamos tu primera botella.",
-      "subtitle": "El diario empieza con un solo momento. Tres pasos rápidos y tu atlas tiene su primer pin.",
-      "step1Title": "Escanea la etiqueta",
-      "step1Body": "Saca una foto o elige la etiqueta de la botella. Rellenamos el productor, la región y las notas por ti.",
-      "step2Title": "Escribe el momento",
-      "step2Body": "Añade un título, el lugar, la fecha, incluso una foto de la noche, si tienes.",
-      "step3Title": "Mírala en tu atlas",
-      "step3Body": "Tu botella queda fijada en tu mapa personal de vinos. La primera de muchas.",
-      "cta": "Escanear mi primera botella"
+      "headline": "Añadamos tu primer momento.",
+      "subtitle": "Cada vino tiene una historia. Tres pasos rápidos para guardar la primera.",
+      "step1Title": "Escribe el momento",
+      "step1Body": "Añade un título, el lugar, la fecha, incluso una foto de la noche, si tienes.",
+      "step2Title": "Añade tu botella",
+      "step2Body": "Escanea la etiqueta o elige una foto de tu galería.",
+      "step3Title": "Míralo en tu atlas de vinos",
+      "step3Body": "Tu momento queda marcado en tu mapa personal de vinos. El primero de muchos.",
+      "cta": "Crear mi primer momento"
     },
     "scanner": {
       "title": "Escanea la etiqueta",
@@ -191,7 +191,7 @@
         "type": "Tipo"
       },
       "notSet": "Sin definir",
-      "createMoment": "Crear mi momento"
+      "addToMoment": "Añadir al momento"
     },
     "newMoment": {
       "headerTitle": "Nuevo momento",
@@ -210,6 +210,8 @@
       "locationPermissionDeniedHint": "Puedes buscar una ciudad abajo.",
       "noResults": "Sin resultados",
       "wineLabel": "Vino",
+      "addBottle": "Añadir botella",
+      "changeBottle": "Cambiar",
       "ratingLabel": "Valoración (opcional)",
       "photosLabel": "Fotos",
       "cover": "Portada",
@@ -218,7 +220,8 @@
       "validation": {
         "titleRequired": "El título es obligatorio",
         "dateRequired": "La fecha es obligatoria",
-        "locationRequired": "Elige una ubicación"
+        "locationRequired": "Elige una ubicación",
+        "wineRequired": "Añade la botella que tomaste"
       },
       "errors": {
         "permissionNeededTitle": "Permiso necesario",

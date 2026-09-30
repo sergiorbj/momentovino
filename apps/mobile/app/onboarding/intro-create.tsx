@@ -17,14 +17,14 @@ type StepKey = '1' | '2' | '3'
 type Step = { icon: keyof typeof Ionicons.glyphMap; key: StepKey }
 
 const STEPS: Step[] = [
-  { icon: 'camera-outline', key: '1' },
-  { icon: 'sparkles-outline', key: '2' },
+  { icon: 'sparkles-outline', key: '1' },
+  { icon: 'camera-outline', key: '2' },
   { icon: 'globe-outline', key: '3' },
 ]
 
 export default function IntroCreateScreen() {
   const { t } = useTranslation()
-  const cont = () => router.push('/onboarding/scanner-onb')
+  const cont = () => router.push('/onboarding/new-moment-onb')
 
   return (
     <View style={styles.container}>
@@ -59,7 +59,7 @@ export default function IntroCreateScreen() {
 
         <View style={styles.footer}>
           <TouchableOpacity style={styles.cta} onPress={cont} activeOpacity={0.85}>
-            <Ionicons name="camera" size={20} color="#FFFFFF" />
+            <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
             <Text style={styles.ctaText}>{t('onboarding.introCreate.cta')}</Text>
           </TouchableOpacity>
         </View>

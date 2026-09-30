@@ -149,15 +149,15 @@
       }
     },
     "introCreate": {
-      "headline": "Aggiungiamo la tua prima bottiglia.",
-      "subtitle": "Il diario inizia con un singolo momento. Tre passi rapidi e il tuo atlante ha il primo segnaposto.",
-      "step1Title": "Scannerizza l'etichetta",
-      "step1Body": "Scatta una foto o scegli l'etichetta della bottiglia. Compileremo produttore, regione e note per te.",
-      "step2Title": "Scrivi il momento",
-      "step2Body": "Aggiungi un titolo, il luogo, la data, anche una foto della serata, se l'hai.",
-      "step3Title": "Vedila sul tuo atlante",
-      "step3Body": "La tua bottiglia viene fissata sulla tua mappa personale del vino. La prima di molte.",
-      "cta": "Scannerizza la mia prima bottiglia"
+      "headline": "Aggiungiamo il tuo primo momento.",
+      "subtitle": "Ogni vino ha una storia. Tre passi rapidi per salvare la prima.",
+      "step1Title": "Scrivi il momento",
+      "step1Body": "Aggiungi un titolo, il luogo, la data, anche una foto della serata, se l'hai.",
+      "step2Title": "Aggiungi la tua bottiglia",
+      "step2Body": "Scansiona l'etichetta o scegli una foto dalla galleria.",
+      "step3Title": "Guardalo sul tuo atlante del vino",
+      "step3Body": "Il tuo momento viene segnato sulla tua mappa personale del vino. Il primo di molti.",
+      "cta": "Crea il mio primo momento"
     },
     "scanner": {
       "title": "Scannerizza l'etichetta",
@@ -191,7 +191,7 @@
         "type": "Tipo"
       },
       "notSet": "Non impostato",
-      "createMoment": "Crea il mio momento"
+      "addToMoment": "Aggiungi al momento"
     },
     "newMoment": {
       "headerTitle": "Nuovo momento",
@@ -210,6 +210,8 @@
       "locationPermissionDeniedHint": "Puoi comunque cercare una città qui sotto.",
       "noResults": "Nessun risultato",
       "wineLabel": "Vino",
+      "addBottle": "Aggiungi bottiglia",
+      "changeBottle": "Cambia",
       "ratingLabel": "Valutazione (opzionale)",
       "photosLabel": "Foto",
       "cover": "Copertina",
@@ -218,7 +220,8 @@
       "validation": {
         "titleRequired": "Il titolo è obbligatorio",
         "dateRequired": "La data è obbligatoria",
-        "locationRequired": "Scegli un luogo"
+        "locationRequired": "Scegli un luogo",
+        "wineRequired": "Aggiungi la bottiglia che hai bevuto"
       },
       "errors": {
         "permissionNeededTitle": "Permesso necessario",

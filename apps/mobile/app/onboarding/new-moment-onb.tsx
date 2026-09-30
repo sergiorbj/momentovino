@@ -15,7 +15,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as ImagePicker from 'expo-image-picker'
@@ -61,12 +61,19 @@ function todayIso(): string {
 export default function OnboardingNewMomentScreen() {
   const { t } = useTranslation()
   const language = useLanguage()
-  const wine = getCapture().wine
+  const [wine, setWine] = useState(getCapture().wine)
+  const [wineError, setWineError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    if (!wine) router.replace('/onboarding/scanner-onb')
-  }, [wine])
+  useFocusEffect(
+    useCallback(() => {
+      const captured = getCapture().wine
+      setWine(captured)
+      if (captured) setWineError(null)
+    }, []),
+  )
+
+  const openScanner = () => router.push('/onboarding/scanner-onb')
 
   const schema = useRef(buildOnboardingMomentSchema(t)).current
 
@@ -206,14 +213,20 @@ export default function OnboardingNewMomentScreen() {
     setValue('photos', next, { shouldValidate: true })
   }
 
+  const flagMissingWine = () => {
+    if (!wine) setWineError(t('onboarding.newMoment.validation.wineRequired'))
+  }
+
   const onSubmit = (values: OnboardingMomentValues) => {
+    if (!wine) {
+      flagMissingWine()
+      return
+    }
     setSubmitting(true)
     setCapturedMoment(values)
     router.push('/onboarding/atlas')
     setSubmitting(false)
   }
-
-  if (!wine) return null
 
   return (
     <View style={styles.container}>
@@ -383,18 +396,22 @@ export default function OnboardingNewMomentScreen() {
               )}
             </Field>
 
-            <Field label={t('onboarding.newMoment.wineLabel')}>
-              <View
-                style={styles.wineLocked}
-                accessibilityRole="text"
-                accessibilityState={{ disabled: true }}
-                accessibilityLabel={`${t('onboarding.newMoment.wineLabel')}: ${wine.name}`}
-              >
-                <Text style={styles.wineLockedText} numberOfLines={2}>
-                  {wine.name}
-                </Text>
-                <Ionicons name="lock-closed" size={14} color={SUBTLE} />
-              </View>
+            <Field label={t('onboarding.newMoment.wineLabel')} error={wineError ?? undefined}>
+              {wine ? (
+                <View style={styles.wineRow}>
+                  <Text style={styles.wineName} numberOfLines={2}>
+                    {wine.name}
+                  </Text>
+                  <TouchableOpacity onPress={openScanner} hitSlop={8}>
+                    <Text style={styles.wineChange}>{t('onboarding.newMoment.changeBottle')}</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity style={styles.wineAdd} onPress={openScanner} activeOpacity={0.85}>
+                  <Ionicons name="camera-outline" size={20} color={WINE} />
+                  <Text style={styles.wineAddText}>{t('onboarding.newMoment.addBottle')}</Text>
+                </TouchableOpacity>
+              )}
             </Field>
 
             <Field label={t('onboarding.newMoment.ratingLabel')}>
@@ -452,7 +469,7 @@ export default function OnboardingNewMomentScreen() {
           <View style={styles.footer}>
             <TouchableOpacity
               style={[styles.submit, submitting && styles.submitDisabled]}
-              onPress={handleSubmit(onSubmit)}
+              onPress={handleSubmit(onSubmit, flagMissingWine)}
               disabled={submitting}
               activeOpacity={0.85}
             >
@@ -539,23 +556,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 13,
   },
-  // Locked-display variant of `input` for the wine row (no TextInput — onboarding is one bottle only).
-  wineLocked: {
-    backgroundColor: '#F5F0EB',
+  wineRow: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E8DDD4',
     paddingHorizontal: 14,
     paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  wineLockedText: {
+  wineName: {
     flex: 1,
     fontSize: 15,
     fontFamily: 'DMSans_400Regular',
     color: INK,
+  },
+  wineChange: {
+    fontSize: 14,
+    fontFamily: 'DMSans_600SemiBold',
+    color: WINE,
+  },
+  wineAdd: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: WINE,
+    borderStyle: 'dashed',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
+  },
+  wineAddText: {
+    fontSize: 15,
+    fontFamily: 'DMSans_600SemiBold',
+    color: WINE,
   },
   stars: { flexDirection: 'row', gap: 8 },
   starBtn: { padding: 4 },

@@ -30,7 +30,7 @@ export default function OnboardingScanResultScreen() {
 
   if (!wine) return null
 
-  const cont = () => router.push('/onboarding/new-moment-onb')
+  const cont = () => router.dismissTo('/onboarding/new-moment-onb')
 
   return (
     <View style={styles.container}>
@@ -96,7 +96,7 @@ export default function OnboardingScanResultScreen() {
             activeOpacity={0.85}
           >
             <Ionicons name="sparkles-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.btnPrimaryText}>{t('onboarding.scanResult.createMoment')}</Text>
+            <Text style={styles.btnPrimaryText}>{t('onboarding.scanResult.addToMoment')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
