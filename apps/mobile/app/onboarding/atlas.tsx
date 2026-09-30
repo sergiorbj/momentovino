@@ -28,6 +28,7 @@ import { useTranslation } from '../../features/i18n/hooks'
 const WINE = '#722F37'
 const INK = '#3F2A2E'
 const SUBTLE = '#6E5A5E'
+const VINO_ACCENT = '#C2703E'
 const BG = '#F5EBE0'
 const BORDER = '#E8DDD4'
 
@@ -250,15 +251,24 @@ function MomentCard({ moment, wine }: { moment: CapturedMoment; wine: CapturedWi
         </View>
       )}
       <View style={styles.momentMeta}>
-        <Text style={styles.momentTitle} numberOfLines={1}>
-          {moment.title}
-        </Text>
-        <Text style={styles.momentWine} numberOfLines={1}>
-          {wine.name}
-        </Text>
-        <Text style={styles.momentPlace} numberOfLines={1}>
-          {moment.locationName}
-        </Text>
+        <View style={styles.momentLine}>
+          <Ionicons name="sparkles-outline" size={14} color={VINO_ACCENT} />
+          <Text style={[styles.momentTitle, styles.momentLineText]} numberOfLines={1}>
+            {moment.title}
+          </Text>
+        </View>
+        <View style={styles.momentLine}>
+          <Ionicons name="wine-outline" size={14} color={VINO_ACCENT} />
+          <Text style={[styles.momentWine, styles.momentLineText]} numberOfLines={1}>
+            {wine.name}
+          </Text>
+        </View>
+        <View style={styles.momentLine}>
+          <Ionicons name="location-outline" size={14} color={VINO_ACCENT} />
+          <Text style={[styles.momentPlace, styles.momentLineText]} numberOfLines={1}>
+            {moment.locationName}
+          </Text>
+        </View>
       </View>
     </View>
   )
@@ -359,7 +369,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  momentMeta: { flex: 1, gap: 2 },
+  momentMeta: { flex: 1, gap: 3 },
+  momentLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  momentLineText: { flexShrink: 1 },
   momentTitle: {
     fontSize: 15,
     fontFamily: 'DMSans_600SemiBold',
