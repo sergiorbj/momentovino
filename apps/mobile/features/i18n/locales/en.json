@@ -248,7 +248,7 @@
       },
       "monthly": "Monthly",
       "monthlyDetailPrefix": "3 days free",
-      "monthlyDetailSuffix": ", then billed",
+      "monthlyDetailSuffix": ", cancel anytime",
       "perMonth": "per month",
       "annual": "Annual",
       "annualDetail": "Just {{monthly}}/month",

@@ -248,7 +248,7 @@
       },
       "monthly": "Mensile",
       "monthlyDetailPrefix": "3 giorni gratis",
-      "monthlyDetailSuffix": ", poi addebitato",
+      "monthlyDetailSuffix": ", disdici quando vuoi",
       "perMonth": "al mese",
       "annual": "Annuale",
       "annualDetail": "Solo {{monthly}}/mese",

@@ -46,7 +46,7 @@ export default function PaywallScreen() {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const [purchasing, setPurchasing] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>('yearly')
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>('monthly')
   const [offering, setOffering] = useState<PurchasesOffering | null>(null)
 
   useEffect(() => {
