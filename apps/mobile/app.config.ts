@@ -10,7 +10,7 @@ const config: ExpoConfig = {
   name: 'MomentoVino',
   slug: 'momentovino',
   owner: 'sergiobernardidev',
-  version: '1.0.3',
+  version: '1.0.4',
   orientation: 'portrait',
   extra: {
     eas: {
@@ -29,7 +29,7 @@ const config: ExpoConfig = {
     supportsTablet: true,
     bundleIdentifier: 'com.momentovino.app',
     usesAppleSignIn: true,
-    buildNumber: '42',
+    buildNumber: '43',
     config: { usesNonExemptEncryption: false },
   },
   android: {
