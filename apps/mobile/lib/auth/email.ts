@@ -1,4 +1,5 @@
 import { supabase } from '../supabase'
+import { i18n } from '../../features/i18n/config'
 import { configurePurchases } from '../purchases'
 import {
   friendlySignUpError,
@@ -55,7 +56,7 @@ export async function signUpWithEmail(input: EmailSignUpInput): Promise<EmailAut
       const { data, error } = await supabase.auth.updateUser({
         email,
         password,
-        data: fullName ? { full_name: fullName } : undefined,
+        data: { language: i18n.language, ...(fullName ? { full_name: fullName } : {}) },
       })
       if (error) {
         // Happens when the user already called `updateUser` with this password earlier in the
@@ -76,7 +77,7 @@ export async function signUpWithEmail(input: EmailSignUpInput): Promise<EmailAut
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: fullName ? { data: { full_name: fullName } } : undefined,
+      options: { data: { language: i18n.language, ...(fullName ? { full_name: fullName } : {}) } },
     })
     if (error) throw error
     if (!data.session) return { kind: 'needs_email_confirmation' }

@@ -17,7 +17,9 @@ import { prefetchCoreData } from '../lib/prefetch'
 import { configurePurchases } from '../lib/purchases'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/query-keys'
-import { initI18n } from '../features/i18n/config'
+import { i18n, initI18n } from '../features/i18n/config'
+import { isLanguageCode } from '../features/i18n/types'
+import { syncAccountLanguage } from '../features/profile/api'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -52,6 +54,11 @@ function BackgroundBootstrap() {
           console.warn('Failed to configure RevenueCat', err)
         }
         prefetchCoreData(queryClient)
+        if (isLanguageCode(i18n.language)) {
+          syncAccountLanguage(i18n.language).catch((err) =>
+            console.warn('Failed to sync account language', err),
+          )
+        }
       } catch (err) {
         console.error('Failed to establish Supabase session', err)
       }

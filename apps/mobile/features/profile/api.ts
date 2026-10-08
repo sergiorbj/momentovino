@@ -185,5 +185,18 @@ export async function updateSettings(input: UpdateSettingsInput): Promise<{ prof
   if (error) throw new Error(error.message || 'Could not update settings')
   if (!data) throw new Error('Profile not found')
 
+  if (input.language !== undefined) {
+    // Supabase Auth email templates read the language from user metadata.
+    const { error: metaErr } = await supabase.auth.updateUser({ data: { language: input.language } })
+    if (metaErr) console.warn('[profile] language metadata', metaErr.message)
+  }
+
   return { profile: data as unknown as ProfileRow }
+}
+
+export async function syncAccountLanguage(language: LanguageCode): Promise<void> {
+  const { data } = await supabase.auth.getSession()
+  const user = data.session?.user
+  if (!user || user.user_metadata?.language === language) return
+  await updateSettings({ language })
 }
