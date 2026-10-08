@@ -15,6 +15,5 @@ export function serverErrorKey(code: string | null | undefined): string | null {
  */
 export function translateApiError(err: unknown, t: TFunction, fallbackKey: string): string {
   const key = err instanceof ApiError ? serverErrorKey(err.code) : null
-  if (!key) console.warn('[api-error]', err)
   return t(key ?? fallbackKey)
 }
