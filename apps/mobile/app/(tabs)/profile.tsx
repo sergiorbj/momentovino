@@ -19,6 +19,7 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { useEntitlement } from '../../features/entitlement/hooks'
 import { useLanguage, useTranslation } from '../../features/i18n/hooks'
+import { translateApiError } from '../../features/i18n/api-error'
 import { useDeleteAccount, useProfile } from '../../features/profile/hooks'
 import { resetOnboardingState } from '../../features/onboarding/state'
 import {
@@ -88,7 +89,7 @@ export default function ProfileScreen() {
     } catch (e) {
       Alert.alert(
         t('profile.restore.failedTitle'),
-        e instanceof Error ? e.message : t('profile.restore.failedBody'),
+        translateApiError(e, t, 'profile.restore.failedBody'),
       )
     } finally {
       setRestoring(false)
@@ -118,7 +119,7 @@ export default function ProfileScreen() {
       await resetOnboardingState()
       router.replace('/onboarding')
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('profile.delete.failed'))
+      Alert.alert(t('common.error'), translateApiError(e, t, 'profile.delete.failed'))
     }
   }
 
@@ -165,7 +166,7 @@ export default function ProfileScreen() {
               if (error) throw error
               router.replace('/onboarding')
             } catch (e) {
-              Alert.alert(t('common.error'), e instanceof Error ? e.message : t('profile.signOut.failed'))
+              Alert.alert(t('common.error'), translateApiError(e, t, 'profile.signOut.failed'))
             }
           },
         },

@@ -31,6 +31,7 @@ import { uploadAvatar } from '../../features/profile/avatar-upload'
 import { supabase } from '../../lib/supabase'
 import { requireOnline } from '../../lib/connection/require-online'
 import { useTranslation } from '../../features/i18n/hooks'
+import { translateApiError } from '../../features/i18n/api-error'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -152,7 +153,7 @@ export default function EditProfileScreen() {
 
       router.back()
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('profile.edit.saveFailed'))
+      Alert.alert(t('common.error'), translateApiError(e, t, 'profile.edit.saveFailed'))
     } finally {
       setSaving(false)
     }
