@@ -653,5 +653,11 @@
       "scan_failed": "We couldn't read this label right now. Please try again.",
       "not_identified": "We couldn't recognize a wine in this photo. Try a closer, well-lit shot of the label."
     }
+  },
+  "auth": {
+    "errors": {
+      "unavailableBody": "This sign-in option isn't available on this device.",
+      "tryAgainBody": "Please try again in a moment."
+    }
   }
 }

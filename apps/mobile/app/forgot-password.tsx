@@ -47,7 +47,7 @@ export default function ForgotPasswordScreen() {
       }
       Alert.alert(
         t('forgotPassword.errors.sendFailedTitle'),
-        outcome.kind === 'error' ? outcome.message : t('forgotPassword.errors.sendFailedBody'),
+        t('forgotPassword.errors.sendFailedBody'),
       )
     } finally {
       setSubmitting(false)

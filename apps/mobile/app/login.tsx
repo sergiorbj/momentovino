@@ -76,11 +76,11 @@ export default function LoginScreen() {
       const outcome = await signInWithApple()
       if (outcome.kind === 'cancelled') return
       if (outcome.kind === 'unavailable') {
-        Alert.alert(t('login.errors.appleUnavailable'), outcome.message)
+        Alert.alert(t('login.errors.appleUnavailable'), t('auth.errors.unavailableBody'))
         return
       }
       if (outcome.kind === 'error') {
-        Alert.alert(t('login.errors.appleFailed'), outcome.message)
+        Alert.alert(t('login.errors.appleFailed'), t('auth.errors.tryAgainBody'))
         return
       }
       await afterSignIn()
@@ -96,11 +96,11 @@ export default function LoginScreen() {
       const outcome = await signInWithGoogle()
       if (outcome.kind === 'cancelled') return
       if (outcome.kind === 'unavailable') {
-        Alert.alert(t('login.errors.googleUnavailable'), outcome.message)
+        Alert.alert(t('login.errors.googleUnavailable'), t('auth.errors.unavailableBody'))
         return
       }
       if (outcome.kind === 'error') {
-        Alert.alert(t('login.errors.googleFailed'), outcome.message)
+        Alert.alert(t('login.errors.googleFailed'), t('auth.errors.tryAgainBody'))
         return
       }
       await afterSignIn()
@@ -126,7 +126,7 @@ export default function LoginScreen() {
         return
       }
       if (outcome.kind === 'error') {
-        Alert.alert(t('login.errors.genericFailed'), outcome.message)
+        Alert.alert(t('login.errors.genericFailed'), t('auth.errors.tryAgainBody'))
       }
     } finally {
       setSubmitting(false)

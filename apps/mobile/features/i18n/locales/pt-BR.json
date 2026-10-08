@@ -653,5 +653,11 @@
       "scan_failed": "Não conseguimos ler este rótulo agora. Tente novamente.",
       "not_identified": "Não conseguimos reconhecer um vinho nesta foto. Tente uma foto mais próxima e bem iluminada do rótulo."
     }
+  },
+  "auth": {
+    "errors": {
+      "unavailableBody": "Esta opção de login não está disponível neste aparelho.",
+      "tryAgainBody": "Tente novamente em instantes."
+    }
   }
 }

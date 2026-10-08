@@ -653,5 +653,11 @@
       "scan_failed": "No pudimos leer esta etiqueta ahora. Inténtalo de nuevo.",
       "not_identified": "No pudimos reconocer un vino en esta foto. Prueba con una foto más cercana y bien iluminada de la etiqueta."
     }
+  },
+  "auth": {
+    "errors": {
+      "unavailableBody": "Esta opción de inicio de sesión no está disponible en este dispositivo.",
+      "tryAgainBody": "Inténtalo de nuevo en un momento."
+    }
   }
 }

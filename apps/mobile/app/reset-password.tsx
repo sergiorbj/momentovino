@@ -101,7 +101,7 @@ export default function ResetPasswordScreen() {
       }
       Alert.alert(
         t('resetPassword.codeStep.verifyFailedTitle'),
-        outcome.kind === 'error' ? outcome.message : t('resetPassword.codeStep.verifyFailedBody'),
+        t('resetPassword.codeStep.verifyFailedBody'),
       )
     } finally {
       setSubmitting(false)
@@ -124,7 +124,7 @@ export default function ResetPasswordScreen() {
       }
       Alert.alert(
         t('resetPassword.codeStep.resendFailedTitle'),
-        outcome.kind === 'error' ? outcome.message : t('resetPassword.codeStep.resendFailedBody'),
+        t('resetPassword.codeStep.resendFailedBody'),
       )
     } finally {
       setResending(false)
@@ -158,7 +158,7 @@ export default function ResetPasswordScreen() {
       }
       Alert.alert(
         t('resetPassword.passwordStep.updateFailedTitle'),
-        outcome.kind === 'error' ? outcome.message : t('resetPassword.passwordStep.updateFailedBody'),
+        t('resetPassword.passwordStep.updateFailedBody'),
       )
     } finally {
       setSubmitting(false)

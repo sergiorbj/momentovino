@@ -75,11 +75,11 @@ export default function SaveAccountScreen() {
       const outcome = await signInWithApple()
       if (outcome.kind === 'cancelled') return
       if (outcome.kind === 'unavailable') {
-        Alert.alert(t('onboarding.saveAccount.errors.appleUnavailable'), outcome.message)
+        Alert.alert(t('onboarding.saveAccount.errors.appleUnavailable'), t('auth.errors.unavailableBody'))
         return
       }
       if (outcome.kind === 'error') {
-        Alert.alert(t('onboarding.saveAccount.errors.appleFailed'), outcome.message)
+        Alert.alert(t('onboarding.saveAccount.errors.appleFailed'), t('auth.errors.tryAgainBody'))
         return
       }
       router.push('/onboarding/complete-profile')
@@ -95,11 +95,11 @@ export default function SaveAccountScreen() {
       const outcome = await signInWithGoogle()
       if (outcome.kind === 'cancelled') return
       if (outcome.kind === 'unavailable') {
-        Alert.alert(t('onboarding.saveAccount.errors.googleUnavailable'), outcome.message)
+        Alert.alert(t('onboarding.saveAccount.errors.googleUnavailable'), t('auth.errors.unavailableBody'))
         return
       }
       if (outcome.kind === 'error') {
-        Alert.alert(t('onboarding.saveAccount.errors.googleFailed'), outcome.message)
+        Alert.alert(t('onboarding.saveAccount.errors.googleFailed'), t('auth.errors.tryAgainBody'))
         return
       }
       router.push('/onboarding/complete-profile')
@@ -155,9 +155,7 @@ export default function SaveAccountScreen() {
       }
       Alert.alert(
         t('onboarding.saveAccount.errors.createFailedTitle'),
-        outcome.kind === 'error'
-          ? outcome.message
-          : t('onboarding.saveAccount.errors.createFailedFallback'),
+        t('onboarding.saveAccount.errors.createFailedFallback'),
       )
     } finally {
       setBusy(false)

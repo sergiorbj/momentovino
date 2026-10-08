@@ -653,5 +653,11 @@
       "scan_failed": "Non siamo riusciti a leggere questa etichetta. Riprova.",
       "not_identified": "Non siamo riusciti a riconoscere un vino in questa foto. Prova con una foto più ravvicinata e ben illuminata dell'etichetta."
     }
+  },
+  "auth": {
+    "errors": {
+      "unavailableBody": "Questa opzione di accesso non è disponibile su questo dispositivo.",
+      "tryAgainBody": "Riprova tra un momento."
+    }
   }
 }
