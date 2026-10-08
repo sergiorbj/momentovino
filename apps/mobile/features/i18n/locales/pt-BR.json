@@ -20,7 +20,8 @@
       "DESSERT": "Sobremesa",
       "FORTIFIED": "Fortificado"
     },
-    "error": "Erro"
+    "error": "Erro",
+    "ok": "OK"
   },
   "login": {
     "title": "Bem-vindo(a) de volta.",
@@ -504,6 +505,34 @@
       "removePhoto": "Remover foto",
       "submit": "Criar família",
       "failed": "Não foi possível criar a família"
+    },
+    "invite": {
+      "hint": "Busque apenas pelo nome de usuário. Se a pessoa ainda não usa o MomentoVino, convide por email abaixo.",
+      "emailToggle": "Convidar por email (ainda sem conta no MomentoVino)",
+      "usernameLabel": "Nome de usuário",
+      "usernamePlaceholder": "ex.: carlossilva",
+      "usernameFormatError": "Apenas nome de usuário: letras, números, ponto, sublinhado e hífen. Sem @ e sem email. Para email, use o convite por email abaixo.",
+      "searching": "Buscando usuários…",
+      "results": "Resultados",
+      "notFoundTitle": "Nenhum usuário encontrado",
+      "notFoundBody": "Nenhuma conta corresponde a esse nome de usuário. Se a pessoa ainda não usa o app, convide por email abaixo.",
+      "emailSection": "Convite por email",
+      "emailPlaceholder": "amigo@exemplo.com",
+      "emailSend": "Enviar convite por email",
+      "searchFailedTitle": "Busca",
+      "searchFailedBody": "Não foi possível buscar.",
+      "invalidEmailTitle": "Email",
+      "invalidEmailBody": "Digite um email válido.",
+      "alreadyOnAppTitle": "Já está no MomentoVino",
+      "sentTitle": "Convite enviado",
+      "sentEmailBody": "Enviamos por email um link para baixar o MomentoVino. Quando a pessoa se cadastrar, peça o nome de usuário e convide por aqui.",
+      "sentUsernameBody": "{{name}} vai ver seu convite na tela de família.",
+      "failed": "Não foi possível enviar o convite",
+      "alreadyInvitedTitle": "Convite já enviado",
+      "cannotInviteTitle": "Não é possível convidar",
+      "alreadyMemberTitle": "Já faz parte da família",
+      "confirmTitle": "Enviar convite?",
+      "confirmSend": "Enviar convite"
     }
   }
 }

@@ -17,6 +17,7 @@ import type { FamilyInviteUserMatch } from '../../features/family/api'
 import { searchFamilyInviteTargets } from '../../features/family/api'
 import { useInviteMemberByEmail, useInviteMemberByUsername } from '../../features/family/hooks'
 import { requireOnline } from '../../lib/connection/require-online'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -66,6 +67,7 @@ function UserMatchCard({ user, onSelect }: { user: FamilyInviteUserMatch; onSele
 }
 
 export default function FamilyInviteMemberScreen() {
+  const { t } = useTranslation()
   const [searchInput, setSearchInput] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [searching, setSearching] = useState(false)
@@ -97,9 +99,7 @@ export default function FamilyInviteMemberScreen() {
       setMatches([])
       setSearchFinished(true)
       setSearching(false)
-      setSearchFormatError(
-        'Username only: letters, numbers, dot, underscore, hyphen. No @ and no email. Use invite by email below for that.',
-      )
+      setSearchFormatError(t('family.invite.usernameFormatError'))
       return
     }
     setSearchFormatError(null)
@@ -118,7 +118,10 @@ export default function FamilyInviteMemberScreen() {
         console.error(e)
         if (!cancelled) {
           setMatches([])
-          Alert.alert('Search', e instanceof Error ? e.message : 'Could not search.')
+          Alert.alert(
+            t('family.invite.searchFailedTitle'),
+            e instanceof Error ? e.message : t('family.invite.searchFailedBody'),
+          )
         }
       })
       .finally(() => {
@@ -130,7 +133,7 @@ export default function FamilyInviteMemberScreen() {
     return () => {
       cancelled = true
     }
-  }, [debouncedSearch])
+  }, [debouncedSearch, t])
 
   useEffect(() => {
     if (searchFinished && debouncedSearch.length >= 2 && matches.length === 0 && isValidUserSearchQuery(debouncedSearch)) {
@@ -141,23 +144,21 @@ export default function FamilyInviteMemberScreen() {
   const runInviteByEmail = async (email: string) => {
     const e = email.trim().toLowerCase()
     if (!looksLikeEmail(e)) {
-      Alert.alert('Email', 'Enter a valid email address.')
+      Alert.alert(t('family.invite.invalidEmailTitle'), t('family.invite.invalidEmailBody'))
       return
     }
     try {
       setSaving(true)
       const out = await inviteByEmailMutation.mutateAsync(e)
       if ('existingUser' in out && out.existingUser) {
-        Alert.alert('Already on MomentoVino', out.message)
+        Alert.alert(t('family.invite.alreadyOnAppTitle'), out.message)
         return
       }
-      Alert.alert(
-        'Invitation sent',
-        "We emailed them a link to download MomentoVino. Once they sign up, ask them for their username and invite them from here.",
-        [{ text: 'OK', onPress: () => router.back() }],
-      )
+      Alert.alert(t('family.invite.sentTitle'), t('family.invite.sentEmailBody'), [
+        { text: t('common.ok'), onPress: () => router.back() },
+      ])
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Invite failed')
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('family.invite.failed'))
     } finally {
       setSaving(false)
     }
@@ -168,24 +169,24 @@ export default function FamilyInviteMemberScreen() {
       setSaving(true)
       const out = await inviteByUsernameMutation.mutateAsync(user.user_id)
       if ('alreadyInvited' in out && out.alreadyInvited) {
-        Alert.alert('Already invited', out.message)
+        Alert.alert(t('family.invite.alreadyInvitedTitle'), out.message)
         return
       }
       if ('targetAlreadyInFamily' in out && out.targetAlreadyInFamily) {
-        Alert.alert('Cannot invite', out.message)
+        Alert.alert(t('family.invite.cannotInviteTitle'), out.message)
         return
       }
       if ('alreadyMember' in out && out.alreadyMember) {
-        Alert.alert('Already a member', out.message)
+        Alert.alert(t('family.invite.alreadyMemberTitle'), out.message)
         return
       }
       Alert.alert(
-        'Invitation sent',
-        `${user.display_name} will see your invitation in their family screen.`,
-        [{ text: 'OK', onPress: () => router.back() }],
+        t('family.invite.sentTitle'),
+        t('family.invite.sentUsernameBody', { name: user.display_name }),
+        [{ text: t('common.ok'), onPress: () => router.back() }],
       )
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Invite failed')
+      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('family.invite.failed'))
     } finally {
       setSaving(false)
     }
@@ -193,12 +194,12 @@ export default function FamilyInviteMemberScreen() {
 
   const confirmAddExistingUser = (user: FamilyInviteUserMatch) => {
     Alert.alert(
-      'Send invitation?',
+      t('family.invite.confirmTitle'),
       `${user.display_name}\n${user.email}`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Send invite',
+          text: t('family.invite.confirmSend'),
           onPress: () => void requireOnline(() => sendUsernameInvite(user)),
         },
       ],
@@ -212,7 +213,7 @@ export default function FamilyInviteMemberScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
             <Ionicons name="chevron-back" size={22} color={WINE} />
           </TouchableOpacity>
-          <Text style={styles.title}>Invite member</Text>
+          <Text style={styles.title}>{t('family.section.inviteCta')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -222,9 +223,7 @@ export default function FamilyInviteMemberScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.hint}>
-            Search by username only. If they are not on MomentoVino yet, invite them by email below.
-          </Text>
+          <Text style={styles.hint}>{t('family.invite.hint')}</Text>
 
           <TouchableOpacity
             style={styles.outlineBtn}
@@ -234,14 +233,14 @@ export default function FamilyInviteMemberScreen() {
             activeOpacity={0.85}
           >
             <Ionicons name="mail-outline" size={20} color={CTA} />
-            <Text style={styles.outlineBtnText}>Invite by email (no MomentoVino account yet)</Text>
+            <Text style={styles.outlineBtnText}>{t('family.invite.emailToggle')}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.label}>Username</Text>
+          <Text style={styles.label}>{t('family.invite.usernameLabel')}</Text>
           <TextInput
             value={searchInput}
             onChangeText={setSearchInput}
-            placeholder="e.g. carlossilva"
+            placeholder={t('family.invite.usernamePlaceholder')}
             placeholderTextColor="#A98B7E"
             style={styles.input}
             autoCapitalize="none"
@@ -253,13 +252,13 @@ export default function FamilyInviteMemberScreen() {
           {searching ? (
             <View style={styles.searchLoading}>
               <ActivityIndicator color={WINE} />
-              <Text style={styles.searchLoadingText}>Searching users…</Text>
+              <Text style={styles.searchLoadingText}>{t('family.invite.searching')}</Text>
             </View>
           ) : null}
 
           {searchFinished && debouncedSearch.length >= 2 && matches.length > 0 ? (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Results</Text>
+              <Text style={styles.sectionTitle}>{t('family.invite.results')}</Text>
               {matches.map((u) => (
                 <UserMatchCard key={u.user_id} user={u} onSelect={() => confirmAddExistingUser(u)} />
               ))}
@@ -273,20 +272,18 @@ export default function FamilyInviteMemberScreen() {
           !searchFormatError ? (
             <View style={styles.notFound}>
               <Ionicons name="person-outline" size={32} color={SUBTLE} />
-              <Text style={styles.notFoundTitle}>No user found</Text>
-              <Text style={styles.notFoundText}>
-                No account matched that username. Invite them by email below if they are not on the app yet.
-              </Text>
+              <Text style={styles.notFoundTitle}>{t('family.invite.notFoundTitle')}</Text>
+              <Text style={styles.notFoundText}>{t('family.invite.notFoundBody')}</Text>
             </View>
           ) : null}
 
           {showEmailPanel ? (
             <View style={styles.emailPanel}>
-              <Text style={styles.sectionTitle}>Email invitation</Text>
+              <Text style={styles.sectionTitle}>{t('family.invite.emailSection')}</Text>
               <TextInput
                 value={inviteEmail}
                 onChangeText={setInviteEmail}
-                placeholder="friend@example.com"
+                placeholder={t('family.invite.emailPlaceholder')}
                 placeholderTextColor="#A98B7E"
                 style={styles.input}
                 autoCapitalize="none"
@@ -301,7 +298,7 @@ export default function FamilyInviteMemberScreen() {
                 {saving ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.ctaText}>Send email invitation</Text>
+                  <Text style={styles.ctaText}>{t('family.invite.emailSend')}</Text>
                 )}
               </TouchableOpacity>
             </View>

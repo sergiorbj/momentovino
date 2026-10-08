@@ -20,7 +20,8 @@
       "DESSERT": "Sobremesa",
       "FORTIFIED": "Fortificado"
     },
-    "error": "Erro"
+    "error": "Erro",
+    "ok": "OK"
   },
   "login": {
     "title": "Bem-vindo(a) de volta.",
@@ -504,6 +505,34 @@
       "removePhoto": "Remover fotografia",
       "submit": "Criar família",
       "failed": "Não foi possível criar a família"
+    },
+    "invite": {
+      "hint": "Pesquise apenas pelo nome de utilizador. Se a pessoa ainda não usa o MomentoVino, convide-a por email abaixo.",
+      "emailToggle": "Convidar por email (ainda sem conta no MomentoVino)",
+      "usernameLabel": "Nome de utilizador",
+      "usernamePlaceholder": "ex.: carlossilva",
+      "usernameFormatError": "Apenas nome de utilizador: letras, números, ponto, sublinhado e hífen. Sem @ e sem email. Para email, use o convite por email abaixo.",
+      "searching": "A pesquisar utilizadores…",
+      "results": "Resultados",
+      "notFoundTitle": "Nenhum utilizador encontrado",
+      "notFoundBody": "Nenhuma conta corresponde a esse nome de utilizador. Se a pessoa ainda não usa a app, convide-a por email abaixo.",
+      "emailSection": "Convite por email",
+      "emailPlaceholder": "amigo@exemplo.com",
+      "emailSend": "Enviar convite por email",
+      "searchFailedTitle": "Pesquisa",
+      "searchFailedBody": "Não foi possível pesquisar.",
+      "invalidEmailTitle": "Email",
+      "invalidEmailBody": "Introduza um email válido.",
+      "alreadyOnAppTitle": "Já está no MomentoVino",
+      "sentTitle": "Convite enviado",
+      "sentEmailBody": "Enviámos por email uma ligação para descarregar o MomentoVino. Quando a pessoa se registar, peça-lhe o nome de utilizador e convide-a a partir daqui.",
+      "sentUsernameBody": "{{name}} vai ver o seu convite no ecrã da família.",
+      "failed": "Não foi possível enviar o convite",
+      "alreadyInvitedTitle": "Convite já enviado",
+      "cannotInviteTitle": "Não é possível convidar",
+      "alreadyMemberTitle": "Já faz parte da família",
+      "confirmTitle": "Enviar convite?",
+      "confirmSend": "Enviar convite"
     }
   }
 }

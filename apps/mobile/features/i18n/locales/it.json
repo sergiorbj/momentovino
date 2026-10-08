@@ -20,7 +20,8 @@
       "DESSERT": "Dolce",
       "FORTIFIED": "Liquoroso"
     },
-    "error": "Errore"
+    "error": "Errore",
+    "ok": "OK"
   },
   "login": {
     "title": "Bentornato.",
@@ -504,6 +505,34 @@
       "removePhoto": "Rimuovi foto",
       "submit": "Crea famiglia",
       "failed": "Impossibile creare la famiglia"
+    },
+    "invite": {
+      "hint": "Cerca solo per nome utente. Se non usa ancora MomentoVino, invitalo via email qui sotto.",
+      "emailToggle": "Invita via email (ancora senza account MomentoVino)",
+      "usernameLabel": "Nome utente",
+      "usernamePlaceholder": "es. carlossilva",
+      "usernameFormatError": "Solo nome utente: lettere, numeri, punto, trattino basso e trattino. Niente @ né email. Per l'email usa l'invito via email qui sotto.",
+      "searching": "Ricerca utenti…",
+      "results": "Risultati",
+      "notFoundTitle": "Nessun utente trovato",
+      "notFoundBody": "Nessun account corrisponde a quel nome utente. Se non usa ancora l'app, invitalo via email qui sotto.",
+      "emailSection": "Invito via email",
+      "emailPlaceholder": "amico@esempio.com",
+      "emailSend": "Invia invito via email",
+      "searchFailedTitle": "Ricerca",
+      "searchFailedBody": "Impossibile cercare.",
+      "invalidEmailTitle": "Email",
+      "invalidEmailBody": "Inserisci un indirizzo email valido.",
+      "alreadyOnAppTitle": "Già su MomentoVino",
+      "sentTitle": "Invito inviato",
+      "sentEmailBody": "Gli abbiamo inviato via email un link per scaricare MomentoVino. Quando si registra, chiedigli il nome utente e invitalo da qui.",
+      "sentUsernameBody": "{{name}} vedrà il tuo invito nella sua schermata famiglia.",
+      "failed": "Impossibile inviare l'invito",
+      "alreadyInvitedTitle": "Invito già inviato",
+      "cannotInviteTitle": "Impossibile invitare",
+      "alreadyMemberTitle": "Fa già parte della famiglia",
+      "confirmTitle": "Inviare l'invito?",
+      "confirmSend": "Invia invito"
     }
   }
 }

@@ -20,7 +20,8 @@
       "DESSERT": "Dessert",
       "FORTIFIED": "Fortified"
     },
-    "error": "Error"
+    "error": "Error",
+    "ok": "OK"
   },
   "login": {
     "title": "Welcome back.",
@@ -504,6 +505,34 @@
       "removePhoto": "Remove photo",
       "submit": "Create family",
       "failed": "Could not create family"
+    },
+    "invite": {
+      "hint": "Search by username only. If they are not on MomentoVino yet, invite them by email below.",
+      "emailToggle": "Invite by email (no MomentoVino account yet)",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "e.g. carlossilva",
+      "usernameFormatError": "Username only: letters, numbers, dot, underscore, hyphen. No @ and no email. Use invite by email below for that.",
+      "searching": "Searching users…",
+      "results": "Results",
+      "notFoundTitle": "No user found",
+      "notFoundBody": "No account matched that username. Invite them by email below if they are not on the app yet.",
+      "emailSection": "Email invitation",
+      "emailPlaceholder": "friend@example.com",
+      "emailSend": "Send email invitation",
+      "searchFailedTitle": "Search",
+      "searchFailedBody": "Could not search.",
+      "invalidEmailTitle": "Email",
+      "invalidEmailBody": "Enter a valid email address.",
+      "alreadyOnAppTitle": "Already on MomentoVino",
+      "sentTitle": "Invitation sent",
+      "sentEmailBody": "We emailed them a link to download MomentoVino. Once they sign up, ask them for their username and invite them from here.",
+      "sentUsernameBody": "{{name}} will see your invitation in their family screen.",
+      "failed": "Invite failed",
+      "alreadyInvitedTitle": "Already invited",
+      "cannotInviteTitle": "Cannot invite",
+      "alreadyMemberTitle": "Already a member",
+      "confirmTitle": "Send invitation?",
+      "confirmSend": "Send invite"
     }
   }
 }
