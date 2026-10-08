@@ -1,0 +1,10 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "MomentoVino usa la cámara para que puedas escanear la etiqueta de una botella de vino. La app lee la etiqueta para identificar el vino y añadirlo a tu colección.",
+    "NSPhotoLibraryUsageDescription": "MomentoVino usa tu fototeca para que elijas fotos de etiquetas al escanear una botella, añadas imágenes a tus momentos, pongas tu foto de perfil y elijas la portada de la familia.",
+    "NSLocationWhenInUseUsageDescription": "Permite que MomentoVino use tu ubicación para marcar dónde probaste este vino.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "Permite que MomentoVino acceda a tu ubicación",
+    "NSLocationAlwaysUsageDescription": "Permite que MomentoVino acceda a tu ubicación",
+    "NSMicrophoneUsageDescription": "Permite que MomentoVino acceda a tu micrófono"
+  }
+}

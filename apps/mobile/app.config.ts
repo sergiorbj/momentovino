@@ -76,6 +76,13 @@ const config: ExpoConfig = {
     ...(googleSignInPlugin ? [googleSignInPlugin] : []),
   ],
   scheme: 'momentovino',
+  locales: {
+    en: './locales/native/en.json',
+    'pt-BR': './locales/native/pt-BR.json',
+    'pt-PT': './locales/native/pt-PT.json',
+    es: './locales/native/es.json',
+    it: './locales/native/it.json',
+  },
 }
 
 export default config

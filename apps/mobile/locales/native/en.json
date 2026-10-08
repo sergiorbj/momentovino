@@ -1,0 +1,10 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "MomentoVino uses the camera so you can scan the label on a wine bottle. The app reads the label to identify the wine and add it to your collection.",
+    "NSPhotoLibraryUsageDescription": "MomentoVino uses your photo library so you can choose existing wine label photos when scanning a bottle, add pictures to your tasting moments, set your profile photo, and pick a family cover image.",
+    "NSLocationWhenInUseUsageDescription": "Allow MomentoVino to use your location to tag where you tasted this wine.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow MomentoVino to access your location",
+    "NSLocationAlwaysUsageDescription": "Allow MomentoVino to access your location",
+    "NSMicrophoneUsageDescription": "Allow MomentoVino to access your microphone"
+  }
+}

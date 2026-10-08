@@ -1,0 +1,10 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "O MomentoVino usa a câmera para você escanear o rótulo de uma garrafa de vinho. O app lê o rótulo para identificar o vinho e adicioná-lo à sua coleção.",
+    "NSPhotoLibraryUsageDescription": "O MomentoVino usa sua fototeca para você escolher fotos de rótulos ao escanear uma garrafa, adicionar imagens aos seus momentos, definir sua foto de perfil e escolher a capa da família.",
+    "NSLocationWhenInUseUsageDescription": "Permita que o MomentoVino use sua localização para marcar onde você provou este vinho.",
+    "NSLocationAlwaysAndWhenInUseUsageDescription": "Permita que o MomentoVino acesse sua localização",
+    "NSLocationAlwaysUsageDescription": "Permita que o MomentoVino acesse sua localização",
+    "NSMicrophoneUsageDescription": "Permita que o MomentoVino acesse seu microfone"
+  }
+}
