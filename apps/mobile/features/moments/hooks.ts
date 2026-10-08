@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type { Database } from '../../lib/database.types'
 import { queryKeys } from '../../lib/query-keys'
+import { useTranslation } from '../i18n/hooks'
 import {
   createMoment,
   createWine,
@@ -36,6 +37,7 @@ function invalidateMomentSurfaces(qc: ReturnType<typeof useQueryClient>) {
  * and navigation on success.
  */
 export function useCreateMoment() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -52,13 +54,13 @@ export function useCreateMoment() {
       } catch (err) {
         const e = err instanceof Error ? err : new Error('Unknown error')
         setError(e)
-        Alert.alert('Could not save moment', e.message)
+        Alert.alert(t('moments.errors.saveFailed'), t('moments.errors.unknown'))
         return null
       } finally {
         setSubmitting(false)
       }
     },
-    [qc],
+    [qc, t],
   )
 
   return { submit, submitting, error } as const
@@ -72,6 +74,7 @@ export function useCreateMoment() {
  * coming from the picker (clone needed) versus the scanner (already a fresh row).
  */
 export function useUpdateMoment(momentId: string) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -93,13 +96,13 @@ export function useUpdateMoment(momentId: string) {
       } catch (err) {
         const e = err instanceof Error ? err : new Error('Unknown error')
         setError(e)
-        Alert.alert('Could not save changes', e.message)
+        Alert.alert(t('moments.errors.saveChangesFailed'), t('moments.errors.unknown'))
         return null
       } finally {
         setSubmitting(false)
       }
     },
-    [momentId, qc],
+    [momentId, qc, t],
   )
 
   return { submit, submitting, error } as const
@@ -109,6 +112,7 @@ export function useUpdateMoment(momentId: string) {
  * Deletes a moment (storage objects + DB row) and pops back on success.
  */
 export function useDeleteMoment(momentId: string) {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -126,12 +130,12 @@ export function useDeleteMoment(momentId: string) {
     } catch (err) {
       const e = err instanceof Error ? err : new Error('Unknown error')
       setError(e)
-      Alert.alert('Could not delete moment', e.message)
+      Alert.alert(t('moments.errors.deleteFailed'), t('moments.errors.unknown'))
       return false
     } finally {
       setDeleting(false)
     }
-  }, [momentId, qc])
+  }, [momentId, qc, t])
 
   return { remove, deleting, error } as const
 }
@@ -175,6 +179,7 @@ export function useWineSearch(debounceMs = 220) {
  * the wine params. Invalidates wine + profile-stats caches on success.
  */
 export function useCreateWine() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const mutation = useMutation({
     mutationFn: (input: WineInput) => createWine(input),
@@ -196,11 +201,11 @@ export function useCreateWine() {
         return row
       } catch (err) {
         const e = err instanceof Error ? err : new Error('Unknown error')
-        Alert.alert('Could not create wine', e.message)
+        Alert.alert(t('moments.errors.createWineFailed'), t('moments.errors.unknown'))
         return null
       }
     },
-    [mutation],
+    [mutation, t],
   )
 
   return { submit, creating: mutation.isPending } as const
