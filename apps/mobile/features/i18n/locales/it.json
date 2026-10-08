@@ -21,7 +21,9 @@
       "FORTIFIED": "Liquoroso"
     },
     "error": "Errore",
-    "ok": "OK"
+    "ok": "OK",
+    "showPassword": "Mostra password",
+    "hidePassword": "Nascondi password"
   },
   "login": {
     "title": "Bentornato.",

@@ -21,7 +21,9 @@
       "FORTIFIED": "Fortificado"
     },
     "error": "Error",
-    "ok": "OK"
+    "ok": "OK",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "login": {
     "title": "Bienvenido de nuevo.",

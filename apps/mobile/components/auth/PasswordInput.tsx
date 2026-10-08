@@ -8,6 +8,8 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 
+import { useTranslation } from '../../features/i18n/hooks'
+
 const BORDER = '#E8DDD4'
 const INK = '#3F2A2E'
 const ICON = '#6E5A5E'
@@ -25,6 +27,7 @@ export function PasswordInput({
   style,
   ...rest
 }: PasswordInputProps) {
+  const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
 
   return (
@@ -39,7 +42,7 @@ export function PasswordInput({
         style={styles.eyeHit}
         onPress={() => setVisible((v) => !v)}
         accessibilityRole="button"
-        accessibilityLabel={visible ? 'Hide password' : 'Show password'}
+        accessibilityLabel={visible ? t('common.hidePassword') : t('common.showPassword')}
         hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
       >
         <Ionicons
