@@ -36,6 +36,7 @@ import {
 } from '../../features/family/hooks'
 import { uploadFamilyCoverPhoto } from '../../features/family/cover-upload'
 import { useLanguage, useTranslation } from '../../features/i18n/hooks'
+import { translateApiError } from '../../features/i18n/api-error'
 import { supabase } from '../../lib/supabase'
 import { requireOnline } from '../../lib/connection/require-online'
 
@@ -220,7 +221,7 @@ export default function FamilyScreen() {
   const loading = isLoading && !dash
   const refreshing = isFetching && !isLoading
   const loadError =
-    familyError instanceof Error ? familyError.message : null
+    familyError ? translateApiError(familyError, t, 'family.loadFailed') : null
   const [selfId, setSelfId] = useState<string | null>(null)
   const [pendingInvitationId, setPendingInvitationId] = useState<string | null>(null)
   const [editingDetails, setEditingDetails] = useState(false)
@@ -337,7 +338,7 @@ export default function FamilyScreen() {
       Keyboard.dismiss()
       setEditingDetails(false)
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('family.edit.saveFailed'))
+      Alert.alert(t('common.error'), translateApiError(e, t, 'family.edit.saveFailed'))
     } finally {
       setSavingDetails(false)
     }
@@ -364,7 +365,7 @@ export default function FamilyScreen() {
     } catch (e) {
       Alert.alert(
         t('family.edit.uploadFailedTitle'),
-        e instanceof Error ? e.message : t('family.edit.uploadFailedBody'),
+        translateApiError(e, t, 'family.edit.uploadFailedBody'),
       )
     } finally {
       setUploadingPhoto(false)
@@ -411,12 +412,12 @@ export default function FamilyScreen() {
       try {
         const result = await acceptInvitationMutation.mutateAsync(invitationId)
         if ('alreadyInOtherFamily' in result && result.alreadyInOtherFamily) {
-          Alert.alert(t('family.invites.alreadyInFamilyTitle'), result.message)
+          Alert.alert(t('family.invites.alreadyInFamilyTitle'), t('errors.server.already_in_family'))
           return
         }
         Alert.alert(t('family.invites.welcomeTitle'), t('family.invites.welcomeBody'))
       } catch (e) {
-        Alert.alert(t('common.error'), e instanceof Error ? e.message : t('family.invites.acceptFailed'))
+        Alert.alert(t('common.error'), translateApiError(e, t, 'family.invites.acceptFailed'))
       } finally {
         setPendingInvitationId(null)
       }
@@ -440,7 +441,7 @@ export default function FamilyScreen() {
                 try {
                   await declineInvitationMutation.mutateAsync(invitationId)
                 } catch (e) {
-                  Alert.alert(t('common.error'), e instanceof Error ? e.message : t('family.invites.declineFailed'))
+                  Alert.alert(t('common.error'), translateApiError(e, t, 'family.invites.declineFailed'))
                 } finally {
                   setPendingInvitationId(null)
                 }
@@ -471,7 +472,7 @@ export default function FamilyScreen() {
                 } catch (e) {
                   Alert.alert(
                     t('common.error'),
-                    e instanceof Error ? e.message : t('family.remove.failed'),
+                    translateApiError(e, t, 'family.remove.failed'),
                   )
                 } finally {
                   setPendingRemoveUid(null)

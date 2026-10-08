@@ -602,7 +602,8 @@
       "alreadyMemberTitle": "Already a member",
       "confirmTitle": "Send invitation?",
       "confirmSend": "Send invite"
-    }
+    },
+    "loadFailed": "Could not load your family. Pull down to refresh."
   },
   "paywallRenewal": {
     "closeA11y": "Close and go to sign in",

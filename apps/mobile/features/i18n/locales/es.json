@@ -602,7 +602,8 @@
       "alreadyMemberTitle": "Ya es miembro",
       "confirmTitle": "¿Enviar invitación?",
       "confirmSend": "Enviar invitación"
-    }
+    },
+    "loadFailed": "No se pudo cargar tu familia. Desliza hacia abajo para actualizar."
   },
   "paywallRenewal": {
     "closeA11y": "Cerrar e ir a iniciar sesión",

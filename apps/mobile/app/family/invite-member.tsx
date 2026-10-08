@@ -18,6 +18,7 @@ import { searchFamilyInviteTargets } from '../../features/family/api'
 import { useInviteMemberByEmail, useInviteMemberByUsername } from '../../features/family/hooks'
 import { requireOnline } from '../../lib/connection/require-online'
 import { useTranslation } from '../../features/i18n/hooks'
+import { translateApiError } from '../../features/i18n/api-error'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -120,7 +121,7 @@ export default function FamilyInviteMemberScreen() {
           setMatches([])
           Alert.alert(
             t('family.invite.searchFailedTitle'),
-            e instanceof Error ? e.message : t('family.invite.searchFailedBody'),
+            translateApiError(e, t, 'family.invite.searchFailedBody'),
           )
         }
       })
@@ -151,14 +152,14 @@ export default function FamilyInviteMemberScreen() {
       setSaving(true)
       const out = await inviteByEmailMutation.mutateAsync(e)
       if ('existingUser' in out && out.existingUser) {
-        Alert.alert(t('family.invite.alreadyOnAppTitle'), out.message)
+        Alert.alert(t('family.invite.alreadyOnAppTitle'), t('errors.server.email_already_registered'))
         return
       }
       Alert.alert(t('family.invite.sentTitle'), t('family.invite.sentEmailBody'), [
         { text: t('common.ok'), onPress: () => router.back() },
       ])
     } catch (err) {
-      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('family.invite.failed'))
+      Alert.alert(t('common.error'), translateApiError(err, t, 'family.invite.failed'))
     } finally {
       setSaving(false)
     }
@@ -169,15 +170,15 @@ export default function FamilyInviteMemberScreen() {
       setSaving(true)
       const out = await inviteByUsernameMutation.mutateAsync(user.user_id)
       if ('alreadyInvited' in out && out.alreadyInvited) {
-        Alert.alert(t('family.invite.alreadyInvitedTitle'), out.message)
+        Alert.alert(t('family.invite.alreadyInvitedTitle'), t('errors.server.already_invited'))
         return
       }
       if ('targetAlreadyInFamily' in out && out.targetAlreadyInFamily) {
-        Alert.alert(t('family.invite.cannotInviteTitle'), out.message)
+        Alert.alert(t('family.invite.cannotInviteTitle'), t('errors.server.target_already_in_family'))
         return
       }
       if ('alreadyMember' in out && out.alreadyMember) {
-        Alert.alert(t('family.invite.alreadyMemberTitle'), out.message)
+        Alert.alert(t('family.invite.alreadyMemberTitle'), t('errors.server.already_member'))
         return
       }
       Alert.alert(
@@ -186,7 +187,7 @@ export default function FamilyInviteMemberScreen() {
         [{ text: t('common.ok'), onPress: () => router.back() }],
       )
     } catch (err) {
-      Alert.alert(t('common.error'), err instanceof Error ? err.message : t('family.invite.failed'))
+      Alert.alert(t('common.error'), translateApiError(err, t, 'family.invite.failed'))
     } finally {
       setSaving(false)
     }
