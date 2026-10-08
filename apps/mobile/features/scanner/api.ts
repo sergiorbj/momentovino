@@ -1,5 +1,6 @@
 import { getApiBaseUrl } from '../../lib/api-base'
 import { supabase } from '../../lib/supabase'
+import { i18n } from '../i18n/config'
 import type { ScanResponse } from './types'
 
 async function getAccessToken(): Promise<string> {
@@ -21,7 +22,7 @@ export async function scanWineImage(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ image: base64, mimeType }),
+    body: JSON.stringify({ image: base64, mimeType, language: i18n.language }),
   })
 
   if (!res.ok) {
