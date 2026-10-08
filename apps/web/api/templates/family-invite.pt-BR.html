@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta name="color-scheme" content="light only" />
+    <meta name="supported-color-schemes" content="light only" />
+    <title>{{INVITER_NAME}} convidou você para o MomentoVino</title>
+    <style>
+      @media (prefers-color-scheme: dark) {
+        body, table, td { background-color: #F5EBE0 !important; color: #3F2A2E !important; }
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #F5EBE0;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      a { text-decoration: none; }
+      .btn:hover { opacity: 0.92; }
+      @media (max-width: 600px) {
+        .card { padding: 28px 22px !important; border-radius: 18px !important; }
+        .h1 { font-size: 26px !important; line-height: 32px !important; }
+        .store-row td { display: block !important; width: 100% !important; padding: 6px 0 !important; }
+      }
+    </style>
+  </head>
+  <body style="background-color:#F5EBE0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F5EBE0;">
+      <tr>
+        <td align="center" style="padding:40px 16px;">
+          <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;">
+            <tr>
+              <td align="center" style="padding-bottom:20px;">
+                <span style="font-family:'DM Serif Display','Playfair Display',Georgia,'Times New Roman',serif;font-size:24px;color:#722F37;letter-spacing:0.5px;">
+                  MomentoVino
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td class="card" style="background-color:#FFFFFF;border-radius:22px;padding:36px 32px;border:1px solid #E8DDD4;">
+                <h1 class="h1" style="margin:0 0 12px 0;font-family:'DM Serif Display','Playfair Display',Georgia,serif;font-weight:400;font-size:30px;line-height:36px;color:#722F37;">
+                  {{INVITER_NAME}} quer compartilhar momentos com vinho com você.
+                </h1>
+                <p style="margin:0 0 20px 0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:15px;line-height:22px;color:#3F2A2E;">
+                  Está montando <strong style="color:#722F37;">{{FAMILY_NAME}}</strong> no MomentoVino, um espaço privado para provar, lembrar e viajar pelo vinho juntos. Baixe o app para criar sua conta e depois peça que {{INVITER_NAME}} convide você pelo seu nome de usuário para entrar na família.
+                </p>
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 20px 0;width:100%;">
+                  <tr class="store-row">
+                    <td align="center" style="padding-right:8px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td align="center" bgcolor="#722F37" style="border-radius:50px;">
+                            <a class="btn" href="{{IOS_LINK}}"
+                               style="display:inline-block;padding:14px 24px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;border-radius:50px;background-color:#722F37;">
+                              Baixar para iPhone
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                    <td align="center" style="padding-left:8px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td align="center" bgcolor="#FFFFFF" style="border-radius:50px;border:1.5px solid #722F37;">
+                            <a class="btn" href="{{ANDROID_LINK}}"
+                               style="display:inline-block;padding:14px 24px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:600;color:#722F37;border-radius:50px;">
+                              Disponível para Android
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+                <hr style="border:none;border-top:1px solid #E8DDD4;margin:24px 0;" />
+                <p style="margin:0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:12px;line-height:18px;color:#6E5A5E;">
+                  Se você não esperava este email, pode ignorá-lo com segurança. Nada acontece a menos que você se cadastre e {{INVITER_NAME}} convide você de novo pelo app.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:18px 8px 0 8px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:11px;color:#6E5A5E;">
+                MomentoVino · O diário de vinhos que você ainda vai ter daqui a 10 anos.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

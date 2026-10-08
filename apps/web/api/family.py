@@ -25,6 +25,23 @@ FAMILY_DESCRIPTION_MAX_LEN = 80
 APP_STORE_URL_IOS = "https://apps.apple.com/app/id6763680512"
 APP_STORE_URL_ANDROID = "https://play.google.com/store/apps/details?id=com.momentovino.app"
 
+EMAIL_LANGUAGES = ("en", "pt-BR", "pt-PT", "es", "it")
+_EMAIL_LANGUAGE_ALIASES = {"pt": "pt-PT", "br": "pt-BR"}
+_INVITE_SUBJECTS = {
+    "en": "{inviter} invited you to MomentoVino",
+    "pt-BR": "{inviter} convidou você para o MomentoVino",
+    "pt-PT": "{inviter} convidou-o para o MomentoVino",
+    "es": "{inviter} te invitó a MomentoVino",
+    "it": "{inviter} ti ha invitato su MomentoVino",
+}
+_INVITER_FALLBACK_NAMES = {
+    "en": "A friend",
+    "pt-BR": "Alguém",
+    "pt-PT": "Alguém",
+    "es": "Alguien",
+    "it": "Qualcuno",
+}
+
 
 def _norm_description(body: dict[str, Any]) -> tuple[Optional[str], Optional[str]]:
     """Returns (description_or_none, error_message)."""
@@ -585,10 +602,50 @@ def _render_template(filename: str, replacements: dict[str, str]) -> str:
     return out
 
 
+def _normalize_email_language(value: str) -> Optional[str]:
+    raw = value.strip()
+    for code in EMAIL_LANGUAGES:
+        if raw.lower() == code.lower():
+            return code
+    return _EMAIL_LANGUAGE_ALIASES.get(raw.lower())
+
+
+def _profile_language(url: str, key: str, user_id: str) -> Optional[str]:
+    r = requests.get(
+        f"{url}/rest/v1/profiles?id=eq.{user_id}&select=language&limit=1",
+        headers={"Authorization": f"Bearer {key}", "apikey": key},
+        timeout=30,
+    )
+    if r.status_code != 200 or not isinstance(r.json(), list) or not r.json():
+        return None
+    lang = r.json()[0].get("language")
+    return lang if lang in EMAIL_LANGUAGES else None
+
+
+def _email_language(handler: BaseHTTPRequestHandler, url: str, key: str, user_id: str) -> str:
+    """`?lang=` wins (pt-BR, pt-PT, es, it, en, or the pt/br shorthands), then the
+    inviter's saved app language, then English."""
+    requested = (parse_qs(urlparse(handler.path).query).get("lang") or [""])[0]
+    return (
+        _normalize_email_language(requested)
+        or _profile_language(url, key, user_id)
+        or "en"
+    )
+
+
+def _inviter_name_for_email(url: str, key: str, user_id: str, language: str) -> str:
+    u = _admin_user_by_id(url, key, user_id)
+    if not u:
+        return _INVITER_FALLBACK_NAMES[language]
+    em = (u.get("email") or "").strip().lower()
+    return _display_name_from_auth_user(u, em)
+
+
 def _send_resend_app_store_email(
     to_email: str,
     family_name: str,
     inviter_name: str,
+    language: str,
 ) -> tuple[bool, Optional[str]]:
     """Marketing-style nudge: 'X invited you to MomentoVino — download the app'.
     The email no longer carries a token / accept link; the actual invitation
@@ -604,7 +661,7 @@ def _send_resend_app_store_email(
     safe_family = html_lib.escape(family_name, quote=True)
     safe_inviter = html_lib.escape(inviter_name, quote=True)
     body_html = _render_template(
-        "family-invite.html",
+        f"family-invite.{language}.html",
         {
             "FAMILY_NAME": safe_family,
             "INVITER_NAME": safe_inviter,
@@ -615,7 +672,7 @@ def _send_resend_app_store_email(
     payload = {
         "from": from_email,
         "to": [to_email],
-        "subject": f"{inviter_name} invited you to MomentoVino",
+        "subject": _INVITE_SUBJECTS[language].format(inviter=inviter_name),
         "html": body_html,
     }
     r = requests.post(
@@ -1028,11 +1085,13 @@ class handler(BaseHTTPRequestHandler):
                 )
                 return
 
-            inviter_name = _inviter_display_name(url, key, uid)
+            language = _email_language(self, url, key, uid)
+            inviter_name = _inviter_name_for_email(url, key, uid, language)
             ok, err_msg = _send_resend_app_store_email(
                 email_norm,
                 fam.get("name") or "MomentoVino",
                 inviter_name,
+                language,
             )
             if not ok:
                 send_json(self, 502, {"error": f"Email failed to send: {err_msg}", "code": "email_send_failed"})
