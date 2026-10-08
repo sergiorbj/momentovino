@@ -116,7 +116,7 @@ class handler(BaseHTTPRequestHandler):
 
         name = body.get("name")
         if not name or not str(name).strip() or len(str(name).strip()) < 2:
-            send_json(self, 400, {"error": "Wine name is required (min 2 chars)"})
+            send_json(self, 400, {"error": "Wine name is required (min 2 chars)", "code": "wine_name_required"})
             return
 
         producer = body.get("producer")
@@ -230,7 +230,7 @@ class handler(BaseHTTPRequestHandler):
             send_json(
                 self,
                 400,
-                {"error": "One or more wines were not found or do not belong to you"},
+                {"error": "One or more wines were not found or do not belong to you", "code": "wines_not_found"},
             )
             return
 
