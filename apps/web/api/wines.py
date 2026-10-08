@@ -14,6 +14,17 @@ from _api_common import auth_bearer_user_id, send_json, supabase_config
 from _wine_match import find_matching_wine
 
 
+_WINE_TYPES = frozenset({"RED", "WHITE", "ROSE", "SPARKLING", "DESSERT", "FORTIFIED"})
+
+
+def _wine_type(value: object) -> Optional[str]:
+    """The scan can return "UNKNOWN", which the DB check constraint rejects."""
+    if not isinstance(value, str):
+        return None
+    code = value.strip().upper()
+    return code if code in _WINE_TYPES else None
+
+
 def _opt_str(value: object) -> Optional[str]:
     if value is None:
         return None
@@ -121,7 +132,7 @@ class handler(BaseHTTPRequestHandler):
             "vintage": vintage,
             "region": _opt_str(region),
             "country": _opt_str(country),
-            "type": wine_type or None,
+            "type": _wine_type(wine_type),
         }
 
         url, key = supabase_config()
