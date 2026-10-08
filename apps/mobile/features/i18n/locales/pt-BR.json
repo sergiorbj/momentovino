@@ -138,6 +138,19 @@
       "dateRequired": "A data é obrigatória",
       "locationRequired": "Escolha um local",
       "wineRequired": "Adicione pelo menos um vinho"
+    },
+    "form": {
+      "headerTitle": "Novo momento",
+      "winesLabel": "Vinhos",
+      "addWine": "Adicionar um vinho",
+      "addAnotherWine": "Adicionar outro vinho"
+    },
+    "errors": {
+      "saveFailed": "Não foi possível salvar o momento",
+      "saveChangesFailed": "Não foi possível salvar as alterações",
+      "deleteFailed": "Não foi possível excluir o momento",
+      "createWineFailed": "Não foi possível adicionar o vinho",
+      "unknown": "Algo deu errado. Tente novamente."
     }
   },
   "onboarding": {

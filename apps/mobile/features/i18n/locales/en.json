@@ -138,6 +138,19 @@
       "dateRequired": "Date is required",
       "locationRequired": "Pick a location",
       "wineRequired": "Add at least one wine"
+    },
+    "form": {
+      "headerTitle": "New Moment",
+      "winesLabel": "Wines",
+      "addWine": "Add a wine",
+      "addAnotherWine": "Add another wine"
+    },
+    "errors": {
+      "saveFailed": "Could not save moment",
+      "saveChangesFailed": "Could not save changes",
+      "deleteFailed": "Could not delete moment",
+      "createWineFailed": "Could not create wine",
+      "unknown": "Something went wrong. Please try again."
     }
   },
   "onboarding": {

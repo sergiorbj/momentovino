@@ -34,7 +34,7 @@ import {
   readEditMomentDraft,
   saveEditMomentDraft,
 } from '../../../features/moments/moment-draft'
-import { useTranslation } from '../../../features/i18n/hooks'
+import { useLanguage, useTranslation } from '../../../features/i18n/hooks'
 import { requireOnline } from '../../../lib/connection/require-online'
 
 const WINE = '#722F37'
@@ -57,6 +57,7 @@ export default function EditMomentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const momentId = id ?? ''
   const { t } = useTranslation()
+  const language = useLanguage()
   const { moment, wines, photos: existingPhotos, loading } = useMomentDetail(momentId)
   const { submit, submitting } = useUpdateMoment(momentId)
 
@@ -213,7 +214,7 @@ export default function EditMomentScreen() {
 
   const happenedAt = watch('happenedAt')
   const displayDate = happenedAt
-    ? new Date(happenedAt + 'T00:00:00').toLocaleDateString('en-US', {
+    ? new Date(happenedAt + 'T00:00:00').toLocaleDateString(language, {
         month: 'long',
         day: 'numeric',
         year: 'numeric',
@@ -517,7 +518,7 @@ export default function EditMomentScreen() {
               >
                 <Ionicons name="add" size={18} color={WINE} />
                 <Text style={styles.wineAddBtnText}>
-                  {wineEntries.length === 0 ? 'Add a wine' : 'Add another wine'}
+                  {wineEntries.length === 0 ? t('moments.form.addWine') : t('moments.form.addAnotherWine')}
                 </Text>
               </TouchableOpacity>
             </Field>

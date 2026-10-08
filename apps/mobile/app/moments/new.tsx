@@ -28,7 +28,7 @@ import { takePendingWinePicks } from '../../features/moments/wine-picker-handoff
 import { momentFormSchema, type MomentFormValues, type PhotoInput } from '../../features/moments/schema'
 import { searchLocations, type LocationResult } from '../../features/moments/location-api'
 import { useCurrentLocation } from '../../features/moments/use-current-location'
-import { useTranslation } from '../../features/i18n/hooks'
+import { useLanguage, useTranslation } from '../../features/i18n/hooks'
 import {
   clearNewMomentDraft,
   readNewMomentDraft,
@@ -59,6 +59,7 @@ export default function NewMomentScreen() {
   const params = useLocalSearchParams<{ wineId?: string; wineName?: string }>()
   const qc = useQueryClient()
   const { t } = useTranslation()
+  const language = useLanguage()
   const [submitting, setSubmitting] = useState(false)
 
   // Saved draft (if any) takes precedence over `params` and defaults — this is
@@ -165,7 +166,7 @@ export default function NewMomentScreen() {
 
   const happenedAt = watch('happenedAt')
   const displayDate = happenedAt
-    ? new Date(happenedAt + 'T00:00:00').toLocaleDateString('en-US', {
+    ? new Date(happenedAt + 'T00:00:00').toLocaleDateString(language, {
         month: 'long',
         day: 'numeric',
         year: 'numeric',
@@ -266,7 +267,10 @@ export default function NewMomentScreen() {
     if (photos.length >= 3) return
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (!perm.granted) {
-      Alert.alert('Permission needed', 'Allow photo library access to add pictures.')
+      Alert.alert(
+        t('onboarding.newMoment.errors.permissionNeededTitle'),
+        t('onboarding.newMoment.errors.permissionNeededBody'),
+      )
       return
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -318,7 +322,7 @@ export default function NewMomentScreen() {
       router.replace('/(tabs)/moments')
     } catch (err) {
       console.error(err)
-      Alert.alert('Could not save moment', err instanceof Error ? err.message : 'Unknown error')
+      Alert.alert(t('moments.errors.saveFailed'), t('moments.errors.unknown'))
     } finally {
       setSubmitting(false)
     }
@@ -331,7 +335,7 @@ export default function NewMomentScreen() {
           <TouchableOpacity onPress={close} style={styles.iconBtn}>
             <Ionicons name="close" size={22} color={WINE} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>New Moment</Text>
+          <Text style={styles.headerTitle}>{t('moments.form.headerTitle')}</Text>
         </View>
 
         <KeyboardAvoidingView
@@ -339,7 +343,7 @@ export default function NewMomentScreen() {
           style={styles.flex}
         >
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-            <Field label="Title" error={formState.errors.title?.message}>
+            <Field label={t('onboarding.newMoment.titleLabel')} error={formState.errors.title?.message}>
               <Controller
                 control={control}
                 name="title"
@@ -348,14 +352,14 @@ export default function NewMomentScreen() {
                     style={styles.input}
                     value={value}
                     onChangeText={onChange}
-                    placeholder="A toast in Mendoza"
+                    placeholder={t('onboarding.newMoment.titlePlaceholder')}
                     placeholderTextColor="#A98B7E"
                   />
                 )}
               />
             </Field>
 
-            <Field label="Description" error={formState.errors.description?.message}>
+            <Field label={t('onboarding.newMoment.descriptionLabel')} error={formState.errors.description?.message}>
               <Controller
                 control={control}
                 name="description"
@@ -364,7 +368,7 @@ export default function NewMomentScreen() {
                     style={[styles.input, styles.multiline]}
                     value={value ?? ''}
                     onChangeText={onChange}
-                    placeholder="Who was there, what made it special…"
+                    placeholder={t('onboarding.newMoment.descriptionPlaceholder')}
                     placeholderTextColor="#A98B7E"
                     multiline
                   />
@@ -372,11 +376,11 @@ export default function NewMomentScreen() {
               />
             </Field>
 
-            <Field label="Date" error={formState.errors.happenedAt?.message}>
+            <Field label={t('onboarding.newMoment.dateLabel')} error={formState.errors.happenedAt?.message}>
               <Pressable style={styles.dateBtn} onPress={() => setDatePickerVisible(true)}>
                 <Ionicons name="calendar-outline" size={18} color={displayDate ? WINE : '#A98B7E'} />
                 <Text style={{ color: displayDate ? INK : '#A98B7E', fontFamily: 'DMSans_400Regular', fontSize: 15 }}>
-                  {displayDate ?? 'Pick a date'}
+                  {displayDate ?? t('onboarding.newMoment.pickDate')}
                 </Text>
               </Pressable>
               <DateTimePickerModal
@@ -387,8 +391,8 @@ export default function NewMomentScreen() {
                 maximumDate={new Date()}
                 onConfirm={handleDateConfirm}
                 onCancel={() => setDatePickerVisible(false)}
-                confirmTextIOS="Confirm"
-                cancelTextIOS="Cancel"
+                confirmTextIOS={t('onboarding.newMoment.datePickerConfirm')}
+                cancelTextIOS={t('onboarding.newMoment.datePickerCancel')}
                 themeVariant="light"
               />
             </Field>
@@ -467,7 +471,7 @@ export default function NewMomentScreen() {
               )}
             </Field>
 
-            <Field label="Wines" error={formState.errors.wineIds?.message as string | undefined}>
+            <Field label={t('moments.form.winesLabel')} error={formState.errors.wineIds?.message as string | undefined}>
               {wineEntries.length > 0 ? (
                 <View style={styles.wineList}>
                   {wineEntries.map((entry, idx) => (
@@ -499,12 +503,12 @@ export default function NewMomentScreen() {
               >
                 <Ionicons name="add" size={18} color={WINE} />
                 <Text style={styles.wineAddBtnText}>
-                  {wineEntries.length === 0 ? 'Add a wine' : 'Add another wine'}
+                  {wineEntries.length === 0 ? t('moments.form.addWine') : t('moments.form.addAnotherWine')}
                 </Text>
               </TouchableOpacity>
             </Field>
 
-            <Field label="Rating (optional)">
+            <Field label={t('onboarding.newMoment.ratingLabel')}>
               <View style={styles.stars}>
                 {[1, 2, 3, 4, 5].map((n) => (
                   <TouchableOpacity
@@ -522,7 +526,7 @@ export default function NewMomentScreen() {
               </View>
             </Field>
 
-            <Field label="Photos" error={formState.errors.photos?.message as string | undefined}>
+            <Field label={t('onboarding.newMoment.photosLabel')} error={formState.errors.photos?.message as string | undefined}>
               <View style={styles.photosRow}>
                 {photos.map((photo, index) => (
                   <View key={`${photo.uri}-${index}`} style={styles.photoWrap}>
@@ -538,7 +542,7 @@ export default function NewMomentScreen() {
                       onPress={() => markCover(index)}
                     >
                       <Text style={[styles.coverText, photo.isCover && styles.coverTextActive]}>
-                        {photo.isCover ? 'Cover' : 'Set cover'}
+                        {photo.isCover ? t('onboarding.newMoment.cover') : t('onboarding.newMoment.setCover')}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -562,7 +566,7 @@ export default function NewMomentScreen() {
               {submitting ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.submitText}>Save moment</Text>
+                <Text style={styles.submitText}>{t('onboarding.newMoment.saveMoment')}</Text>
               )}
             </TouchableOpacity>
           </View>
