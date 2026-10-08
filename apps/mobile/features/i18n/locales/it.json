@@ -660,5 +660,24 @@
       "unavailableBody": "Questa opzione di accesso non è disponibile su questo dispositivo.",
       "tryAgainBody": "Riprova tra un momento."
     }
+  },
+  "location": {
+    "countries": {
+      "AR": "Argentina",
+      "FR": "Francia",
+      "IT": "Italia",
+      "US": "Stati Uniti",
+      "PT": "Portogallo",
+      "AU": "Australia",
+      "ZA": "Sudafrica",
+      "ES": "Spagna",
+      "CL": "Cile",
+      "JP": "Giappone"
+    },
+    "cities": {
+      "tuscany": "Toscana",
+      "rome": "Roma",
+      "tokyo": "Tokyo"
+    }
   }
 }

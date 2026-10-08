@@ -660,5 +660,24 @@
       "unavailableBody": "This sign-in option isn't available on this device.",
       "tryAgainBody": "Please try again in a moment."
     }
+  },
+  "location": {
+    "countries": {
+      "AR": "Argentina",
+      "FR": "France",
+      "IT": "Italy",
+      "US": "United States",
+      "PT": "Portugal",
+      "AU": "Australia",
+      "ZA": "South Africa",
+      "ES": "Spain",
+      "CL": "Chile",
+      "JP": "Japan"
+    },
+    "cities": {
+      "tuscany": "Tuscany",
+      "rome": "Rome",
+      "tokyo": "Tokyo"
+    }
   }
 }

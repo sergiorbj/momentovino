@@ -660,5 +660,24 @@
       "unavailableBody": "Esta opción de inicio de sesión no está disponible en este dispositivo.",
       "tryAgainBody": "Inténtalo de nuevo en un momento."
     }
+  },
+  "location": {
+    "countries": {
+      "AR": "Argentina",
+      "FR": "Francia",
+      "IT": "Italia",
+      "US": "Estados Unidos",
+      "PT": "Portugal",
+      "AU": "Australia",
+      "ZA": "Sudáfrica",
+      "ES": "España",
+      "CL": "Chile",
+      "JP": "Japón"
+    },
+    "cities": {
+      "tuscany": "Toscana",
+      "rome": "Roma",
+      "tokyo": "Tokio"
+    }
   }
 }
