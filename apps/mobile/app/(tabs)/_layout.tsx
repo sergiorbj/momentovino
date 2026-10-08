@@ -3,28 +3,31 @@ import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 
+import { useTranslation } from '../../features/i18n/hooks'
+
 type IconName = React.ComponentProps<typeof Ionicons>['name']
 type TabRoute = BottomTabBarProps['state']['routes'][number]
 
 const WINE = '#722F37'
 const BAR_BG = '#F5EBE0'
 
-const TABS: Record<string, { icon: IconName; label: string }> = {
-  moments: { icon: 'globe', label: 'Moments' },
-  family: { icon: 'people', label: 'Family' },
-  scanner: { icon: 'camera', label: 'Scanner' },
-  wines: { icon: 'wine', label: 'Wines' },
-  profile: { icon: 'person', label: 'Profile' },
+const TAB_ICONS: Record<string, IconName> = {
+  moments: 'globe',
+  family: 'people',
+  scanner: 'camera',
+  wines: 'wine',
+  profile: 'person',
 }
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+  const { t } = useTranslation()
   return (
     <View style={styles.bar}>
       <View style={styles.inner}>
         {state.routes.map((route: TabRoute, index: number) => {
           const focused = state.index === index
-          const meta = TABS[route.name]
-          if (!meta) return null
+          const icon = TAB_ICONS[route.name]
+          if (!icon) return null
 
           const onPress = () => {
             const event = navigation.emit({
@@ -54,10 +57,10 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                     resizeMode="contain"
                   />
                 ) : (
-                  <Ionicons name={meta.icon} size={22} color={fg} />
+                  <Ionicons name={icon} size={22} color={fg} />
                 )}
               </View>
-              <Text style={[styles.label, { color: fg }]}>{meta.label}</Text>
+              <Text style={[styles.label, { color: fg }]}>{t(`tabs.${route.name}`)}</Text>
             </Pressable>
           )
         })}
@@ -67,16 +70,17 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 export default function TabsLayout() {
+  const { t } = useTranslation()
   return (
     <Tabs
       screenOptions={{ headerShown: false }}
       tabBar={(props: BottomTabBarProps) => <CustomTabBar {...props} />}
     >
-      <Tabs.Screen name="moments" options={{ title: 'Moments' }} />
-      <Tabs.Screen name="family" options={{ title: 'Family' }} />
-      <Tabs.Screen name="scanner" options={{ title: 'Scanner' }} />
-      <Tabs.Screen name="wines" options={{ title: 'Wines' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="moments" options={{ title: t('tabs.moments') }} />
+      <Tabs.Screen name="family" options={{ title: t('tabs.family') }} />
+      <Tabs.Screen name="scanner" options={{ title: t('tabs.scanner') }} />
+      <Tabs.Screen name="wines" options={{ title: t('tabs.wines') }} />
+      <Tabs.Screen name="profile" options={{ title: t('tabs.profile') }} />
     </Tabs>
   )
 }

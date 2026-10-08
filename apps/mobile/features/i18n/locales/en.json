@@ -332,5 +332,12 @@
         "failedFallback": "Could not finish setup. Try again."
       }
     }
+  },
+  "tabs": {
+    "moments": "Moments",
+    "family": "Family",
+    "scanner": "Scanner",
+    "wines": "Wines",
+    "profile": "Profile"
   }
 }

@@ -332,5 +332,12 @@
         "failedFallback": "No se pudo finalizar. Inténtalo de nuevo."
       }
     }
+  },
+  "tabs": {
+    "moments": "Momentos",
+    "family": "Familia",
+    "scanner": "Escáner",
+    "wines": "Vinos",
+    "profile": "Perfil"
   }
 }
