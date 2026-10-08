@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router'
 
 import { queryClient } from '../lib/query-client'
 import { supabase } from '../lib/supabase'
+import { useTranslation } from '../features/i18n/hooks'
 
 const BG = '#F5EBE0'
 const WINE = '#722F37'
@@ -17,6 +18,7 @@ const INK = '#3F2A2E'
  */
 export default function NotFoundScreen() {
   const router = useRouter()
+  const { t } = useTranslation()
 
   useEffect(() => {
     let cancelled = false
@@ -51,7 +53,7 @@ export default function NotFoundScreen() {
   return (
     <View style={styles.container}>
       <ActivityIndicator color={WINE} />
-      <Text style={styles.hint}>Taking you to MomentoVino…</Text>
+      <Text style={styles.hint}>{t('common.redirecting')}</Text>
     </View>
   )
 }

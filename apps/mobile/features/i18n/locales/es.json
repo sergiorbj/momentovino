@@ -23,7 +23,8 @@
     "error": "Error",
     "ok": "OK",
     "showPassword": "Mostrar contraseña",
-    "hidePassword": "Ocultar contraseña"
+    "hidePassword": "Ocultar contraseña",
+    "redirecting": "Llevándote a MomentoVino…"
   },
   "login": {
     "title": "Bienvenido de nuevo.",
