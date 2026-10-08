@@ -386,5 +386,9 @@
     "searchPlaceholder": "Pesquisar vinhos",
     "emptyNoWines": "Ainda sem vinhos. Digitalize uma garrafa para adicionar o primeiro.",
     "emptyNoMatch": "Nenhum vinho corresponde a \"{{query}}\"."
+  },
+  "scanner": {
+    "title": "Digitalizar vinho",
+    "subtitle": "Alinhe o rótulo dentro da moldura e capture"
   }
 }

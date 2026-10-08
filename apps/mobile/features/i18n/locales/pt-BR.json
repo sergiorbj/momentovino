@@ -386,5 +386,9 @@
     "searchPlaceholder": "Buscar vinhos",
     "emptyNoWines": "Nenhum vinho ainda. Escaneie uma garrafa para adicionar o primeiro.",
     "emptyNoMatch": "Nenhum vinho encontrado para \"{{query}}\"."
+  },
+  "scanner": {
+    "title": "Escanear vinho",
+    "subtitle": "Alinhe o rótulo dentro do quadro e capture"
   }
 }

@@ -386,5 +386,9 @@
     "searchPlaceholder": "Search wines",
     "emptyNoWines": "No wines yet. Scan a bottle to add your first one.",
     "emptyNoMatch": "No wines match \"{{query}}\"."
+  },
+  "scanner": {
+    "title": "Scan Wine",
+    "subtitle": "Align the label inside the frame, then capture"
   }
 }

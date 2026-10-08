@@ -386,5 +386,9 @@
     "searchPlaceholder": "Cerca vini",
     "emptyNoWines": "Ancora nessun vino. Scansiona una bottiglia per aggiungere il primo.",
     "emptyNoMatch": "Nessun vino corrisponde a \"{{query}}\"."
+  },
+  "scanner": {
+    "title": "Scansiona vino",
+    "subtitle": "Allinea l'etichetta nella cornice, poi scatta"
   }
 }
