@@ -69,9 +69,9 @@ export default function WinePickerScreen() {
 
   const emptyLabel = useMemo(() => {
     if (loading) return ''
-    if (query.trim().length === 0) return 'No wines yet. Scan a bottle to add your first one.'
-    return `No wines match "${query}".`
-  }, [loading, query])
+    if (query.trim().length === 0) return t('wines.emptyNoWines')
+    return t('wines.emptyNoMatch', { query })
+  }, [loading, query, t])
 
   const select = (cluster: WineCluster) => {
     const w = cluster.canonical
@@ -87,7 +87,7 @@ export default function WinePickerScreen() {
             <Ionicons name="chevron-back" size={22} color={WINE_C} />
           </TouchableOpacity>
           <View style={styles.headerTitleRow}>
-            <Text style={styles.headerTitle}>Select wine</Text>
+            <Text style={styles.headerTitle}>{t('wines.pickerTitle')}</Text>
             {totalWines !== null ? <Text style={styles.headerCount}>{totalWines}</Text> : null}
           </View>
           <View style={styles.iconBtnPlaceholder} />
@@ -108,7 +108,7 @@ export default function WinePickerScreen() {
             activeOpacity={0.85}
           >
             <Ionicons name="scan-outline" size={18} color="#FFFFFF" />
-            <Text style={styles.scanCtaText}>Scan to add a wine</Text>
+            <Text style={styles.scanCtaText}>{t('wines.scanToAdd')}</Text>
           </TouchableOpacity>
 
           <View style={styles.searchWrap}>
@@ -116,7 +116,7 @@ export default function WinePickerScreen() {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search wines"
+              placeholder={t('wines.searchPlaceholder')}
               placeholderTextColor="#A98B7E"
               style={styles.search}
               autoCapitalize="none"

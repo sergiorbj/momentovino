@@ -379,5 +379,12 @@
     "scanner": "Escáner",
     "wines": "Vinos",
     "profile": "Perfil"
+  },
+  "wines": {
+    "pickerTitle": "Elige el vino",
+    "scanToAdd": "Escanea para añadir un vino",
+    "searchPlaceholder": "Buscar vinos",
+    "emptyNoWines": "Aún no hay vinos. Escanea una botella para añadir el primero.",
+    "emptyNoMatch": "Ningún vino coincide con \"{{query}}\"."
   }
 }
