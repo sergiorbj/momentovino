@@ -19,7 +19,8 @@
       "SPARKLING": "Spumante",
       "DESSERT": "Dolce",
       "FORTIFIED": "Liquoroso"
-    }
+    },
+    "error": "Errore"
   },
   "login": {
     "title": "Bentornato.",
@@ -385,7 +386,21 @@
     "scanToAdd": "Scansiona per aggiungere un vino",
     "searchPlaceholder": "Cerca vini",
     "emptyNoWines": "Ancora nessun vino. Scansiona una bottiglia per aggiungere il primo.",
-    "emptyNoMatch": "Nessun vino corrisponde a \"{{query}}\"."
+    "emptyNoMatch": "Nessun vino corrisponde a \"{{query}}\".",
+    "title": "Vini",
+    "remove": {
+      "confirmTitle": "Rimuovere questo vino?",
+      "cannotUndo": "L'operazione non può essere annullata.",
+      "remove": "Rimuovi",
+      "confirm": "Conferma",
+      "quantityTitle": "Quante rimuoverne?",
+      "bottlesTotal_one": "{{count}} bottiglia in totale. Quelle aggiunte più di recente vengono rimosse per prime.",
+      "bottlesTotal_other": "{{count}} bottiglie in totale. Quelle aggiunte più di recente vengono rimosse per prime.",
+      "a11yRemove": "Rimuovi vino",
+      "a11yConfirmRemove": "Conferma rimozione dei vini",
+      "resolveFailed": "Impossibile capire quale vino rimuovere.",
+      "removeFailed": "Impossibile rimuovere il vino."
+    }
   },
   "scanner": {
     "title": "Scansiona vino",

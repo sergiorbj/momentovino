@@ -66,9 +66,9 @@ export default function WinesScreen() {
 
   const emptyLabel = useMemo(() => {
     if (loading) return ''
-    if (query.trim().length === 0) return 'No wines yet. Scan a bottle to add your first one.'
-    return `No wines match "${query}".`
-  }, [loading, query])
+    if (query.trim().length === 0) return t('wines.emptyNoWines')
+    return t('wines.emptyNoMatch', { query })
+  }, [loading, query, t])
 
   const openDeleteFlow = useCallback((cluster: WineCluster) => {
     if (cluster.members.length === 1) {
@@ -87,7 +87,7 @@ export default function WinesScreen() {
     async (cluster: WineCluster, count: number) => {
       const ids = pickWineIdsToDelete(cluster, count)
       if (ids.length === 0) {
-        Alert.alert('Error', 'Could not resolve which wine to delete.')
+        Alert.alert(t('common.error'), t('wines.remove.resolveFailed'))
         return
       }
       try {
@@ -95,10 +95,10 @@ export default function WinesScreen() {
         setDeleteModal(null)
       } catch (err) {
         console.error(err)
-        Alert.alert('Error', err instanceof Error ? err.message : 'Could not remove wine.')
+        Alert.alert(t('common.error'), t('wines.remove.removeFailed'))
       }
     },
-    [deleteMutation],
+    [deleteMutation, t],
   )
 
   const qtyCluster = deleteModal?.mode === 'quantity' ? deleteModal.cluster : null
@@ -109,7 +109,7 @@ export default function WinesScreen() {
       <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
           <View style={styles.headerTitleRow}>
-            <Text style={styles.headerTitle}>Wines</Text>
+            <Text style={styles.headerTitle}>{t('wines.title')}</Text>
             {totalWines !== null ? <Text style={styles.headerCount}>{totalWines}</Text> : null}
           </View>
         </View>
@@ -121,7 +121,7 @@ export default function WinesScreen() {
             activeOpacity={0.85}
           >
             <Ionicons name="scan-outline" size={18} color="#FFFFFF" />
-            <Text style={styles.scanCtaText}>Scan to add a wine</Text>
+            <Text style={styles.scanCtaText}>{t('wines.scanToAdd')}</Text>
           </TouchableOpacity>
 
           <View style={styles.searchWrap}>
@@ -129,7 +129,7 @@ export default function WinesScreen() {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search wines"
+              placeholder={t('wines.searchPlaceholder')}
               placeholderTextColor="#A98B7E"
               style={styles.search}
               autoCapitalize="none"
@@ -183,7 +183,7 @@ export default function WinesScreen() {
                     style={styles.trashBtn}
                     onPress={() => openDeleteFlow(item)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    accessibilityLabel="Remove wine"
+                    accessibilityLabel={t('wines.remove.a11yRemove')}
                   >
                     <Ionicons name="trash-outline" size={22} color={SUBTLE} />
                   </TouchableOpacity>
@@ -200,11 +200,11 @@ export default function WinesScreen() {
           <View style={styles.modalCard} collapsable={false} pointerEvents="box-none">
             {deleteModal?.mode === 'confirm' ? (
               <View pointerEvents="auto">
-                <Text style={styles.modalTitle}>Remove this wine?</Text>
+                <Text style={styles.modalTitle}>{t('wines.remove.confirmTitle')}</Text>
                 <Text style={styles.modalSubtitle}>
                   {deleteModal.cluster.canonical.name}
                   {'\n'}
-                  This can't be undone.
+                  {t('wines.remove.cannotUndo')}
                 </Text>
                 <View style={styles.modalActions}>
                   <TouchableOpacity
@@ -213,7 +213,7 @@ export default function WinesScreen() {
                     disabled={deleting}
                     activeOpacity={0.85}
                   >
-                    <Text style={styles.modalBtnGhostText}>Cancel</Text>
+                    <Text style={styles.modalBtnGhostText}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalBtn, styles.modalBtnDanger, deleting && styles.modalBtnDisabled]}
@@ -221,12 +221,12 @@ export default function WinesScreen() {
                     disabled={deleting}
                     activeOpacity={0.85}
                     accessibilityRole="button"
-                    accessibilityLabel="Remove wine"
+                    accessibilityLabel={t('wines.remove.a11yRemove')}
                   >
                     {deleting ? (
                       <ActivityIndicator color="#FFFFFF" />
                     ) : (
-                      <Text style={styles.modalBtnDangerText}>Remove</Text>
+                      <Text style={styles.modalBtnDangerText}>{t('wines.remove.remove')}</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -234,14 +234,12 @@ export default function WinesScreen() {
             ) : null}
             {deleteModal?.mode === 'quantity' ? (
               <View pointerEvents="auto">
-                <Text style={styles.modalTitle}>How many to remove?</Text>
+                <Text style={styles.modalTitle}>{t('wines.remove.quantityTitle')}</Text>
                 <Text style={styles.modalWineName} numberOfLines={2}>
                   {deleteModal.cluster.canonical.name}
                 </Text>
                 <Text style={styles.modalSubtitle}>
-                  {deleteModal.cluster.members.length} bottle
-                  {deleteModal.cluster.members.length === 1 ? '' : 's'} total. The most recently added are removed
-                  first.
+                  {t('wines.remove.bottlesTotal', { count: deleteModal.cluster.members.length })}
                 </Text>
                 <View style={styles.qtyRow}>
                   <TouchableOpacity
@@ -269,7 +267,7 @@ export default function WinesScreen() {
                     disabled={deleting}
                     activeOpacity={0.85}
                   >
-                    <Text style={styles.modalBtnGhostText}>Cancel</Text>
+                    <Text style={styles.modalBtnGhostText}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalBtn, styles.modalBtnDanger, deleting && styles.modalBtnDisabled]}
@@ -277,12 +275,12 @@ export default function WinesScreen() {
                     disabled={deleting}
                     activeOpacity={0.85}
                     accessibilityRole="button"
-                    accessibilityLabel="Confirm remove wines"
+                    accessibilityLabel={t('wines.remove.a11yConfirmRemove')}
                   >
                     {deleting ? (
                       <ActivityIndicator color="#FFFFFF" />
                     ) : (
-                      <Text style={styles.modalBtnDangerText}>Confirm</Text>
+                      <Text style={styles.modalBtnDangerText}>{t('wines.remove.confirm')}</Text>
                     )}
                   </TouchableOpacity>
                 </View>

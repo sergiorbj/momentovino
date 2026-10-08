@@ -19,7 +19,8 @@
       "SPARKLING": "Sparkling",
       "DESSERT": "Dessert",
       "FORTIFIED": "Fortified"
-    }
+    },
+    "error": "Error"
   },
   "login": {
     "title": "Welcome back.",
@@ -385,7 +386,21 @@
     "scanToAdd": "Scan to add a wine",
     "searchPlaceholder": "Search wines",
     "emptyNoWines": "No wines yet. Scan a bottle to add your first one.",
-    "emptyNoMatch": "No wines match \"{{query}}\"."
+    "emptyNoMatch": "No wines match \"{{query}}\".",
+    "title": "Wines",
+    "remove": {
+      "confirmTitle": "Remove this wine?",
+      "cannotUndo": "This can't be undone.",
+      "remove": "Remove",
+      "confirm": "Confirm",
+      "quantityTitle": "How many to remove?",
+      "bottlesTotal_one": "{{count}} bottle total. The most recently added are removed first.",
+      "bottlesTotal_other": "{{count}} bottles total. The most recently added are removed first.",
+      "a11yRemove": "Remove wine",
+      "a11yConfirmRemove": "Confirm remove wines",
+      "resolveFailed": "Could not resolve which wine to delete.",
+      "removeFailed": "Could not remove wine."
+    }
   },
   "scanner": {
     "title": "Scan Wine",

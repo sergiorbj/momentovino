@@ -19,7 +19,8 @@
       "SPARKLING": "Espumante",
       "DESSERT": "Sobremesa",
       "FORTIFIED": "Fortificado"
-    }
+    },
+    "error": "Erro"
   },
   "login": {
     "title": "Bem-vindo(a) de volta.",
@@ -385,7 +386,21 @@
     "scanToAdd": "Digitalize para adicionar um vinho",
     "searchPlaceholder": "Pesquisar vinhos",
     "emptyNoWines": "Ainda sem vinhos. Digitalize uma garrafa para adicionar o primeiro.",
-    "emptyNoMatch": "Nenhum vinho corresponde a \"{{query}}\"."
+    "emptyNoMatch": "Nenhum vinho corresponde a \"{{query}}\".",
+    "title": "Vinhos",
+    "remove": {
+      "confirmTitle": "Remover este vinho?",
+      "cannotUndo": "Esta ação não pode ser anulada.",
+      "remove": "Remover",
+      "confirm": "Confirmar",
+      "quantityTitle": "Quantas remover?",
+      "bottlesTotal_one": "{{count}} garrafa no total. As adicionadas mais recentemente são removidas primeiro.",
+      "bottlesTotal_other": "{{count}} garrafas no total. As adicionadas mais recentemente são removidas primeiro.",
+      "a11yRemove": "Remover vinho",
+      "a11yConfirmRemove": "Confirmar remoção dos vinhos",
+      "resolveFailed": "Não foi possível identificar qual vinho remover.",
+      "removeFailed": "Não foi possível remover o vinho."
+    }
   },
   "scanner": {
     "title": "Digitalizar vinho",

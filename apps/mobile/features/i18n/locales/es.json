@@ -19,7 +19,8 @@
       "SPARKLING": "Espumoso",
       "DESSERT": "Postre",
       "FORTIFIED": "Fortificado"
-    }
+    },
+    "error": "Error"
   },
   "login": {
     "title": "Bienvenido de nuevo.",
@@ -385,7 +386,21 @@
     "scanToAdd": "Escanea para añadir un vino",
     "searchPlaceholder": "Buscar vinos",
     "emptyNoWines": "Aún no hay vinos. Escanea una botella para añadir el primero.",
-    "emptyNoMatch": "Ningún vino coincide con \"{{query}}\"."
+    "emptyNoMatch": "Ningún vino coincide con \"{{query}}\".",
+    "title": "Vinos",
+    "remove": {
+      "confirmTitle": "¿Eliminar este vino?",
+      "cannotUndo": "Esta acción no se puede deshacer.",
+      "remove": "Eliminar",
+      "confirm": "Confirmar",
+      "quantityTitle": "¿Cuántas eliminar?",
+      "bottlesTotal_one": "{{count}} botella en total. Las añadidas más recientemente se eliminan primero.",
+      "bottlesTotal_other": "{{count}} botellas en total. Las añadidas más recientemente se eliminan primero.",
+      "a11yRemove": "Eliminar vino",
+      "a11yConfirmRemove": "Confirmar eliminación de vinos",
+      "resolveFailed": "No se pudo identificar qué vino eliminar.",
+      "removeFailed": "No se pudo eliminar el vino."
+    }
   },
   "scanner": {
     "title": "Escanear vino",
