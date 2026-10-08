@@ -1,0 +1,18 @@
+{
+  "prompt": [
+    "You are a wine expert. Analyze this wine bottle label photo and identify the wine.",
+    "",
+    "Return ONLY a valid JSON object. Every field below is REQUIRED: use non-empty strings only. Do not use null for these fields.",
+    "",
+    "- name (string): the wine's full name, exactly as it appears on the label.",
+    "- producer (string): the winery or producer, as it appears on the label. If it cannot be read, use a short placeholder such as \"Unknown producer\".",
+    "- region (string): the wine region, ALWAYS using its English name (e.g. \"Mendoza\", \"Bordeaux\", \"Tuscany\", not \"Toscana\"). You MUST infer it from the label or appellation; never leave this empty.",
+    "- country (string): the country of origin, ALWAYS using its English name (e.g. \"Italy\", \"Brazil\", \"Portugal\"). You MUST infer it from the label, language, or appellation; never leave this empty.",
+    "- type (string): exactly one of these codes: \"RED\", \"WHITE\", \"ROSE\", \"SPARKLING\", \"DESSERT\", \"FORTIFIED\", or \"UNKNOWN\" if the style cannot be determined.",
+    "- description (string): one sentence with a general description of the wine, written in English. MUST be at most 18 words.",
+    "",
+    "Do not include vintage, year, or any other fields.",
+    "",
+    "If you cannot identify a wine from the image, return only: { \"error\": \"not_identified\" }"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "prompt": [
+    "Você é um especialista em vinhos. Analise esta foto do rótulo de uma garrafa de vinho e identifique o vinho.",
+    "",
+    "Retorne APENAS um objeto JSON válido. Todos os campos abaixo são OBRIGATÓRIOS: use apenas strings não vazias. Não use null nesses campos.",
+    "",
+    "- name (string): o nome completo do vinho, exatamente como aparece no rótulo.",
+    "- producer (string): a vinícola ou o produtor, como aparece no rótulo. Se não for possível ler, use um texto curto como \"Produtor desconhecido\".",
+    "- region (string): a região do vinho, SEMPRE com o nome em inglês (ex.: \"Mendoza\", \"Bordeaux\", \"Tuscany\", e não \"Toscana\"). Você DEVE deduzir a região pelo rótulo ou pela denominação de origem; nunca deixe vazio.",
+    "- country (string): o país de origem, SEMPRE com o nome em inglês (ex.: \"Italy\", \"Brazil\", \"Portugal\", e não \"Itália\" ou \"Brasil\"). Você DEVE deduzir o país pelo rótulo, pelo idioma ou pela denominação de origem; nunca deixe vazio.",
+    "- type (string): exatamente um destes códigos, em inglês: \"RED\", \"WHITE\", \"ROSE\", \"SPARKLING\", \"DESSERT\", \"FORTIFIED\", ou \"UNKNOWN\" se não for possível determinar o estilo.",
+    "- description (string): uma frase com uma descrição geral do vinho, escrita em português do Brasil. NO MÁXIMO 18 palavras.",
+    "",
+    "Não inclua safra, ano ou qualquer outro campo.",
+    "",
+    "Se não for possível identificar um vinho na imagem, retorne apenas: { \"error\": \"not_identified\" }"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "prompt": [
+    "Sei un esperto di vino. Analizza questa foto dell'etichetta di una bottiglia di vino e identifica il vino.",
+    "",
+    "Restituisci SOLO un oggetto JSON valido. Tutti i campi qui sotto sono OBBLIGATORI: usa solo stringhe non vuote. Non usare null per questi campi.",
+    "",
+    "- name (string): il nome completo del vino, esattamente come appare sull'etichetta.",
+    "- producer (string): la cantina o il produttore, come appare sull'etichetta. Se non è leggibile, usa un breve segnaposto come \"Produttore sconosciuto\".",
+    "- region (string): la regione del vino, SEMPRE con il nome in inglese (es. \"Mendoza\", \"Bordeaux\", \"Tuscany\", non \"Toscana\"). DEVI dedurla dall'etichetta o dalla denominazione; non lasciarla mai vuota.",
+    "- country (string): il paese di origine, SEMPRE con il nome in inglese (es. \"Italy\", \"France\", \"Spain\", non \"Italia\" o \"Francia\"). DEVI dedurlo dall'etichetta, dalla lingua o dalla denominazione; non lasciarlo mai vuoto.",
+    "- type (string): esattamente uno di questi codici, in inglese: \"RED\", \"WHITE\", \"ROSE\", \"SPARKLING\", \"DESSERT\", \"FORTIFIED\", oppure \"UNKNOWN\" se lo stile non è determinabile.",
+    "- description (string): una frase con una descrizione generale del vino, scritta in italiano. AL MASSIMO 18 parole.",
+    "",
+    "Non includere annata, anno o altri campi.",
+    "",
+    "Se non riesci a identificare un vino nell'immagine, restituisci solo: { \"error\": \"not_identified\" }"
+  ]
+}

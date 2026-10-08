@@ -3,7 +3,7 @@ import os
 import sys
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
-from typing import Optional
+from typing import Dict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -12,24 +12,32 @@ import requests
 from _api_common import auth_bearer_user_id, load_env, send_json
 
 _API_DIR = Path(__file__).resolve().parent
-_PROMPT_JSON = _API_DIR / "prompts" / "scan-wine-label.json"
-_scan_wine_label_prompt_cache: Optional[str] = None
+_PROMPTS_DIR = _API_DIR / "prompts"
+_SUPPORTED_LANGUAGES = frozenset({"en", "pt-BR", "pt-PT", "es", "it"})
+_DEFAULT_LANGUAGE = "en"
+_prompt_cache: Dict[str, str] = {}
 
 
-def _load_scan_wine_label_prompt() -> str:
-    global _scan_wine_label_prompt_cache
-    if _scan_wine_label_prompt_cache is not None:
-        return _scan_wine_label_prompt_cache
-    with open(_PROMPT_JSON, encoding="utf-8") as f:
+def _resolve_language(value: object) -> str:
+    return value if isinstance(value, str) and value in _SUPPORTED_LANGUAGES else _DEFAULT_LANGUAGE
+
+
+def _load_scan_wine_label_prompt(language: str) -> str:
+    cached = _prompt_cache.get(language)
+    if cached is not None:
+        return cached
+    path = _PROMPTS_DIR / f"scan-wine-label.{language}.json"
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
     lines = data.get("prompt")
     if isinstance(lines, list):
-        _scan_wine_label_prompt_cache = "\n".join(str(x) for x in lines)
+        prompt = "\n".join(str(x) for x in lines)
     elif isinstance(lines, str):
-        _scan_wine_label_prompt_cache = lines
+        prompt = lines
     else:
-        raise ValueError("prompts/scan-wine-label.json must contain a string or array \"prompt\"")
-    return _scan_wine_label_prompt_cache
+        raise ValueError(f"{path.name} must contain a string or array \"prompt\"")
+    _prompt_cache[language] = prompt
+    return prompt
 
 
 class handler(BaseHTTPRequestHandler):
@@ -53,6 +61,8 @@ class handler(BaseHTTPRequestHandler):
             send_json(self, 400, {"error": "Missing image or mimeType in request body"})
             return
 
+        language = _resolve_language(body.get("language"))
+
         load_env()
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
@@ -68,7 +78,7 @@ class handler(BaseHTTPRequestHandler):
                 {
                     "role": "user",
                     "parts": [
-                        {"text": _load_scan_wine_label_prompt()},
+                        {"text": _load_scan_wine_label_prompt(language)},
                         {"inlineData": {"mimeType": mime_type, "data": image}},
                     ],
                 }
@@ -118,7 +128,12 @@ class handler(BaseHTTPRequestHandler):
             return
 
         if "error" in parsed and "name" not in parsed:
-            send_json(self, 200, parsed)
+            # Older app builds show `error` verbatim; newer ones translate `code`.
+            send_json(
+                self,
+                200,
+                {"error": "Could not identify wine from this image", "code": "not_identified"},
+            )
             return
 
         required = ("name", "producer", "region", "country", "type", "description")
