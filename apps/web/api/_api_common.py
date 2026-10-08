@@ -33,10 +33,10 @@ def supabase_config() -> Tuple[str, str]:
 def auth_bearer_user_id(handler: Any) -> Tuple[Optional[str], Optional[Tuple[int, dict]]]:
     header = handler.headers.get("Authorization") or ""
     if not header.startswith("Bearer "):
-        return None, (401, {"error": "Missing authorization header"})
+        return None, (401, {"error": "Missing authorization header", "code": "session_expired"})
     token = header[7:].strip()
     if not token:
-        return None, (401, {"error": "Missing authorization header"})
+        return None, (401, {"error": "Missing authorization header", "code": "session_expired"})
 
     url, key = supabase_config()
     if not url or not key:
@@ -48,11 +48,11 @@ def auth_bearer_user_id(handler: Any) -> Tuple[Optional[str], Optional[Tuple[int
         timeout=30,
     )
     if r.status_code != 200:
-        return None, (401, {"error": "Invalid or expired token"})
+        return None, (401, {"error": "Invalid or expired token", "code": "session_expired"})
     data = r.json()
     uid = data.get("id")
     if not uid:
-        return None, (401, {"error": "Invalid or expired token"})
+        return None, (401, {"error": "Invalid or expired token", "code": "session_expired"})
     return uid, None
 
 
@@ -60,10 +60,10 @@ def auth_bearer_user(handler: Any) -> Tuple[Optional[str], Optional[str], Option
     """Returns (user_id, email_lower_or_empty, error_tuple)."""
     header = handler.headers.get("Authorization") or ""
     if not header.startswith("Bearer "):
-        return None, None, (401, {"error": "Missing authorization header"})
+        return None, None, (401, {"error": "Missing authorization header", "code": "session_expired"})
     token = header[7:].strip()
     if not token:
-        return None, None, (401, {"error": "Missing authorization header"})
+        return None, None, (401, {"error": "Missing authorization header", "code": "session_expired"})
 
     url, key = supabase_config()
     if not url or not key:
@@ -75,11 +75,11 @@ def auth_bearer_user(handler: Any) -> Tuple[Optional[str], Optional[str], Option
         timeout=30,
     )
     if r.status_code != 200:
-        return None, None, (401, {"error": "Invalid or expired token"})
+        return None, None, (401, {"error": "Invalid or expired token", "code": "session_expired"})
     data = r.json()
     uid = data.get("id")
     if not uid:
-        return None, None, (401, {"error": "Invalid or expired token"})
+        return None, None, (401, {"error": "Invalid or expired token", "code": "session_expired"})
     email = (data.get("email") or "").strip().lower()
     return uid, email, None
 
