@@ -1,4 +1,5 @@
 import { toApiError } from '../../lib/api-error'
+import { i18n } from '../i18n/config'
 import { getApiBaseUrl } from '../../lib/api-base'
 import { supabase } from '../../lib/supabase'
 
@@ -162,7 +163,7 @@ export async function inviteMemberByEmail(
   email: string,
 ): Promise<{ emailed: true; email: string } | { existingUser: true; message: string }> {
   const token = await getAccessToken()
-  const res = await fetch(`${getApiBaseUrl()}/family?op=members`, {
+  const res = await fetch(`${getApiBaseUrl()}/family?op=members&lang=${encodeURIComponent(i18n.language)}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
