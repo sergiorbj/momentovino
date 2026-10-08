@@ -151,6 +151,12 @@
       "deleteFailed": "No se pudo eliminar el momento",
       "createWineFailed": "No se pudo añadir el vino",
       "unknown": "Algo salió mal. Inténtalo de nuevo."
+    },
+    "detail": {
+      "rating": "Valoración",
+      "photos": "Fotos",
+      "wine": "Vino",
+      "winesCount": "Vinos · {{n}}"
     }
   },
   "onboarding": {

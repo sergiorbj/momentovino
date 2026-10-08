@@ -151,6 +151,12 @@
       "deleteFailed": "Could not delete moment",
       "createWineFailed": "Could not create wine",
       "unknown": "Something went wrong. Please try again."
+    },
+    "detail": {
+      "rating": "Rating",
+      "photos": "Photos",
+      "wine": "Wine",
+      "winesCount": "Wines · {{n}}"
     }
   },
   "onboarding": {

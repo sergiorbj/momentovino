@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 
 import { useDeleteMoment, useMomentDetail } from '../../features/moments/hooks'
-import { useTranslation, wineTypeLabel } from '../../features/i18n/hooks'
+import { useLanguage, useTranslation, wineTypeLabel } from '../../features/i18n/hooks'
 import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
@@ -26,9 +26,9 @@ const BROWN = '#5C4033'
 const { width: SCREEN_W } = Dimensions.get('window')
 const COVER_H = 260
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, language: string): string {
   const d = new Date(iso + 'T00:00:00')
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString(language, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -55,6 +55,7 @@ function Stars({ rating }: { rating: number }) {
 export default function MomentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { t } = useTranslation()
+  const language = useLanguage()
   const { moment, wines, photos, loading } = useMomentDetail(id ?? '')
   const { remove, deleting } = useDeleteMoment(id ?? '')
 
@@ -137,7 +138,7 @@ export default function MomentDetailScreen() {
 
           <View style={styles.infoRow}>
             <Ionicons name="calendar-outline" size={16} color={SUBTLE} />
-            <Text style={styles.infoText}>{formatDate(moment.happened_at)}</Text>
+            <Text style={styles.infoText}>{formatDate(moment.happened_at, language)}</Text>
           </View>
 
           <View style={styles.infoRow}>
@@ -147,7 +148,7 @@ export default function MomentDetailScreen() {
 
           {moment.rating != null && (
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Rating</Text>
+              <Text style={styles.sectionLabel}>{t('moments.detail.rating')}</Text>
               <Stars rating={moment.rating} />
             </View>
           )}
@@ -155,7 +156,9 @@ export default function MomentDetailScreen() {
           {wines.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>
-                {wines.length === 1 ? 'Wine' : `Wines · ${wines.length}`}
+                {wines.length === 1
+                  ? t('moments.detail.wine')
+                  : t('moments.detail.winesCount', { n: wines.length })}
               </Text>
               <View style={styles.wineCardList}>
                 {wines.map((wine) => (
@@ -182,7 +185,7 @@ export default function MomentDetailScreen() {
 
           {photos.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Photos</Text>
+              <Text style={styles.sectionLabel}>{t('moments.detail.photos')}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
