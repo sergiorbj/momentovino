@@ -117,7 +117,15 @@
       "confirmBody": "Se eliminarán el momento y sus fotos de forma permanente. Esta acción no se puede deshacer.",
       "confirm": "Eliminar",
       "cancel": "Cancelar"
-    }
+    },
+    "title": "Momentos",
+    "statsLabels": {
+      "moments": "Momentos",
+      "countries": "Países",
+      "wines": "Vinos"
+    },
+    "saveCta": "+ Guardar un momento",
+    "loading": "Sirviendo tus momentos…"
   },
   "onboarding": {
     "welcome": {

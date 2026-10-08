@@ -117,7 +117,15 @@
       "confirmBody": "O momento e as fotografias serão removidos definitivamente. Esta acção não pode ser anulada.",
       "confirm": "Eliminar",
       "cancel": "Cancelar"
-    }
+    },
+    "title": "Momentos",
+    "statsLabels": {
+      "moments": "Momentos",
+      "countries": "Países",
+      "wines": "Vinhos"
+    },
+    "saveCta": "+ Guardar um momento",
+    "loading": "A servir os seus momentos…"
   },
   "onboarding": {
     "welcome": {

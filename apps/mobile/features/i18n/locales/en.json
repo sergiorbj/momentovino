@@ -117,7 +117,15 @@
       "confirmBody": "This will permanently remove the moment and its photos. This can't be undone.",
       "confirm": "Delete",
       "cancel": "Cancel"
-    }
+    },
+    "title": "Moments",
+    "statsLabels": {
+      "moments": "Moments",
+      "countries": "Countries",
+      "wines": "Wines"
+    },
+    "saveCta": "+ Save a Moment",
+    "loading": "Pouring your moments…"
   },
   "onboarding": {
     "welcome": {

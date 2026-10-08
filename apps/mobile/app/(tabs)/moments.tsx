@@ -21,7 +21,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from '../../features/i18n/hooks'
 
 import WireframeGlobe from '../../components/globe/WireframeGlobe'
 import { useMomentStats } from '../../features/moments/hooks'
@@ -264,7 +264,7 @@ export default function MomentsScreen() {
       <StatusBar style="dark" />
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
-          <Text style={styles.title}>Moments</Text>
+          <Text style={styles.title}>{t('moments.title')}</Text>
         </View>
 
         <Animated.View style={[styles.contentFill, contentAnimatedStyle]}>
@@ -296,7 +296,7 @@ export default function MomentsScreen() {
                 animate
                 style={styles.statNumber}
               />
-              <Text style={styles.statLabel}>Moments</Text>
+              <Text style={styles.statLabel}>{t('moments.statsLabels.moments')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -305,7 +305,7 @@ export default function MomentsScreen() {
                 animate
                 style={styles.statNumber}
               />
-              <Text style={styles.statLabel}>Countries</Text>
+              <Text style={styles.statLabel}>{t('moments.statsLabels.countries')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
@@ -314,7 +314,7 @@ export default function MomentsScreen() {
                 animate
                 style={styles.statNumber}
               />
-              <Text style={styles.statLabel}>Wines</Text>
+              <Text style={styles.statLabel}>{t('moments.statsLabels.wines')}</Text>
             </View>
           </View>
         </Animated.View>
@@ -325,7 +325,7 @@ export default function MomentsScreen() {
             activeOpacity={0.85}
             onPress={() => router.push('/moments/new')}
           >
-            <Text style={styles.ctaBtnText}>+ Save a Moment</Text>
+            <Text style={styles.ctaBtnText}>{t('moments.saveCta')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -339,7 +339,7 @@ export default function MomentsScreen() {
             source={GLASS_ICON}
             style={[styles.loadingGlass, glassAnimStyle]}
           />
-          <Text style={styles.loadingText}>Pouring your moments…</Text>
+          <Text style={styles.loadingText}>{t('moments.loading')}</Text>
         </Animated.View>
       )}
     </View>
