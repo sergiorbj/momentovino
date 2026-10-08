@@ -600,5 +600,20 @@
       "confirmTitle": "Enviar convite?",
       "confirmSend": "Enviar convite"
     }
+  },
+  "paywallRenewal": {
+    "closeA11y": "Fechar e ir para o login",
+    "eyebrow": "MOMENTOVINO PRO",
+    "headline": "Seu plano de assinatura terminou.",
+    "subtitle": "Renove para continuar escaneando rótulos e guardando cada momento com vinho.",
+    "benefits": {
+      "scans": "Scans de vinho ilimitados para ver os detalhes",
+      "family": "Crie um grupo familiar com quem você ama",
+      "moments": "Cada momento guardado para sempre no seu diário"
+    },
+    "cancelAnytime": "Cancele a renovação quando quiser",
+    "ctaYearly": "Renovar · {{price}}/ano",
+    "ctaMonthly": "Renovar · {{price}}/mês",
+    "reassureMonthly": "Cobrança mensal. Cancele a renovação quando quiser nos Ajustes."
   }
 }

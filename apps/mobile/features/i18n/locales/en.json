@@ -600,5 +600,20 @@
       "confirmTitle": "Send invitation?",
       "confirmSend": "Send invite"
     }
+  },
+  "paywallRenewal": {
+    "closeA11y": "Close and go to sign in",
+    "eyebrow": "MOMENTOVINO PRO",
+    "headline": "Your subscription plan ended.",
+    "subtitle": "Renew to keep scanning labels and saving every wine moment.",
+    "benefits": {
+      "scans": "Unlimited wine scans to see the details",
+      "family": "Create a family group with your loved ones",
+      "moments": "Every moment, kept forever in your journal"
+    },
+    "cancelAnytime": "Cancel renewal anytime",
+    "ctaYearly": "Renew · {{price}}/year",
+    "ctaMonthly": "Renew · {{price}}/month",
+    "reassureMonthly": "Billed monthly. Cancel renewal anytime in Settings."
   }
 }
