@@ -1,12 +1,12 @@
-<!doctype html>
-<html lang="en">
+{{ $lang := printf "%v" .Data.language }}<!doctype html>
+<html lang="{{ if eq $lang "pt-BR" }}pt-BR{{ else if eq $lang "pt-PT" }}pt-PT{{ else if eq $lang "es" }}es{{ else if eq $lang "it" }}it{{ else }}en{{ end }}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="x-apple-disable-message-reformatting" />
     <meta name="color-scheme" content="light only" />
     <meta name="supported-color-schemes" content="light only" />
-    <title>Confirm your email | MomentoVino</title>
+    <title>{{ if eq $lang "pt-BR" }}Confirme seu email | MomentoVino{{ else if eq $lang "pt-PT" }}Confirme o seu email | MomentoVino{{ else if eq $lang "es" }}Confirma tu email | MomentoVino{{ else if eq $lang "it" }}Conferma la tua email | MomentoVino{{ else }}Confirm your email | MomentoVino{{ end }}</title>
     <style>
       @media (prefers-color-scheme: dark) {
         body, table, td { background-color: #F5EBE0 !important; color: #3F2A2E !important; }
@@ -41,20 +41,20 @@
             <tr>
               <td class="card" style="background-color:#FFFFFF;border-radius:22px;padding:36px 32px;border:1px solid #E8DDD4;">
                 <h1 class="h1" style="margin:0 0 12px 0;font-family:'DM Serif Display','Playfair Display',Georgia,serif;font-weight:400;font-size:30px;line-height:36px;color:#722F37;">
-                  Welcome to MomentoVino.
+                  {{ if eq $lang "pt-BR" }}Boas-vindas ao MomentoVino.{{ else if eq $lang "pt-PT" }}Boas-vindas ao MomentoVino.{{ else if eq $lang "es" }}Te damos la bienvenida a MomentoVino.{{ else if eq $lang "it" }}Ti diamo il benvenuto su MomentoVino.{{ else }}Welcome to MomentoVino.{{ end }}
                 </h1>
                 <p style="margin:0 0 16px 0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:15px;line-height:22px;color:#3F2A2E;">
-                  Confirm your email so we can save your wine moments forever: on this iPhone, your next one, and every device you sign in to.
+                  {{ if eq $lang "pt-BR" }}Confirme seu email para guardarmos seus momentos com vinho para sempre: neste iPhone, no próximo e em qualquer aparelho em que você entrar.{{ else if eq $lang "pt-PT" }}Confirme o seu email para guardarmos os seus momentos com vinho para sempre: neste iPhone, no próximo e em todos os dispositivos em que iniciar sessão.{{ else if eq $lang "es" }}Confirma tu email para que guardemos tus momentos con vino para siempre: en este iPhone, en el próximo y en cualquier dispositivo donde inicies sesión.{{ else if eq $lang "it" }}Conferma la tua email così possiamo custodire per sempre i tuoi momenti con il vino: su questo iPhone, sul prossimo e su ogni dispositivo da cui accedi.{{ else }}Confirm your email so we can save your wine moments forever: on this iPhone, your next one, and every device you sign in to.{{ end }}
                 </p>
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 22px 0;">
                   <tr>
                     <td style="background-color:#F5EBE0;border:1px solid #E8DDD4;border-radius:14px;padding:16px 18px;">
                       <p style="margin:0 0 8px 0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:21px;color:#3F2A2E;">
-                        <strong style="color:#722F37;">One gentle request.</strong>
-                        If you’re signing up in the <strong>MomentoVino app</strong>, open this email <em>on the same phone or tablet</em> and tap the button below. That way we can confirm your address and bring you right back into the app without a hitch.
+                        <strong style="color:#722F37;">{{ if eq $lang "pt-BR" }}Um pedido gentil.{{ else if eq $lang "pt-PT" }}Um pedido simpático.{{ else if eq $lang "es" }}Una pequeña petición.{{ else if eq $lang "it" }}Una piccola richiesta.{{ else }}One gentle request.{{ end }}</strong>
+                        {{ if eq $lang "pt-BR" }}Se você está se cadastrando no <strong>app MomentoVino</strong>, abra este email <em>no mesmo celular ou tablet</em> e toque no botão abaixo. Assim confirmamos seu endereço e levamos você de volta ao app sem complicação.{{ else if eq $lang "pt-PT" }}Se está a registar-se na <strong>app MomentoVino</strong>, abra este email <em>no mesmo telemóvel ou tablet</em> e toque no botão abaixo. Assim confirmamos o seu endereço e levamo-lo de volta à app sem complicações.{{ else if eq $lang "es" }}Si te estás registrando en la <strong>app MomentoVino</strong>, abre este email <em>en el mismo teléfono o tablet</em> y toca el botón de abajo. Así confirmamos tu dirección y te llevamos de vuelta a la app sin complicaciones.{{ else if eq $lang "it" }}Se ti stai registrando nell'<strong>app MomentoVino</strong>, apri questa email <em>sullo stesso telefono o tablet</em> e tocca il pulsante qui sotto. Così confermiamo il tuo indirizzo e ti riportiamo subito nell'app senza intoppi.{{ else }}If you’re signing up in the <strong>MomentoVino app</strong>, open this email <em>on the same phone or tablet</em> and tap the button below. That way we can confirm your address and bring you right back into the app without a hitch.{{ end }}
                       </p>
                       <p style="margin:0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:20px;color:#6E5A5E;">
-                        Tapping the button on a computer can still work in some cases, but phones are where MomentoVino feels most at home, so when you can, use your mobile inbox.
+                        {{ if eq $lang "pt-BR" }}Tocar no botão pelo computador pode funcionar em alguns casos, mas o MomentoVino se sente em casa no celular. Sempre que puder, use o email do seu celular.{{ else if eq $lang "pt-PT" }}Tocar no botão num computador pode funcionar em alguns casos, mas o MomentoVino sente-se em casa no telemóvel. Sempre que puder, use o email do seu telemóvel.{{ else if eq $lang "es" }}Tocar el botón en un ordenador puede funcionar en algunos casos, pero MomentoVino se siente en casa en el móvil. Siempre que puedas, usa el email de tu móvil.{{ else if eq $lang "it" }}Toccare il pulsante da computer può funzionare in alcuni casi, ma MomentoVino si sente a casa sul telefono. Quando puoi, usa la posta del tuo telefono.{{ else }}Tapping the button on a computer can still work in some cases, but phones are where MomentoVino feels most at home, so when you can, use your mobile inbox.{{ end }}
                       </p>
                     </td>
                   </tr>
@@ -64,26 +64,26 @@
                     <td align="center" bgcolor="#722F37" style="border-radius:50px;">
                       <a class="btn" href="{{ .ConfirmationURL }}"
                          style="display:inline-block;padding:16px 28px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;border-radius:50px;background-color:#722F37;">
-                        Confirm my email
+                        {{ if eq $lang "pt-BR" }}Confirmar meu email{{ else if eq $lang "pt-PT" }}Confirmar o meu email{{ else if eq $lang "es" }}Confirmar mi email{{ else if eq $lang "it" }}Conferma la mia email{{ else }}Confirm my email{{ end }}
                       </a>
                     </td>
                   </tr>
                 </table>
                 <p style="margin:0 0 6px 0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:20px;color:#6E5A5E;">
-                  Button not working? Copy the link below into your browser. On mobile it should still help you confirm; on desktop you may need to continue on your phone afterward.
+                  {{ if eq $lang "pt-BR" }}O botão não funcionou? Copie o link abaixo no seu navegador. No celular ele ainda deve ajudar a confirmar; no computador, talvez você precise continuar pelo celular depois.{{ else if eq $lang "pt-PT" }}O botão não funciona? Copie a ligação abaixo para o seu navegador. No telemóvel deve continuar a ajudar a confirmar; no computador, poderá ter de continuar no telemóvel a seguir.{{ else if eq $lang "es" }}¿El botón no funciona? Copia el enlace de abajo en tu navegador. En el móvil debería ayudarte a confirmar; en el ordenador, puede que tengas que continuar luego en tu teléfono.{{ else if eq $lang "it" }}Il pulsante non funziona? Copia il link qui sotto nel browser. Sul telefono dovrebbe comunque aiutarti a confermare; dal computer potresti dover continuare poi sul telefono.{{ else }}Button not working? Copy the link below into your browser. On mobile it should still help you confirm; on desktop you may need to continue on your phone afterward.{{ end }}
                 </p>
                 <p style="margin:0 0 24px 0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:20px;word-break:break-all;">
                   <a href="{{ .ConfirmationURL }}" style="color:#722F37;">{{ .ConfirmationURL }}</a>
                 </p>
                 <hr style="border:none;border-top:1px solid #E8DDD4;margin:24px 0;" />
                 <p style="margin:0;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:12px;line-height:18px;color:#6E5A5E;">
-                  If you didn't create a MomentoVino account, you can safely ignore this email. No account will be created.
+                  {{ if eq $lang "pt-BR" }}Se você não criou uma conta no MomentoVino, pode ignorar este email com segurança. Nenhuma conta será criada.{{ else if eq $lang "pt-PT" }}Se não criou uma conta no MomentoVino, pode ignorar este email em segurança. Nenhuma conta será criada.{{ else if eq $lang "es" }}Si no creaste una cuenta en MomentoVino, puedes ignorar este email sin problema. No se creará ninguna cuenta.{{ else if eq $lang "it" }}Se non hai creato un account MomentoVino, puoi ignorare questa email tranquillamente. Nessun account verrà creato.{{ else }}If you didn't create a MomentoVino account, you can safely ignore this email. No account will be created.{{ end }}
                 </p>
               </td>
             </tr>
             <tr>
               <td align="center" style="padding:18px 8px 0 8px;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;font-size:11px;color:#6E5A5E;">
-                MomentoVino · The wine journal you'll still have in 10 years.
+                {{ if eq $lang "pt-BR" }}MomentoVino · O diário de vinhos que você ainda vai ter daqui a 10 anos.{{ else if eq $lang "pt-PT" }}MomentoVino · O diário de vinhos que ainda vai ter daqui a 10 anos.{{ else if eq $lang "es" }}MomentoVino · El diario de vinos que seguirás teniendo dentro de 10 años.{{ else if eq $lang "it" }}MomentoVino · Il diario dei vini che avrai ancora tra 10 anni.{{ else }}MomentoVino · The wine journal you'll still have in 10 years.{{ end }}
               </td>
             </tr>
           </table>
