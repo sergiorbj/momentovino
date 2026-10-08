@@ -63,6 +63,7 @@ export type IncomingInvitation = {
     photo_url: string | null
   } | null
   inviter_name: string
+  inviter_unknown?: boolean
   expires_at: string
   created_at: string
 }

@@ -491,7 +491,8 @@
       "fallbackFamily": "una familia",
       "subtitle": "{{inviter}} te invitó a unirte a su familia.",
       "decline": "Rechazar",
-      "accept": "Aceptar"
+      "accept": "Aceptar",
+      "fallbackInviter": "Alguien"
     },
     "empty": {
       "title": "Aún no tienes familia",

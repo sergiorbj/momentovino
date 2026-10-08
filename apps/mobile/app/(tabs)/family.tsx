@@ -72,7 +72,11 @@ function IncomingInvitationCard({
         />
       </Text>
       <Text style={styles.invitationSubtitle}>
-        {t('family.invitation.subtitle', { inviter: invitation.inviter_name })}
+        {t('family.invitation.subtitle', {
+          inviter: invitation.inviter_unknown
+            ? t('family.invitation.fallbackInviter')
+            : invitation.inviter_name,
+        })}
       </Text>
       <View style={styles.invitationActions}>
         <TouchableOpacity

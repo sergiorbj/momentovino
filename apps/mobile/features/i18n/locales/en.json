@@ -491,7 +491,8 @@
       "fallbackFamily": "a family",
       "subtitle": "{{inviter}} invited you to join their family.",
       "decline": "Decline",
-      "accept": "Accept"
+      "accept": "Accept",
+      "fallbackInviter": "A friend"
     },
     "empty": {
       "title": "No Family Yet",
