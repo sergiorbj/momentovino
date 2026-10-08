@@ -23,10 +23,29 @@ Supabase Dashboard → **Authentication → Email Templates**:
 
 Paste each file's HTML into the matching template editor and save. **Whenever you change a file here, open the Supabase dashboard again and paste the updated HTML** — the dashboard does not sync from Git automatically.
 
+## Language
+
+Both templates render in the user's app language, read from
+`user_metadata.language` (`en`, `pt-BR`, `pt-PT`, `es`, `it`). The app writes it
+on signup and whenever the language changes or differs at boot. The value is
+coerced with `printf "%v"` before comparing, so users without it (older
+accounts) get English instead of a template error.
+
 ## Subjects (set in the same screen)
 
-- Confirm signup: `Welcome to MomentoVino — confirm your email`
-- Reset password: `Reset your MomentoVino password`
+Paste each line as-is; the subject field accepts the same template syntax.
+
+Confirm signup:
+
+```
+{{ $lang := printf "%v" .Data.language }}{{ if eq $lang "pt-BR" }}Boas-vindas ao MomentoVino: confirme seu email{{ else if eq $lang "pt-PT" }}Boas-vindas ao MomentoVino: confirme o seu email{{ else if eq $lang "es" }}Te damos la bienvenida a MomentoVino: confirma tu email{{ else if eq $lang "it" }}Ti diamo il benvenuto su MomentoVino: conferma la tua email{{ else }}Welcome to MomentoVino: confirm your email{{ end }}
+```
+
+Reset password:
+
+```
+{{ $lang := printf "%v" .Data.language }}{{ if eq $lang "pt-BR" }}Redefina sua senha do MomentoVino{{ else if eq $lang "pt-PT" }}Redefina a sua palavra-passe do MomentoVino{{ else if eq $lang "es" }}Restablece tu contraseña de MomentoVino{{ else if eq $lang "it" }}Reimposta la password di MomentoVino{{ else }}Reset your MomentoVino password{{ end }}
+```
 
 ## Notes on rendering
 
