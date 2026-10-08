@@ -18,6 +18,7 @@ import { router } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { useEntitlement } from '../../features/entitlement/hooks'
+import { useTranslation } from '../../features/i18n/hooks'
 import { useDeleteAccount, useProfile } from '../../features/profile/hooks'
 import { resetOnboardingState } from '../../features/onboarding/state'
 import {
@@ -35,6 +36,7 @@ const WINE = '#722F37'
 const BG = '#F5EBE0'
 
 export default function ProfileScreen() {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: entData, isLoading: entLoading } = useEntitlement()
   const [restoring, setRestoring] = useState(false)
@@ -196,8 +198,13 @@ export default function ProfileScreen() {
       type: 'nav',
       onPress: () => router.push('/profile/edit'),
     },
-    // Language switch is hidden until the tabs / moments / wines / family / profile screens
-    // are translated. Until then switching language only affects onboarding + auth.
+    {
+      icon: 'language-outline',
+      label: t('profile.language.title'),
+      iconColor: '#722F37',
+      type: 'nav',
+      onPress: () => router.push('/profile/language'),
+    },
     {
       icon: 'chatbubble-ellipses-outline',
       label: 'Talk to Us',
