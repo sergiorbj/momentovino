@@ -1,11 +1,13 @@
 import { z } from 'zod'
 
+// Validation messages are i18n keys; forms translate them when rendering.
+
 export const WINE_TYPES = ['RED', 'WHITE', 'ROSE', 'SPARKLING', 'DESSERT', 'FORTIFIED'] as const
 export type WineTypeCode = (typeof WINE_TYPES)[number]
 
 export const wineSchema = z.object({
   id: z.string().uuid().optional(),
-  name: z.string().min(2, 'Name is required').max(120),
+  name: z.string().min(2, 'moments.validation.nameRequired').max(120),
   producer: z.string().max(120).optional(),
   vintage: z
     .number()
@@ -26,13 +28,13 @@ export const photoInputSchema = z.object({
 export type PhotoInput = z.infer<typeof photoInputSchema>
 
 export const momentFormSchema = z.object({
-  title: z.string().min(2, 'Title is required').max(80),
+  title: z.string().min(2, 'moments.validation.titleRequired').max(80),
   description: z.string().max(500).optional(),
-  happenedAt: z.string().min(1, 'Date is required'),
-  locationName: z.string().min(2, 'Pick a location'),
+  happenedAt: z.string().min(1, 'moments.validation.dateRequired'),
+  locationName: z.string().min(2, 'moments.validation.locationRequired'),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
-  wineIds: z.array(z.string().uuid()).min(1, 'Add at least one wine').max(8),
+  wineIds: z.array(z.string().uuid()).min(1, 'moments.validation.wineRequired').max(8),
   rating: z.number().int().min(1).max(5).optional(),
   photos: z.array(photoInputSchema).max(3),
 })

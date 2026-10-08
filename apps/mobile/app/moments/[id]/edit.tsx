@@ -610,11 +610,12 @@ function Field({
   error?: string
   children: React.ReactNode
 }) {
+  const { t } = useTranslation()
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
       {children}
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={styles.error}>{t(error)}</Text>}
     </View>
   )
 }

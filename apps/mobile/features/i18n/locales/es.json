@@ -131,6 +131,13 @@
       "emptyTitle": "Aún no hay momentos",
       "emptyBody": "Tus recuerdos con vino aparecerán aquí.",
       "emptyCta": "+ Registra tu primer momento"
+    },
+    "validation": {
+      "nameRequired": "El nombre es obligatorio",
+      "titleRequired": "El título es obligatorio",
+      "dateRequired": "La fecha es obligatoria",
+      "locationRequired": "Elige un lugar",
+      "wineRequired": "Añade al menos un vino"
     }
   },
   "onboarding": {

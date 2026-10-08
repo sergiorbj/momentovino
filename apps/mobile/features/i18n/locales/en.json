@@ -131,6 +131,13 @@
       "emptyTitle": "No moments yet",
       "emptyBody": "Your wine memories will appear here.",
       "emptyCta": "+ Register your first moment"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "titleRequired": "Title is required",
+      "dateRequired": "Date is required",
+      "locationRequired": "Pick a location",
+      "wineRequired": "Add at least one wine"
     }
   },
   "onboarding": {
