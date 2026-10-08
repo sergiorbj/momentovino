@@ -125,7 +125,13 @@
       "wines": "Wines"
     },
     "saveCta": "+ Save a Moment",
-    "loading": "Pouring your moments…"
+    "loading": "Pouring your moments…",
+    "list": {
+      "title": "My Moments",
+      "emptyTitle": "No moments yet",
+      "emptyBody": "Your wine memories will appear here.",
+      "emptyCta": "+ Register your first moment"
+    }
   },
   "onboarding": {
     "welcome": {

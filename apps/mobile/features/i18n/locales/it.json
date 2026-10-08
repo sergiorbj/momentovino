@@ -125,7 +125,13 @@
       "wines": "Vini"
     },
     "saveCta": "+ Salva un momento",
-    "loading": "Versando i tuoi momenti…"
+    "loading": "Versando i tuoi momenti…",
+    "list": {
+      "title": "I miei momenti",
+      "emptyTitle": "Ancora nessun momento",
+      "emptyBody": "I tuoi ricordi con il vino appariranno qui.",
+      "emptyCta": "+ Registra il tuo primo momento"
+    }
   },
   "onboarding": {
     "welcome": {

@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
+import { useLanguage, useTranslation } from '../../features/i18n/hooks'
 import { useMoments } from '../../features/moments/hooks'
 import type { MomentWithWines } from '../../features/moments/api'
 
@@ -21,9 +22,9 @@ const SUBTLE = '#C2703E'
 const BG = '#F5EBE0'
 const BROWN = '#5C4033'
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, language: string): string {
   const d = new Date(iso + 'T00:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return d.toLocaleDateString(language, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function Stars({ rating }: { rating: number }) {
@@ -42,6 +43,7 @@ function Stars({ rating }: { rating: number }) {
 }
 
 function MomentCard({ item }: { item: MomentWithWines }) {
+  const language = useLanguage()
   const uniqueWines = Array.from(new Map(item.wines.map((w) => [w.id, w])).values())
   const firstWine = uniqueWines[0]
   const extraWines = uniqueWines.length - 1
@@ -66,7 +68,7 @@ function MomentCard({ item }: { item: MomentWithWines }) {
       <View style={styles.cardBody}>
         <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
         <Text style={styles.cardMeta} numberOfLines={1}>
-          {item.location_name} · {formatDate(item.happened_at)}
+          {item.location_name} · {formatDate(item.happened_at, language)}
         </Text>
         {firstWine && (
           <View style={styles.wineChipRow}>
@@ -92,6 +94,7 @@ function MomentCard({ item }: { item: MomentWithWines }) {
 }
 
 export default function MomentsListScreen() {
+  const { t } = useTranslation()
   const { moments, loading, refresh } = useMoments()
 
   return (
@@ -101,7 +104,7 @@ export default function MomentsListScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
             <Ionicons name="chevron-back" size={22} color={WINE} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Moments</Text>
+          <Text style={styles.headerTitle}>{t('moments.list.title')}</Text>
         </View>
 
         {loading && moments.length === 0 ? (
@@ -125,15 +128,13 @@ export default function MomentsListScreen() {
             ListEmptyComponent={
               <View style={styles.empty}>
                 <Ionicons name="globe-outline" size={56} color={SUBTLE} />
-                <Text style={styles.emptyTitle}>No moments yet</Text>
-                <Text style={styles.emptyText}>
-                  Your wine memories will appear here.
-                </Text>
+                <Text style={styles.emptyTitle}>{t('moments.list.emptyTitle')}</Text>
+                <Text style={styles.emptyText}>{t('moments.list.emptyBody')}</Text>
                 <TouchableOpacity
                   style={styles.emptyCta}
                   onPress={() => router.push('/moments/new')}
                 >
-                  <Text style={styles.emptyCtaText}>+ Register your first moment</Text>
+                  <Text style={styles.emptyCtaText}>{t('moments.list.emptyCta')}</Text>
                 </TouchableOpacity>
               </View>
             }
