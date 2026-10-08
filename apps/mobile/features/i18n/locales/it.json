@@ -166,6 +166,11 @@
       "usernameHint": "Da {{min}} a {{max}} lettere minuscole, numeri, punti o trattini bassi.",
       "bioLabel": "Bio",
       "bioPlaceholder": "Raccontaci qualcosa di te..."
+    },
+    "talk": {
+      "heading": "Ci farebbe piacere sentirti!",
+      "body": "Che sia un'idea per migliorare MomentoVino, un feedback sulla tua esperienza o semplicemente un bel momento con il vino da raccontarci... siamo tutto orecchi.",
+      "cta": "Scrivici un'email"
     }
   },
   "moments": {

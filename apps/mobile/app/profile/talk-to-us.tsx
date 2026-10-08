@@ -3,6 +3,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
+import { useTranslation } from '../../features/i18n/hooks'
+
 const WINE = '#722F37'
 const BG = '#F5EBE0'
 const SUBTLE = '#C2703E'
@@ -11,6 +13,7 @@ const INK = '#3F2A2E'
 const EMAIL = 'feedback@sergiobernardi.dev'
 
 export default function TalkToUsScreen() {
+  const { t } = useTranslation()
   const openEmail = () => {
     Linking.openURL(`mailto:${EMAIL}?subject=MomentoVino Feedback`)
   }
@@ -22,7 +25,7 @@ export default function TalkToUsScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
             <Ionicons name="chevron-back" size={22} color={WINE} />
           </TouchableOpacity>
-          <Text style={styles.title}>Talk to Us</Text>
+          <Text style={styles.title}>{t('profile.menu.talkToUs')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -31,15 +34,12 @@ export default function TalkToUsScreen() {
             <Ionicons name="chatbubbles-outline" size={48} color={WINE} />
           </View>
 
-          <Text style={styles.heading}>We'd love to hear from you!</Text>
-          <Text style={styles.description}>
-            Whether you have an idea to make MomentoVino better, want to share feedback about your
-            experience, or just want to tell us about a cool wine moment... we're all ears.
-          </Text>
+          <Text style={styles.heading}>{t('profile.talk.heading')}</Text>
+          <Text style={styles.description}>{t('profile.talk.body')}</Text>
 
           <TouchableOpacity style={styles.emailBtn} onPress={openEmail} activeOpacity={0.85}>
             <Ionicons name="mail-outline" size={20} color="#FFFFFF" />
-            <Text style={styles.emailBtnText}>Send us an email</Text>
+            <Text style={styles.emailBtnText}>{t('profile.talk.cta')}</Text>
           </TouchableOpacity>
 
           <Text style={styles.emailHint}>{EMAIL}</Text>

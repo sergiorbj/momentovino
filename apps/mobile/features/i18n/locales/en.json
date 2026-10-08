@@ -166,6 +166,11 @@
       "usernameHint": "{{min}}–{{max}} lowercase letters, numbers, dots or underscores.",
       "bioLabel": "Bio",
       "bioPlaceholder": "Tell us a bit about yourself..."
+    },
+    "talk": {
+      "heading": "We'd love to hear from you!",
+      "body": "Whether you have an idea to make MomentoVino better, want to share feedback about your experience, or just want to tell us about a cool wine moment... we're all ears.",
+      "cta": "Send us an email"
     }
   },
   "moments": {
