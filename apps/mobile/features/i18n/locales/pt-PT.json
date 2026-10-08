@@ -105,6 +105,45 @@
     "language": {
       "title": "Idioma",
       "subtitle": "Escolha o idioma usado na aplicação."
+    },
+    "title": "Perfil",
+    "fallbackName": "Utilizador",
+    "menu": {
+      "editProfile": "Editar perfil",
+      "talkToUs": "Fale connosco"
+    },
+    "subscription": {
+      "title": "Subscrição",
+      "checking": "A verificar o estado…",
+      "pro": "MomentoVino Pro",
+      "renewsOrExpires": "Renova ou expira a {{date}}",
+      "billingIssue": "Problema no pagamento. Atualize em Definições ▸ Subscrições.",
+      "freePlan": "Plano gratuito",
+      "restore": "Restaurar compras"
+    },
+    "restore": {
+      "notIosBody": "As subscrições são geridas na app MomentoVino para iOS.",
+      "restoredTitle": "Compras restauradas",
+      "restoredBody": "A sua subscrição está associada a esta conta.",
+      "nothingTitle": "Nada para restaurar",
+      "nothingBody": "Nenhuma subscrição ativa da App Store encontrada para este ID Apple.",
+      "failedTitle": "Falha ao restaurar",
+      "failedBody": "Tente novamente mais tarde."
+    },
+    "delete": {
+      "button": "Eliminar conta",
+      "title": "Eliminar conta",
+      "body": "Isto elimina permanentemente a sua conta MomentoVino, perfil, vinhos, momentos, fotografias e participação em famílias. Esta ação não pode ser anulada.",
+      "continue": "Continuar",
+      "confirmTitle": "Tem a certeza?",
+      "confirmBody": "A sua conta e todos os dados associados serão removidos permanentemente.",
+      "failed": "Não foi possível eliminar a conta"
+    },
+    "signOut": {
+      "button": "Terminar sessão",
+      "title": "Terminar sessão",
+      "body": "Vai precisar de iniciar sessão novamente para ver os seus momentos.",
+      "failed": "Não foi possível terminar a sessão"
     }
   },
   "moments": {

@@ -18,7 +18,7 @@ import { router } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { useEntitlement } from '../../features/entitlement/hooks'
-import { useTranslation } from '../../features/i18n/hooks'
+import { useLanguage, useTranslation } from '../../features/i18n/hooks'
 import { useDeleteAccount, useProfile } from '../../features/profile/hooks'
 import { resetOnboardingState } from '../../features/onboarding/state'
 import {
@@ -37,6 +37,7 @@ const BG = '#F5EBE0'
 
 export default function ProfileScreen() {
   const { t } = useTranslation()
+  const language = useLanguage()
   const qc = useQueryClient()
   const { data: entData, isLoading: entLoading } = useEntitlement()
   const [restoring, setRestoring] = useState(false)
@@ -71,10 +72,7 @@ export default function ProfileScreen() {
 
   const onRestorePurchases = async () => {
     if (Platform.OS !== 'ios') {
-      Alert.alert(
-        'Restore purchases',
-        'In-app subscriptions are managed on the MomentoVino iOS app.',
-      )
+      Alert.alert(t('profile.subscription.restore'), t('profile.restore.notIosBody'))
       return
     }
     setRestoring(true)
@@ -84,13 +82,14 @@ export default function ProfileScreen() {
       await qc.invalidateQueries({ queryKey: queryKeys.profile })
       const ok = hasProEntitlement(info)
       Alert.alert(
-        ok ? 'Purchases restored' : 'Nothing to restore',
-        ok
-          ? 'Your subscription is linked to this account.'
-          : 'No active App Store subscription found for this Apple ID.',
+        ok ? t('profile.restore.restoredTitle') : t('profile.restore.nothingTitle'),
+        ok ? t('profile.restore.restoredBody') : t('profile.restore.nothingBody'),
       )
     } catch (e) {
-      Alert.alert('Restore failed', e instanceof Error ? e.message : 'Try again later.')
+      Alert.alert(
+        t('profile.restore.failedTitle'),
+        e instanceof Error ? e.message : t('profile.restore.failedBody'),
+      )
     } finally {
       setRestoring(false)
     }
@@ -119,27 +118,27 @@ export default function ProfileScreen() {
       await resetOnboardingState()
       router.replace('/onboarding')
     } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Could not delete account')
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('profile.delete.failed'))
     }
   }
 
   const deleteAccount = () => {
     Alert.alert(
-      'Delete account',
-      'This permanently deletes your MomentoVino account, profile, wines, moments, photos, and family memberships. This cannot be undone.',
+      t('profile.delete.title'),
+      t('profile.delete.body'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Continue',
+          text: t('profile.delete.continue'),
           style: 'destructive',
           onPress: () => {
             Alert.alert(
-              'Are you sure?',
-              'Your account and all associated data will be removed permanently.',
+              t('profile.delete.confirmTitle'),
+              t('profile.delete.confirmBody'),
               [
-                { text: 'Cancel', style: 'cancel' },
+                { text: t('common.cancel'), style: 'cancel' },
                 {
-                  text: 'Delete account',
+                  text: t('profile.delete.title'),
                   style: 'destructive',
                   onPress: () => requireOnline(runDeleteAccount),
                 },
@@ -153,12 +152,12 @@ export default function ProfileScreen() {
 
   const signOut = () => {
     Alert.alert(
-      'Sign out',
-      "You'll need to sign in again to see your moments.",
+      t('profile.signOut.title'),
+      t('profile.signOut.body'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Sign out',
+          text: t('profile.signOut.title'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -166,7 +165,7 @@ export default function ProfileScreen() {
               if (error) throw error
               router.replace('/onboarding')
             } catch (e) {
-              Alert.alert('Error', e instanceof Error ? e.message : 'Could not sign out')
+              Alert.alert(t('common.error'), e instanceof Error ? e.message : t('profile.signOut.failed'))
             }
           },
         },
@@ -174,7 +173,7 @@ export default function ProfileScreen() {
     )
   }
 
-  const displayName = profile?.display_name || 'User'
+  const displayName = profile?.display_name || t('profile.fallbackName')
   const initials = displayName
     .split(' ')
     .map((w) => w[0])
@@ -193,7 +192,7 @@ export default function ProfileScreen() {
   const settingsItems: SettingsItem[] = [
     {
       icon: 'create-outline',
-      label: 'Edit Profile',
+      label: t('profile.menu.editProfile'),
       iconColor: '#722F37',
       type: 'nav',
       onPress: () => router.push('/profile/edit'),
@@ -207,7 +206,7 @@ export default function ProfileScreen() {
     },
     {
       icon: 'chatbubble-ellipses-outline',
-      label: 'Talk to Us',
+      label: t('profile.menu.talkToUs'),
       iconColor: '#722F37',
       type: 'nav',
       onPress: () => router.push('/profile/talk-to-us'),
@@ -219,7 +218,7 @@ export default function ProfileScreen() {
       <StatusBar style="dark" />
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerTitle}>{t('profile.title')}</Text>
         </View>
 
         {loading ? (
@@ -254,30 +253,29 @@ export default function ProfileScreen() {
                     <Ionicons name="sparkles-outline" size={18} color={WINE} />
                   </View>
                   <View style={styles.subscriptionCopy}>
-                    <Text style={styles.subscriptionTitle}>Subscription</Text>
+                    <Text style={styles.subscriptionTitle}>{t('profile.subscription.title')}</Text>
                     {entLoading ? (
-                      <Text style={styles.subscriptionMeta}>Checking status…</Text>
+                      <Text style={styles.subscriptionMeta}>{t('profile.subscription.checking')}</Text>
                     ) : entData?.isPro ? (
                       <>
-                        <Text style={styles.subscriptionStatus}>MomentoVino Pro</Text>
+                        <Text style={styles.subscriptionStatus}>{t('profile.subscription.pro')}</Text>
                         {entData.expiresAt ? (
                           <Text style={styles.subscriptionMeta}>
-                            Renews or expires{' '}
-                            {new Date(entData.expiresAt).toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
+                            {t('profile.subscription.renewsOrExpires', {
+                              date: new Date(entData.expiresAt).toLocaleDateString(language, {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              }),
                             })}
                           </Text>
                         ) : null}
                         {entData.inBillingRetry ? (
-                          <Text style={styles.subscriptionWarn}>
-                            Billing issue. Update payment in Settings ▸ Subscriptions.
-                          </Text>
+                          <Text style={styles.subscriptionWarn}>{t('profile.subscription.billingIssue')}</Text>
                         ) : null}
                       </>
                     ) : (
-                      <Text style={styles.subscriptionMeta}>Free plan</Text>
+                      <Text style={styles.subscriptionMeta}>{t('profile.subscription.freePlan')}</Text>
                     )}
                   </View>
                 </View>
@@ -291,7 +289,7 @@ export default function ProfileScreen() {
                     {restoring ? (
                       <ActivityIndicator color={WINE} />
                     ) : (
-                      <Text style={styles.restoreBtnText}>Restore purchases</Text>
+                      <Text style={styles.restoreBtnText}>{t('profile.subscription.restore')}</Text>
                     )}
                   </TouchableOpacity>
                 ) : null}
@@ -331,7 +329,7 @@ export default function ProfileScreen() {
                 ) : (
                   <>
                     <Ionicons name="trash-outline" size={18} color="#C0392B" />
-                    <Text style={styles.deleteAccountText}>Delete Account</Text>
+                    <Text style={styles.deleteAccountText}>{t('profile.delete.button')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -339,7 +337,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.7} onPress={signOut}>
               <Ionicons name="log-out-outline" size={18} color="#5C4033" />
-              <Text style={styles.signOutText}>Sign Out</Text>
+              <Text style={styles.signOutText}>{t('profile.signOut.button')}</Text>
             </TouchableOpacity>
           </ScrollView>
         )}

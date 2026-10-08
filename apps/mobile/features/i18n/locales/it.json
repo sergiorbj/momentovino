@@ -105,6 +105,45 @@
     "language": {
       "title": "Lingua",
       "subtitle": "Scegli la lingua utilizzata nell'app."
+    },
+    "title": "Profilo",
+    "fallbackName": "Utente",
+    "menu": {
+      "editProfile": "Modifica profilo",
+      "talkToUs": "Contattaci"
+    },
+    "subscription": {
+      "title": "Abbonamento",
+      "checking": "Verifica dello stato…",
+      "pro": "MomentoVino Pro",
+      "renewsOrExpires": "Si rinnova o scade il {{date}}",
+      "billingIssue": "Problema di pagamento. Aggiornalo in Impostazioni ▸ Abbonamenti.",
+      "freePlan": "Piano gratuito",
+      "restore": "Ripristina acquisti"
+    },
+    "restore": {
+      "notIosBody": "Gli abbonamenti si gestiscono nell'app MomentoVino per iOS.",
+      "restoredTitle": "Acquisti ripristinati",
+      "restoredBody": "Il tuo abbonamento è collegato a questo account.",
+      "nothingTitle": "Niente da ripristinare",
+      "nothingBody": "Nessun abbonamento attivo dell'App Store trovato per questo ID Apple.",
+      "failedTitle": "Ripristino non riuscito",
+      "failedBody": "Riprova più tardi."
+    },
+    "delete": {
+      "button": "Elimina account",
+      "title": "Elimina account",
+      "body": "Questo elimina definitivamente il tuo account MomentoVino, il profilo, i vini, i momenti, le foto e le iscrizioni alle famiglie. L'operazione non può essere annullata.",
+      "continue": "Continua",
+      "confirmTitle": "Vuoi davvero continuare?",
+      "confirmBody": "Il tuo account e tutti i dati associati verranno rimossi definitivamente.",
+      "failed": "Impossibile eliminare l'account"
+    },
+    "signOut": {
+      "button": "Esci",
+      "title": "Esci",
+      "body": "Dovrai accedere di nuovo per vedere i tuoi momenti.",
+      "failed": "Impossibile uscire"
     }
   },
   "moments": {

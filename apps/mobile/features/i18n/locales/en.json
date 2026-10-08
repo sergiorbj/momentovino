@@ -105,6 +105,45 @@
     "language": {
       "title": "Language",
       "subtitle": "Choose the language used throughout the app."
+    },
+    "title": "Profile",
+    "fallbackName": "User",
+    "menu": {
+      "editProfile": "Edit Profile",
+      "talkToUs": "Talk to Us"
+    },
+    "subscription": {
+      "title": "Subscription",
+      "checking": "Checking status…",
+      "pro": "MomentoVino Pro",
+      "renewsOrExpires": "Renews or expires {{date}}",
+      "billingIssue": "Billing issue. Update payment in Settings ▸ Subscriptions.",
+      "freePlan": "Free plan",
+      "restore": "Restore purchases"
+    },
+    "restore": {
+      "notIosBody": "In-app subscriptions are managed on the MomentoVino iOS app.",
+      "restoredTitle": "Purchases restored",
+      "restoredBody": "Your subscription is linked to this account.",
+      "nothingTitle": "Nothing to restore",
+      "nothingBody": "No active App Store subscription found for this Apple ID.",
+      "failedTitle": "Restore failed",
+      "failedBody": "Try again later."
+    },
+    "delete": {
+      "button": "Delete Account",
+      "title": "Delete account",
+      "body": "This permanently deletes your MomentoVino account, profile, wines, moments, photos, and family memberships. This cannot be undone.",
+      "continue": "Continue",
+      "confirmTitle": "Are you sure?",
+      "confirmBody": "Your account and all associated data will be removed permanently.",
+      "failed": "Could not delete account"
+    },
+    "signOut": {
+      "button": "Sign Out",
+      "title": "Sign out",
+      "body": "You'll need to sign in again to see your moments.",
+      "failed": "Could not sign out"
     }
   },
   "moments": {

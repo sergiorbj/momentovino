@@ -105,6 +105,45 @@
     "language": {
       "title": "Idioma",
       "subtitle": "Escolha o idioma usado no aplicativo."
+    },
+    "title": "Perfil",
+    "fallbackName": "Usuário",
+    "menu": {
+      "editProfile": "Editar perfil",
+      "talkToUs": "Fale conosco"
+    },
+    "subscription": {
+      "title": "Assinatura",
+      "checking": "Verificando status…",
+      "pro": "MomentoVino Pro",
+      "renewsOrExpires": "Renova ou expira em {{date}}",
+      "billingIssue": "Problema no pagamento. Atualize em Ajustes ▸ Assinaturas.",
+      "freePlan": "Plano gratuito",
+      "restore": "Restaurar compras"
+    },
+    "restore": {
+      "notIosBody": "As assinaturas são gerenciadas no app MomentoVino para iOS.",
+      "restoredTitle": "Compras restauradas",
+      "restoredBody": "Sua assinatura está vinculada a esta conta.",
+      "nothingTitle": "Nada para restaurar",
+      "nothingBody": "Nenhuma assinatura ativa da App Store encontrada para este ID Apple.",
+      "failedTitle": "Falha ao restaurar",
+      "failedBody": "Tente novamente mais tarde."
+    },
+    "delete": {
+      "button": "Excluir conta",
+      "title": "Excluir conta",
+      "body": "Isso exclui permanentemente sua conta MomentoVino, perfil, vinhos, momentos, fotos e participação em famílias. Essa ação não pode ser desfeita.",
+      "continue": "Continuar",
+      "confirmTitle": "Tem certeza?",
+      "confirmBody": "Sua conta e todos os dados associados serão removidos permanentemente.",
+      "failed": "Não foi possível excluir a conta"
+    },
+    "signOut": {
+      "button": "Sair",
+      "title": "Sair",
+      "body": "Você vai precisar entrar de novo para ver seus momentos.",
+      "failed": "Não foi possível sair"
     }
   },
   "moments": {
