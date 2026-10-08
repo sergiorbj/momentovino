@@ -494,6 +494,16 @@
       "inviteCta": "Invite member",
       "pending": "Pending invitations",
       "expires": "Expires {{date}}"
+    },
+    "create": {
+      "title": "New family",
+      "namePlaceholder": "e.g. Silva family",
+      "photosPermissionBody": "Allow photo library access to add a cover image.",
+      "coverLabel": "Cover photo (optional)",
+      "coverPlaceholder": "Tap to choose a photo",
+      "removePhoto": "Remove photo",
+      "submit": "Create family",
+      "failed": "Could not create family"
     }
   }
 }

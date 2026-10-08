@@ -494,6 +494,16 @@
       "inviteCta": "Invita un membro",
       "pending": "Inviti in sospeso",
       "expires": "Scade il {{date}}"
+    },
+    "create": {
+      "title": "Nuova famiglia",
+      "namePlaceholder": "es. Famiglia Rossi",
+      "photosPermissionBody": "Consenti l'accesso alle foto per aggiungere un'immagine di copertina.",
+      "coverLabel": "Foto di copertina (facoltativa)",
+      "coverPlaceholder": "Tocca per scegliere una foto",
+      "removePhoto": "Rimuovi foto",
+      "submit": "Crea famiglia",
+      "failed": "Impossibile creare la famiglia"
     }
   }
 }

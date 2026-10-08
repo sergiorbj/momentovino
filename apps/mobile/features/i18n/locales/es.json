@@ -494,6 +494,16 @@
       "inviteCta": "Invitar miembro",
       "pending": "Invitaciones pendientes",
       "expires": "Vence el {{date}}"
+    },
+    "create": {
+      "title": "Nueva familia",
+      "namePlaceholder": "p. ej. Familia García",
+      "photosPermissionBody": "Permite el acceso a las fotos para añadir una imagen de portada.",
+      "coverLabel": "Foto de portada (opcional)",
+      "coverPlaceholder": "Toca para elegir una foto",
+      "removePhoto": "Quitar foto",
+      "submit": "Crear familia",
+      "failed": "No se pudo crear la familia"
     }
   }
 }

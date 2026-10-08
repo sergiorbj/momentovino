@@ -19,6 +19,7 @@ import { useCreateFamily, useUpdateFamily } from '../../features/family/hooks'
 import { uploadFamilyCoverPhoto } from '../../features/family/cover-upload'
 import { supabase } from '../../lib/supabase'
 import { requireOnline } from '../../lib/connection/require-online'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -27,6 +28,7 @@ const BG = '#F5EBE0'
 const DESC_MAX = 80
 
 export default function FamilyCreateScreen() {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [coverUri, setCoverUri] = useState<string | null>(null)
@@ -37,7 +39,7 @@ export default function FamilyCreateScreen() {
   const pickCover = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (!perm.granted) {
-      Alert.alert('Photos', 'Allow photo library access to add a cover image.')
+      Alert.alert(t('family.edit.photosPermissionTitle'), t('family.create.photosPermissionBody'))
       return
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -54,12 +56,12 @@ export default function FamilyCreateScreen() {
   const submit = async () => {
     const n = name.trim()
     if (n.length < 2) {
-      Alert.alert('Name required', 'Enter at least 2 characters.')
+      Alert.alert(t('family.edit.nameRequiredTitle'), t('family.edit.nameRequiredBody'))
       return
     }
     const d = description.trim()
     if (d.length > DESC_MAX) {
-      Alert.alert('Description', `Maximum ${DESC_MAX} characters.`)
+      Alert.alert(t('family.edit.descriptionTooLongTitle'), t('family.edit.descriptionTooLongBody', { max: DESC_MAX }))
       return
     }
     try {
@@ -80,7 +82,7 @@ export default function FamilyCreateScreen() {
 
       router.back()
     } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Could not create family')
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('family.create.failed'))
     } finally {
       setSaving(false)
     }
@@ -95,47 +97,47 @@ export default function FamilyCreateScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
             <Ionicons name="chevron-back" size={22} color={WINE} />
           </TouchableOpacity>
-          <Text style={styles.title}>New family</Text>
+          <Text style={styles.title}>{t('family.create.title')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <Text style={styles.label}>Family name</Text>
+          <Text style={styles.label}>{t('family.edit.nameLabel')}</Text>
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="e.g. Silva family"
+            placeholder={t('family.create.namePlaceholder')}
             placeholderTextColor="#A98B7E"
             style={styles.input}
             autoCapitalize="words"
           />
 
-          <Text style={styles.label}>Description (optional)</Text>
+          <Text style={styles.label}>{t('family.edit.descriptionLabel')}</Text>
           <TextInput
             value={description}
-            onChangeText={(t) => setDescription(t.slice(0, DESC_MAX))}
-            placeholder="Short line about your family"
+            onChangeText={(text) => setDescription(text.slice(0, DESC_MAX))}
+            placeholder={t('family.edit.descriptionPlaceholder')}
             placeholderTextColor="#A98B7E"
             style={[styles.input, styles.inputMultiline]}
             multiline
             maxLength={DESC_MAX}
           />
-          <Text style={styles.counter}>{descLeft} characters left</Text>
+          <Text style={styles.counter}>{t('family.edit.charactersLeft', { count: descLeft })}</Text>
 
-          <Text style={styles.label}>Cover photo (optional)</Text>
+          <Text style={styles.label}>{t('family.create.coverLabel')}</Text>
           <TouchableOpacity style={styles.coverPicker} onPress={pickCover} activeOpacity={0.85}>
             {coverUri ? (
               <Image source={{ uri: coverUri }} style={styles.coverPreview} resizeMode="cover" />
             ) : (
               <View style={styles.coverPlaceholder}>
                 <Ionicons name="image-outline" size={36} color={SUBTLE} />
-                <Text style={styles.coverPlaceholderText}>Tap to choose a photo</Text>
+                <Text style={styles.coverPlaceholderText}>{t('family.create.coverPlaceholder')}</Text>
               </View>
             )}
           </TouchableOpacity>
           {coverUri ? (
             <TouchableOpacity onPress={() => setCoverUri(null)} style={styles.removePhoto}>
-              <Text style={styles.removePhotoText}>Remove photo</Text>
+              <Text style={styles.removePhotoText}>{t('family.create.removePhoto')}</Text>
             </TouchableOpacity>
           ) : null}
 
@@ -148,7 +150,7 @@ export default function FamilyCreateScreen() {
             {saving ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.ctaText}>Create family</Text>
+              <Text style={styles.ctaText}>{t('family.create.submit')}</Text>
             )}
           </TouchableOpacity>
         </ScrollView>

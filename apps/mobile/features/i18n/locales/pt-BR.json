@@ -494,6 +494,16 @@
       "inviteCta": "Convidar membro",
       "pending": "Convites pendentes",
       "expires": "Expira em {{date}}"
+    },
+    "create": {
+      "title": "Nova família",
+      "namePlaceholder": "ex.: Família Silva",
+      "photosPermissionBody": "Permita o acesso às fotos para adicionar uma imagem de capa.",
+      "coverLabel": "Foto de capa (opcional)",
+      "coverPlaceholder": "Toque para escolher uma foto",
+      "removePhoto": "Remover foto",
+      "submit": "Criar família",
+      "failed": "Não foi possível criar a família"
     }
   }
 }
