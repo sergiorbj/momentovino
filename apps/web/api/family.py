@@ -558,10 +558,10 @@ def _active_pending_invite_for_user(
     return None
 
 
-def _inviter_display_name(url: str, key: str, user_id: str) -> str:
+def _inviter_display_name(url: str, key: str, user_id: str) -> Optional[str]:
     u = _admin_user_by_id(url, key, user_id)
     if not u:
-        return "A friend"
+        return None
     em = (u.get("email") or "").strip().lower()
     return _display_name_from_auth_user(u, em)
 
@@ -634,11 +634,7 @@ def _email_language(handler: BaseHTTPRequestHandler, url: str, key: str, user_id
 
 
 def _inviter_name_for_email(url: str, key: str, user_id: str, language: str) -> str:
-    u = _admin_user_by_id(url, key, user_id)
-    if not u:
-        return _INVITER_FALLBACK_NAMES[language]
-    em = (u.get("email") or "").strip().lower()
-    return _display_name_from_auth_user(u, em)
+    return _inviter_display_name(url, key, user_id) or _INVITER_FALLBACK_NAMES[language]
 
 
 def _send_resend_app_store_email(
@@ -742,13 +738,16 @@ class handler(BaseHTTPRequestHandler):
                             fam_row = body[0]
                 inviter_uid = row.get("invited_by")
                 inviter_name = (
-                    _inviter_display_name(url, key, str(inviter_uid)) if inviter_uid else "A friend"
+                    _inviter_display_name(url, key, str(inviter_uid)) if inviter_uid else None
                 )
                 out.append(
                     {
                         "id": row["id"],
                         "family": fam_row,
-                        "inviter_name": inviter_name,
+                        # Older app builds render `inviter_name` verbatim; newer ones
+                        # translate the fallback themselves when `inviter_unknown` is set.
+                        "inviter_name": inviter_name or _INVITER_FALLBACK_NAMES["en"],
+                        "inviter_unknown": inviter_name is None,
                         "expires_at": row["expires_at"],
                         "created_at": row["created_at"],
                     }
