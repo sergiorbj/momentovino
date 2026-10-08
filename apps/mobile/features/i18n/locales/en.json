@@ -28,7 +28,7 @@
   },
   "login": {
     "title": "Welcome back.",
-    "subtitle": "Sign in to pick up your journal: wines, moments, and places, right where you left them.",
+    "subtitle": "Sign in to pick up where you left off: your wines, moments, and places.",
     "continueEmail": "Continue with email",
     "continueApple": "Continue with Apple",
     "continueGoogle": "Continue with Google",
@@ -342,16 +342,16 @@
     "atlas": {
       "loadingPreferences": "Storing your preferences...",
       "loadingMoment": "Saving your moment to the atlas...",
-      "loadingJournal": "Preparing your wine journal...",
+      "loadingJournal": "Preparing your wine atlas...",
       "headline": "Your first memory is on your atlas.",
-      "subtitle": "One moment, one bottle. The start of your journal.",
+      "subtitle": "One moment, one bottle. The first pin on your map.",
       "hint": "Tap your moment later to add photos, edit details, or share it with family.",
-      "cta": "Save my journal",
+      "cta": "Save my moment",
       "shareMessage": "I just started my wine atlas on MomentoVino 🍷"
     },
     "paywall": {
       "headline": "Your wine memories, forever.",
-      "subtitle": "Unlimited moments. Unlimited bottles. One beautiful journal you'll still have in 10 years.",
+      "subtitle": "Unlimited moments. Unlimited bottles. A world of memories you'll still have in 10 years.",
       "benefits": {
         "atlas": "Your wine atlas, every bottle on the map",
         "family": "Share with family, register moments together",
@@ -389,7 +389,7 @@
       }
     },
     "saveAccount": {
-      "headline": "Save your wine journal.",
+      "headline": "Keep your moments safe.",
       "subtitle": "Your subscription is yours. Pick how you want to sign in so we can keep your moments safe across every device.",
       "continueEmail": "Continue with email",
       "continueApple": "Continue with Apple",
@@ -402,7 +402,7 @@
       "passwordPlaceholder": "At least 8 characters",
       "useAnotherMethod": "Use another method",
       "saving": "Saving…",
-      "saveJournal": "Save my journal",
+      "saveJournal": "Save my moments",
       "legalEmail": "By creating an account you agree to our Terms and Privacy Policy.",
       "legalProviders": "By continuing you agree to our Terms and Privacy Policy. Your subscription is already active on this Apple ID. Sign in to attach it to your account.",
       "errors": {
@@ -613,7 +613,7 @@
     "benefits": {
       "scans": "Unlimited wine scans to see the details",
       "family": "Create a family group with your loved ones",
-      "moments": "Every moment, kept forever in your journal"
+      "moments": "Every moment, kept forever on your map"
     },
     "cancelAnytime": "Cancel renewal anytime",
     "ctaYearly": "Renew · {{price}}/year",

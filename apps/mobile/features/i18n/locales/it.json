@@ -28,7 +28,7 @@
   },
   "login": {
     "title": "Bentornato.",
-    "subtitle": "Accedi per riprendere il tuo diario: vini, momenti e luoghi, proprio dove li hai lasciati.",
+    "subtitle": "Accedi per riprendere da dove avevi lasciato: i tuoi vini, momenti e luoghi.",
     "continueEmail": "Continua con email",
     "continueApple": "Continua con Apple",
     "continueGoogle": "Continua con Google",
@@ -342,16 +342,16 @@
     "atlas": {
       "loadingPreferences": "Salvataggio delle preferenze...",
       "loadingMoment": "Salvataggio del tuo momento nell'atlante...",
-      "loadingJournal": "Preparazione del diario dei vini...",
+      "loadingJournal": "Preparazione del tuo atlante del vino...",
       "headline": "Il tuo primo ricordo è sul tuo atlante.",
-      "subtitle": "Un momento, una bottiglia. L'inizio del tuo diario.",
+      "subtitle": "Un momento, una bottiglia. Il primo segnaposto sulla tua mappa.",
       "hint": "Tocca il momento più tardi per aggiungere foto, modificare dettagli o condividerlo con la famiglia.",
-      "cta": "Salva il mio diario",
+      "cta": "Salva il mio momento",
       "shareMessage": "Ho appena iniziato il mio atlante del vino su MomentoVino 🍷"
     },
     "paywall": {
       "headline": "I tuoi ricordi di vino, per sempre.",
-      "subtitle": "Momenti illimitati. Bottiglie illimitate. Un diario meraviglioso che avrai ancora tra 10 anni.",
+      "subtitle": "Momenti illimitati. Bottiglie illimitate. Un mondo di ricordi che avrai ancora tra 10 anni.",
       "benefits": {
         "atlas": "Il tuo atlante del vino, ogni bottiglia sulla mappa",
         "family": "Condividi con la famiglia, registrate momenti insieme",
@@ -389,7 +389,7 @@
       }
     },
     "saveAccount": {
-      "headline": "Salva il tuo diario del vino.",
+      "headline": "Custodisci i tuoi momenti.",
       "subtitle": "Il tuo abbonamento è tuo. Scegli come accedere per mantenere i tuoi momenti al sicuro su tutti i dispositivi.",
       "continueEmail": "Continua con email",
       "continueApple": "Continua con Apple",
@@ -402,7 +402,7 @@
       "passwordPlaceholder": "Almeno 8 caratteri",
       "useAnotherMethod": "Usa un altro metodo",
       "saving": "Salvataggio…",
-      "saveJournal": "Salva il mio diario",
+      "saveJournal": "Salva i miei momenti",
       "legalEmail": "Creando un account accetti i nostri Termini e l'Informativa sulla Privacy.",
       "legalProviders": "Continuando accetti i nostri Termini e l'Informativa sulla Privacy. Il tuo abbonamento è già attivo su questo Apple ID. Accedi per collegarlo al tuo account.",
       "errors": {
@@ -613,7 +613,7 @@
     "benefits": {
       "scans": "Scansioni di vino illimitate per vedere i dettagli",
       "family": "Crea un gruppo famiglia con le persone care",
-      "moments": "Ogni momento, custodito per sempre nel tuo diario"
+      "moments": "Ogni momento, custodito per sempre sulla tua mappa"
     },
     "cancelAnytime": "Disdici il rinnovo quando vuoi",
     "ctaYearly": "Rinnova · {{price}}/anno",
