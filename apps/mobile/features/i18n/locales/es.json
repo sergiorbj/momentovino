@@ -178,6 +178,7 @@
         "cameraTitle": "Cámara",
         "cameraFallback": "No se pudo tomar la foto",
         "couldNotIdentifyTitle": "No se pudo identificar",
+        "couldNotIdentifyBody": "No pudimos reconocer un vino en esta foto. Prueba con una foto más cercana y bien iluminada de la etiqueta.",
         "scanFailedTitle": "Fallo en el escaneo",
         "scanFailedFallback": "Error desconocido"
       }

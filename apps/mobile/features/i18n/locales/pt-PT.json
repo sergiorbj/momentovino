@@ -178,6 +178,7 @@
         "cameraTitle": "Câmara",
         "cameraFallback": "Não foi possível tirar a foto",
         "couldNotIdentifyTitle": "Não foi possível identificar",
+        "couldNotIdentifyBody": "Não conseguimos reconhecer um vinho nesta fotografia. Experimente uma fotografia mais próxima e bem iluminada do rótulo.",
         "scanFailedTitle": "Falha na digitalização",
         "scanFailedFallback": "Erro desconhecido"
       }

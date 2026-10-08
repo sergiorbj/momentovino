@@ -9,6 +9,7 @@ export interface ScanResult {
 
 export interface ScanErrorResult {
   error: string
+  code?: 'not_identified'
 }
 
 export type ScanResponse = ScanResult | ScanErrorResult

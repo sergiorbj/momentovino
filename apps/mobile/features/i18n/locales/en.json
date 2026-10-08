@@ -178,6 +178,7 @@
         "cameraTitle": "Camera",
         "cameraFallback": "Could not take photo",
         "couldNotIdentifyTitle": "Could not identify",
+        "couldNotIdentifyBody": "We couldn't recognize a wine in this photo. Try a closer, well-lit shot of the label.",
         "scanFailedTitle": "Scan failed",
         "scanFailedFallback": "Unknown error"
       }

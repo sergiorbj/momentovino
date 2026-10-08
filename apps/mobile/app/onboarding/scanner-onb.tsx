@@ -126,7 +126,12 @@ export default function OnboardingScannerScreen() {
 
       if (isScanError(result)) {
         clearImage()
-        Alert.alert(t('onboarding.scanner.errors.couldNotIdentifyTitle'), result.error)
+        Alert.alert(
+          t('onboarding.scanner.errors.couldNotIdentifyTitle'),
+          result.code === 'not_identified'
+            ? t('onboarding.scanner.errors.couldNotIdentifyBody')
+            : result.error,
+        )
         return
       }
 
