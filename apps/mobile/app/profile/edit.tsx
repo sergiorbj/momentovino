@@ -30,6 +30,7 @@ import {
 import { uploadAvatar } from '../../features/profile/avatar-upload'
 import { supabase } from '../../lib/supabase'
 import { requireOnline } from '../../lib/connection/require-online'
+import { useTranslation } from '../../features/i18n/hooks'
 
 const WINE = '#722F37'
 const INK = '#3F2A2E'
@@ -39,6 +40,7 @@ const NAME_MAX = 50
 const BIO_MAX = 160
 
 export default function EditProfileScreen() {
+  const { t } = useTranslation()
   const { data, isLoading } = useProfile()
   const updateProfileMutation = useUpdateProfile()
   const setUsernameMutation = useSetUsername()
@@ -71,7 +73,7 @@ export default function EditProfileScreen() {
   const pickAvatar = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (!perm.granted) {
-      Alert.alert('Photos', 'Allow photo library access to change your avatar.')
+      Alert.alert(t('family.edit.photosPermissionTitle'), t('profile.edit.photosPermissionBody'))
       return
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -88,23 +90,23 @@ export default function EditProfileScreen() {
   const save = async () => {
     const name = displayName.trim()
     if (name.length < 2) {
-      Alert.alert('Name required', 'Enter at least 2 characters.')
+      Alert.alert(t('profile.edit.nameRequiredTitle'), t('profile.edit.nameRequiredBody'))
       return
     }
     if (name.length > NAME_MAX) {
-      Alert.alert('Name too long', `Maximum ${NAME_MAX} characters.`)
+      Alert.alert(t('profile.edit.nameTooLongTitle'), t('profile.edit.maxCharacters', { max: NAME_MAX }))
       return
     }
     const trimBio = bio.trim()
     if (trimBio.length > BIO_MAX) {
-      Alert.alert('Bio too long', `Maximum ${BIO_MAX} characters.`)
+      Alert.alert(t('profile.edit.bioTooLongTitle'), t('profile.edit.maxCharacters', { max: BIO_MAX }))
       return
     }
     const normalizedUsername = username.trim().toLowerCase()
     if (!USERNAME_REGEX.test(normalizedUsername)) {
       Alert.alert(
-        'Invalid username',
-        `Use ${USERNAME_MIN}–${USERNAME_MAX} lowercase letters, numbers, dots or underscores.`
+        t('profile.edit.invalidUsernameTitle'),
+        t('profile.edit.usernameRule', { min: USERNAME_MIN, max: USERNAME_MAX }),
       )
       return
     }
@@ -134,11 +136,14 @@ export default function EditProfileScreen() {
           await setUsernameMutation.mutateAsync(normalizedUsername)
         } catch (e) {
           if (e instanceof UsernameTakenError) {
-            Alert.alert('Username taken', 'Try another one. Other changes were saved.')
+            Alert.alert(t('profile.edit.usernameTakenTitle'), t('profile.edit.usernameTakenBody'))
             return
           }
           if (e instanceof UsernameFormatError) {
-            Alert.alert('Invalid username', e.message)
+            Alert.alert(
+              t('profile.edit.invalidUsernameTitle'),
+              t('profile.edit.usernameRule', { min: USERNAME_MIN, max: USERNAME_MAX }),
+            )
             return
           }
           throw e
@@ -147,7 +152,7 @@ export default function EditProfileScreen() {
 
       router.back()
     } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Could not save profile')
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('profile.edit.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -177,7 +182,7 @@ export default function EditProfileScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
             <Ionicons name="chevron-back" size={22} color={WINE} />
           </TouchableOpacity>
-          <Text style={styles.title}>Edit Profile</Text>
+          <Text style={styles.title}>{t('profile.menu.editProfile')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -201,16 +206,16 @@ export default function EditProfileScreen() {
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={pickAvatar}>
-              <Text style={styles.changePhotoText}>Change photo</Text>
+              <Text style={styles.changePhotoText}>{t('profile.edit.changePhoto')}</Text>
             </TouchableOpacity>
           </View>
 
           {/* Name */}
-          <Text style={styles.label}>Display name</Text>
+          <Text style={styles.label}>{t('profile.edit.displayNameLabel')}</Text>
           <TextInput
             value={displayName}
-            onChangeText={(t) => setDisplayName(t.slice(0, NAME_MAX))}
-            placeholder="Your name"
+            onChangeText={(text) => setDisplayName(text.slice(0, NAME_MAX))}
+            placeholder={t('profile.edit.displayNamePlaceholder')}
             placeholderTextColor="#A98B7E"
             style={styles.input}
             autoCapitalize="words"
@@ -218,20 +223,20 @@ export default function EditProfileScreen() {
           />
 
           {/* Username */}
-          <Text style={styles.label}>Username</Text>
+          <Text style={styles.label}>{t('profile.edit.usernameLabel')}</Text>
           <View style={styles.usernameRow}>
             <Text style={styles.usernamePrefix}>@</Text>
             <TextInput
               value={username}
-              onChangeText={(t) =>
+              onChangeText={(text) =>
                 setUsernameState(
-                  t
+                  text
                     .toLowerCase()
                     .replace(/[^a-z0-9_.]/g, '')
                     .slice(0, USERNAME_MAX)
                 )
               }
-              placeholder="your_handle"
+              placeholder={t('profile.edit.usernamePlaceholder')}
               placeholderTextColor="#A98B7E"
               style={styles.usernameInput}
               autoCapitalize="none"
@@ -241,22 +246,22 @@ export default function EditProfileScreen() {
           </View>
           <Text style={[styles.hint, !usernameValid && styles.hintError]}>
             {username.length === 0
-              ? 'Required.'
-              : `${USERNAME_MIN}–${USERNAME_MAX} lowercase letters, numbers, dots or underscores.`}
+              ? t('profile.edit.usernameRequired')
+              : t('profile.edit.usernameHint', { min: USERNAME_MIN, max: USERNAME_MAX })}
           </Text>
 
           {/* Bio */}
-          <Text style={styles.label}>Bio</Text>
+          <Text style={styles.label}>{t('profile.edit.bioLabel')}</Text>
           <TextInput
             value={bio}
-            onChangeText={(t) => setBio(t.slice(0, BIO_MAX))}
-            placeholder="Tell us a bit about yourself..."
+            onChangeText={(text) => setBio(text.slice(0, BIO_MAX))}
+            placeholder={t('profile.edit.bioPlaceholder')}
             placeholderTextColor="#A98B7E"
             style={[styles.input, styles.inputMultiline]}
             multiline
             maxLength={BIO_MAX}
           />
-          <Text style={styles.counter}>{bioLeft} characters left</Text>
+          <Text style={styles.counter}>{t('family.edit.charactersLeft', { count: bioLeft })}</Text>
 
           {/* Save */}
           <TouchableOpacity
@@ -268,7 +273,7 @@ export default function EditProfileScreen() {
             {saving ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.ctaText}>Save</Text>
+              <Text style={styles.ctaText}>{t('common.save')}</Text>
             )}
           </TouchableOpacity>
         </ScrollView>

@@ -144,6 +144,28 @@
       "title": "Sair",
       "body": "Você vai precisar entrar de novo para ver seus momentos.",
       "failed": "Não foi possível sair"
+    },
+    "edit": {
+      "photosPermissionBody": "Permita o acesso às fotos para trocar sua foto de perfil.",
+      "nameRequiredTitle": "Nome obrigatório",
+      "nameRequiredBody": "Digite pelo menos 2 caracteres.",
+      "nameTooLongTitle": "Nome muito longo",
+      "bioTooLongTitle": "Bio muito longa",
+      "maxCharacters": "Máximo de {{max}} caracteres.",
+      "invalidUsernameTitle": "Nome de usuário inválido",
+      "usernameRule": "Use de {{min}} a {{max}} letras minúsculas, números, pontos ou sublinhados.",
+      "usernameTakenTitle": "Nome de usuário em uso",
+      "usernameTakenBody": "Tente outro. As outras alterações foram salvas.",
+      "saveFailed": "Não foi possível salvar o perfil",
+      "changePhoto": "Trocar foto",
+      "displayNameLabel": "Nome de exibição",
+      "displayNamePlaceholder": "Seu nome",
+      "usernameLabel": "Nome de usuário",
+      "usernamePlaceholder": "seu_usuario",
+      "usernameRequired": "Obrigatório.",
+      "usernameHint": "De {{min}} a {{max}} letras minúsculas, números, pontos ou sublinhados.",
+      "bioLabel": "Bio",
+      "bioPlaceholder": "Conte um pouco sobre você..."
     }
   },
   "moments": {

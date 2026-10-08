@@ -144,6 +144,28 @@
       "title": "Sign out",
       "body": "You'll need to sign in again to see your moments.",
       "failed": "Could not sign out"
+    },
+    "edit": {
+      "photosPermissionBody": "Allow photo library access to change your avatar.",
+      "nameRequiredTitle": "Name required",
+      "nameRequiredBody": "Enter at least 2 characters.",
+      "nameTooLongTitle": "Name too long",
+      "bioTooLongTitle": "Bio too long",
+      "maxCharacters": "Maximum {{max}} characters.",
+      "invalidUsernameTitle": "Invalid username",
+      "usernameRule": "Use {{min}}–{{max}} lowercase letters, numbers, dots or underscores.",
+      "usernameTakenTitle": "Username taken",
+      "usernameTakenBody": "Try another one. Other changes were saved.",
+      "saveFailed": "Could not save profile",
+      "changePhoto": "Change photo",
+      "displayNameLabel": "Display name",
+      "displayNamePlaceholder": "Your name",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "your_handle",
+      "usernameRequired": "Required.",
+      "usernameHint": "{{min}}–{{max}} lowercase letters, numbers, dots or underscores.",
+      "bioLabel": "Bio",
+      "bioPlaceholder": "Tell us a bit about yourself..."
     }
   },
   "moments": {

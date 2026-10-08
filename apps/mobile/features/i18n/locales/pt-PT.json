@@ -144,6 +144,28 @@
       "title": "Terminar sessão",
       "body": "Vai precisar de iniciar sessão novamente para ver os seus momentos.",
       "failed": "Não foi possível terminar a sessão"
+    },
+    "edit": {
+      "photosPermissionBody": "Permita o acesso às fotografias para mudar a sua fotografia de perfil.",
+      "nameRequiredTitle": "Nome obrigatório",
+      "nameRequiredBody": "Introduza pelo menos 2 caracteres.",
+      "nameTooLongTitle": "Nome demasiado longo",
+      "bioTooLongTitle": "Biografia demasiado longa",
+      "maxCharacters": "Máximo de {{max}} caracteres.",
+      "invalidUsernameTitle": "Nome de utilizador inválido",
+      "usernameRule": "Use de {{min}} a {{max}} letras minúsculas, números, pontos ou sublinhados.",
+      "usernameTakenTitle": "Nome de utilizador em uso",
+      "usernameTakenBody": "Experimente outro. As restantes alterações foram guardadas.",
+      "saveFailed": "Não foi possível guardar o perfil",
+      "changePhoto": "Mudar fotografia",
+      "displayNameLabel": "Nome a apresentar",
+      "displayNamePlaceholder": "O seu nome",
+      "usernameLabel": "Nome de utilizador",
+      "usernamePlaceholder": "o_seu_nome",
+      "usernameRequired": "Obrigatório.",
+      "usernameHint": "De {{min}} a {{max}} letras minúsculas, números, pontos ou sublinhados.",
+      "bioLabel": "Biografia",
+      "bioPlaceholder": "Fale-nos um pouco de si..."
     }
   },
   "moments": {

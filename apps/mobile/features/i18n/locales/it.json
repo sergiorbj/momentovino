@@ -144,6 +144,28 @@
       "title": "Esci",
       "body": "Dovrai accedere di nuovo per vedere i tuoi momenti.",
       "failed": "Impossibile uscire"
+    },
+    "edit": {
+      "photosPermissionBody": "Consenti l'accesso alle foto per cambiare la tua foto profilo.",
+      "nameRequiredTitle": "Nome obbligatorio",
+      "nameRequiredBody": "Inserisci almeno 2 caratteri.",
+      "nameTooLongTitle": "Nome troppo lungo",
+      "bioTooLongTitle": "Bio troppo lunga",
+      "maxCharacters": "Massimo {{max}} caratteri.",
+      "invalidUsernameTitle": "Nome utente non valido",
+      "usernameRule": "Usa da {{min}} a {{max}} lettere minuscole, numeri, punti o trattini bassi.",
+      "usernameTakenTitle": "Nome utente già in uso",
+      "usernameTakenBody": "Provane un altro. Le altre modifiche sono state salvate.",
+      "saveFailed": "Impossibile salvare il profilo",
+      "changePhoto": "Cambia foto",
+      "displayNameLabel": "Nome visualizzato",
+      "displayNamePlaceholder": "Il tuo nome",
+      "usernameLabel": "Nome utente",
+      "usernamePlaceholder": "tuo_nome",
+      "usernameRequired": "Obbligatorio.",
+      "usernameHint": "Da {{min}} a {{max}} lettere minuscole, numeri, punti o trattini bassi.",
+      "bioLabel": "Bio",
+      "bioPlaceholder": "Raccontaci qualcosa di te..."
     }
   },
   "moments": {
