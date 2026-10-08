@@ -23,6 +23,7 @@ import { BlurView } from 'expo-blur'
 import * as ImagePicker from 'expo-image-picker'
 import { StatusBar } from 'expo-status-bar'
 import { router, useFocusEffect } from 'expo-router'
+import { Trans } from 'react-i18next'
 
 import type { FamilyMemberRow, IncomingInvitation } from '../../features/family/api'
 import {
@@ -34,6 +35,7 @@ import {
   useUpdateFamily,
 } from '../../features/family/hooks'
 import { uploadFamilyCoverPhoto } from '../../features/family/cover-upload'
+import { useLanguage, useTranslation } from '../../features/i18n/hooks'
 import { supabase } from '../../lib/supabase'
 import { requireOnline } from '../../lib/connection/require-online'
 
@@ -57,12 +59,19 @@ function IncomingInvitationCard({
   onDecline: () => void
   busy: boolean
 }) {
-  const familyName = invitation.family?.name ?? 'a family'
+  const { t } = useTranslation()
+  const familyName = invitation.family?.name ?? t('family.invitation.fallbackFamily')
   return (
     <View style={styles.invitationCard}>
-      <Text style={styles.invitationTitle}>You're invited to <Text style={styles.invitationTitleFamilyName}>{familyName}</Text>!</Text>
+      <Text style={styles.invitationTitle}>
+        <Trans
+          i18nKey="family.invitation.title"
+          values={{ family: familyName }}
+          components={{ b: <Text style={styles.invitationTitleFamilyName} /> }}
+        />
+      </Text>
       <Text style={styles.invitationSubtitle}>
-        {invitation.inviter_name} invited you to join their family.
+        {t('family.invitation.subtitle', { inviter: invitation.inviter_name })}
       </Text>
       <View style={styles.invitationActions}>
         <TouchableOpacity
@@ -71,7 +80,7 @@ function IncomingInvitationCard({
           disabled={busy}
           activeOpacity={0.85}
         >
-          <Text style={styles.invitationDeclineText}>Decline</Text>
+          <Text style={styles.invitationDeclineText}>{t('family.invitation.decline')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.invitationBtn, styles.invitationAcceptBtn, busy && styles.invitationBtnDisabled]}
@@ -82,7 +91,7 @@ function IncomingInvitationCard({
           {busy ? (
             <ActivityIndicator color="#FFFFFF" size="small" />
           ) : (
-            <Text style={styles.invitationAcceptText}>Accept</Text>
+            <Text style={styles.invitationAcceptText}>{t('family.invitation.accept')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -91,27 +100,25 @@ function IncomingInvitationCard({
 }
 
 function EmptyNoFamily({ onCreate }: { onCreate: () => void }) {
+  const { t } = useTranslation()
   return (
     <View style={styles.emptyContainer}>
       <Ionicons name="people" size={96} color={WINE} style={styles.emptyIcon} />
-      <Text style={styles.emptyTitle}>No Family Yet</Text>
-      <Text style={styles.emptySubtitle}>
-        Create a family group to share your wine moments with your loved ones
-      </Text>
+      <Text style={styles.emptyTitle}>{t('family.empty.title')}</Text>
+      <Text style={styles.emptySubtitle}>{t('family.empty.body')}</Text>
       <TouchableOpacity style={styles.createBtn} onPress={onCreate} activeOpacity={0.85}>
-        <Text style={styles.createBtnText}>Start your Family</Text>
+        <Text style={styles.createBtnText}>{t('family.empty.cta')}</Text>
       </TouchableOpacity>
     </View>
   )
 }
 
 function EmptyMembersCallout() {
+  const { t } = useTranslation()
   return (
     <View style={styles.callout}>
       <Ionicons name="people-outline" size={22} color={WINE} />
-      <Text style={styles.calloutText}>
-        You are the only member so far. Invite someone to share this space.
-      </Text>
+      <Text style={styles.calloutText}>{t('family.soloCallout')}</Text>
     </View>
   )
 }
@@ -147,8 +154,9 @@ function MemberRow({
   onRemove: () => void
   removing: boolean
 }) {
+  const { t } = useTranslation()
   const label = isSelf
-    ? 'You'
+    ? t('family.member.you')
     : member.display_name || member.email || member.user_id.slice(0, 8) + '…'
   const moments = member.moments_count ?? '–'
   const countries = member.countries_count ?? '–'
@@ -162,13 +170,13 @@ function MemberRow({
         </Text>
         <Text style={styles.memberStatsLine} numberOfLines={1}>
           <Text style={styles.statNum}>{moments}</Text>
-          <Text style={styles.statUnit}> moments</Text>
+          <Text style={styles.statUnit}> {t('family.member.moments', { count: typeof moments === 'number' ? moments : 0 })}</Text>
           <Text style={styles.statDot}>{'  ·  '}</Text>
           <Text style={styles.statNum}>{countries}</Text>
-          <Text style={styles.statUnit}> countries</Text>
+          <Text style={styles.statUnit}> {t('family.member.countries', { count: typeof countries === 'number' ? countries : 0 })}</Text>
           <Text style={styles.statDot}>{'  ·  '}</Text>
           <Text style={styles.statNum}>{wines}</Text>
-          <Text style={styles.statUnit}> wines</Text>
+          <Text style={styles.statUnit}> {t('family.member.wines', { count: typeof wines === 'number' ? wines : 0 })}</Text>
         </Text>
       </View>
       {canRemove ? (
@@ -177,7 +185,7 @@ function MemberRow({
           disabled={removing}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           style={[styles.memberRemoveBtn, removing && styles.memberRemoveBtnDisabled]}
-          accessibilityLabel={`Remove ${label} from family`}
+          accessibilityLabel={t('family.member.removeA11y', { name: label })}
         >
           {removing ? (
             <ActivityIndicator color={WINE} size="small" />
@@ -191,6 +199,8 @@ function MemberRow({
 }
 
 export default function FamilyScreen() {
+  const { t } = useTranslation()
+  const language = useLanguage()
   const { width: winW, height: winH } = useWindowDimensions()
   const safeInsets = useSafeAreaInsets()
   const {
@@ -310,12 +320,12 @@ export default function FamilyScreen() {
     if (!dash?.family) return
     const n = draftName.trim()
     if (n.length < 2) {
-      Alert.alert('Name required', 'Enter at least 2 characters.')
+      Alert.alert(t('family.edit.nameRequiredTitle'), t('family.edit.nameRequiredBody'))
       return
     }
     const d = draftDescription.trim()
     if (d.length > DESC_MAX) {
-      Alert.alert('Description', `Maximum ${DESC_MAX} characters.`)
+      Alert.alert(t('family.edit.descriptionTooLongTitle'), t('family.edit.descriptionTooLongBody', { max: DESC_MAX }))
       return
     }
     setSavingDetails(true)
@@ -327,17 +337,17 @@ export default function FamilyScreen() {
       Keyboard.dismiss()
       setEditingDetails(false)
     } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Could not save')
+      Alert.alert(t('common.error'), e instanceof Error ? e.message : t('family.edit.saveFailed'))
     } finally {
       setSavingDetails(false)
     }
-  }, [dash?.family, draftName, draftDescription, updateFamilyMutation])
+  }, [dash?.family, draftName, draftDescription, updateFamilyMutation, t])
 
   const pickCoverPhoto = useCallback(async () => {
     if (!dash?.family || !dash.isOwner || !selfId) return
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (!perm.granted) {
-      Alert.alert('Photos', 'Allow photo library access to change the cover image.')
+      Alert.alert(t('family.edit.photosPermissionTitle'), t('family.edit.photosPermissionBody'))
       return
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -352,11 +362,14 @@ export default function FamilyScreen() {
       const url = await uploadFamilyCoverPhoto(selfId, dash.family.id, result.assets[0].uri)
       await updateFamilyMutation.mutateAsync({ photo_url: url })
     } catch (e) {
-      Alert.alert('Upload failed', e instanceof Error ? e.message : 'Could not update cover photo')
+      Alert.alert(
+        t('family.edit.uploadFailedTitle'),
+        e instanceof Error ? e.message : t('family.edit.uploadFailedBody'),
+      )
     } finally {
       setUploadingPhoto(false)
     }
-  }, [dash?.family, dash?.isOwner, selfId, updateFamilyMutation])
+  }, [dash?.family, dash?.isOwner, selfId, updateFamilyMutation, t])
 
   useEffect(() => {
     let cancelled = false
@@ -398,28 +411,28 @@ export default function FamilyScreen() {
       try {
         const result = await acceptInvitationMutation.mutateAsync(invitationId)
         if ('alreadyInOtherFamily' in result && result.alreadyInOtherFamily) {
-          Alert.alert('Already in a family', result.message)
+          Alert.alert(t('family.invites.alreadyInFamilyTitle'), result.message)
           return
         }
-        Alert.alert('Welcome', "You've joined the family.")
+        Alert.alert(t('family.invites.welcomeTitle'), t('family.invites.welcomeBody'))
       } catch (e) {
-        Alert.alert('Error', e instanceof Error ? e.message : 'Could not accept invitation')
+        Alert.alert(t('common.error'), e instanceof Error ? e.message : t('family.invites.acceptFailed'))
       } finally {
         setPendingInvitationId(null)
       }
     },
-    [acceptInvitationMutation],
+    [acceptInvitationMutation, t],
   )
 
   const handleDeclineInvitation = useCallback(
     (invitationId: string) => {
       Alert.alert(
-        'Decline invitation?',
-        "You can ask the inviter to send a new one later.",
+        t('family.invites.declineTitle'),
+        t('family.invites.declineBody'),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Decline',
+            text: t('family.invitation.decline'),
             style: 'destructive',
             onPress: () =>
               void requireOnline(async () => {
@@ -427,7 +440,7 @@ export default function FamilyScreen() {
                 try {
                   await declineInvitationMutation.mutateAsync(invitationId)
                 } catch (e) {
-                  Alert.alert('Error', e instanceof Error ? e.message : 'Could not decline invitation')
+                  Alert.alert(t('common.error'), e instanceof Error ? e.message : t('family.invites.declineFailed'))
                 } finally {
                   setPendingInvitationId(null)
                 }
@@ -436,19 +449,19 @@ export default function FamilyScreen() {
         ],
       )
     },
-    [declineInvitationMutation],
+    [declineInvitationMutation, t],
   )
 
   const handleRemoveMember = useCallback(
     (member: FamilyMemberRow) => {
-      const memberName = member.display_name || member.email || 'this member'
+      const memberName = member.display_name || member.email || t('family.remove.fallbackName')
       Alert.alert(
-        'Remove from family?',
-        `${memberName} will be removed from your family.`,
+        t('family.remove.title'),
+        t('family.remove.body', { name: memberName }),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Remove',
+            text: t('family.remove.confirm'),
             style: 'destructive',
             onPress: () =>
               void requireOnline(async () => {
@@ -457,8 +470,8 @@ export default function FamilyScreen() {
                   await removeMemberMutation.mutateAsync(member.user_id)
                 } catch (e) {
                   Alert.alert(
-                    'Error',
-                    e instanceof Error ? e.message : 'Could not remove member',
+                    t('common.error'),
+                    e instanceof Error ? e.message : t('family.remove.failed'),
                   )
                 } finally {
                   setPendingRemoveUid(null)
@@ -468,7 +481,7 @@ export default function FamilyScreen() {
         ],
       )
     },
-    [removeMemberMutation],
+    [removeMemberMutation, t],
   )
 
   const hasFamily = Boolean(dash?.family)
@@ -509,7 +522,7 @@ export default function FamilyScreen() {
                 <Pressable
                   style={styles.coverModalPressLayer}
                   onPress={closeCoverPreview}
-                  accessibilityLabel="Dismiss photo preview"
+                  accessibilityLabel={t('family.cover.dismissA11y')}
                 >
                   <View style={[styles.coverModalImageFrame, { backgroundColor: COVER_PREVIEW_LETTERBOX }]}>
                     <View style={styles.coverModalImageHitThrough} pointerEvents="none">
@@ -535,7 +548,7 @@ export default function FamilyScreen() {
                   style={styles.coverModalClose}
                   onPress={closeCoverPreview}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  accessibilityLabel="Close photo preview"
+                  accessibilityLabel={t('family.cover.closeA11y')}
                 >
                   <Ionicons name="close" size={26} color={INK} />
                 </TouchableOpacity>
@@ -546,7 +559,7 @@ export default function FamilyScreen() {
       </Modal>
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Family</Text>
+          <Text style={styles.headerTitle}>{t('family.title')}</Text>
         </View>
 
         {loadError ? (
@@ -597,7 +610,7 @@ export default function FamilyScreen() {
                     style={StyleSheet.absoluteFillObject}
                     onPress={() => setCoverPreviewVisible(true)}
                     accessibilityRole="imagebutton"
-                    accessibilityLabel="View cover photo full screen"
+                    accessibilityLabel={t('family.cover.viewA11y')}
                   >
                     <Image
                       source={{ uri: dash!.family!.photo_url }}
@@ -612,7 +625,7 @@ export default function FamilyScreen() {
                     onPress={() => requireOnline(pickCoverPhoto)}
                     disabled={uploadingPhoto}
                     activeOpacity={0.85}
-                    accessibilityLabel="Change family cover photo"
+                    accessibilityLabel={t('family.cover.changeA11y')}
                   >
                     {uploadingPhoto ? (
                       <ActivityIndicator color="#FFFFFF" size="small" />
@@ -625,35 +638,35 @@ export default function FamilyScreen() {
               <View style={styles.familyCardBody}>
                 {dash!.isOwner && editingDetails ? (
                   <>
-                    <Text style={styles.inlineLabel}>Family name</Text>
+                    <Text style={styles.inlineLabel}>{t('family.edit.nameLabel')}</Text>
                     <TextInput
                       value={draftName}
                       onChangeText={setDraftName}
-                      placeholder="Family name"
+                      placeholder={t('family.edit.nameLabel')}
                       placeholderTextColor="#A98B7E"
                       style={styles.inlineInput}
                       autoCapitalize="words"
                       editable={!savingDetails}
                     />
-                    <Text style={styles.inlineLabel}>Description (optional)</Text>
+                    <Text style={styles.inlineLabel}>{t('family.edit.descriptionLabel')}</Text>
                     <TextInput
                       value={draftDescription}
-                      onChangeText={(t) => setDraftDescription(t.slice(0, DESC_MAX))}
-                      placeholder="Short line about your family"
+                      onChangeText={(text) => setDraftDescription(text.slice(0, DESC_MAX))}
+                      placeholder={t('family.edit.descriptionPlaceholder')}
                       placeholderTextColor="#A98B7E"
                       style={[styles.inlineInput, styles.inlineInputMultiline]}
                       multiline
                       maxLength={DESC_MAX}
                       editable={!savingDetails}
                     />
-                    <Text style={styles.inlineCounter}>{descRemaining} characters left</Text>
+                    <Text style={styles.inlineCounter}>{t('family.edit.charactersLeft', { count: descRemaining })}</Text>
                     <View style={styles.inlineActions}>
                       <TouchableOpacity
                         style={[styles.inlineBtn, styles.inlineBtnSecondary]}
                         onPress={cancelEditDetails}
                         disabled={savingDetails}
                       >
-                        <Text style={styles.inlineBtnSecondaryText}>Cancel</Text>
+                        <Text style={styles.inlineBtnSecondaryText}>{t('common.cancel')}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.inlineBtn, styles.inlineBtnPrimary, savingDetails && styles.inlineBtnDisabled]}
@@ -663,7 +676,7 @@ export default function FamilyScreen() {
                         {savingDetails ? (
                           <ActivityIndicator color="#FFFFFF" size="small" />
                         ) : (
-                          <Text style={styles.inlineBtnPrimaryText}>Save</Text>
+                          <Text style={styles.inlineBtnPrimaryText}>{t('common.save')}</Text>
                         )}
                       </TouchableOpacity>
                     </View>
@@ -677,7 +690,7 @@ export default function FamilyScreen() {
                       style={styles.nameEditBtn}
                       onPress={beginEditDetails}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      accessibilityLabel="Edit family name and description"
+                      accessibilityLabel={t('family.edit.editA11y')}
                     >
                       <Ionicons name="create-outline" size={22} color={WINE} />
                     </TouchableOpacity>
@@ -693,9 +706,9 @@ export default function FamilyScreen() {
                   ) : null
                 ) : null}
                 <Text style={styles.familyMeta}>
-                  {dash!.members.length} member{dash!.members.length === 1 ? '' : 's'}
+                  {t('family.meta.members', { count: dash!.members.length })}
                   {dash!.pendingInvitations.length > 0
-                    ? ` · ${dash!.pendingInvitations.length} pending invite${dash!.pendingInvitations.length === 1 ? '' : 's'}`
+                    ? ` · ${t('family.meta.pendingInvites', { count: dash!.pendingInvitations.length })}`
                     : ''}
                 </Text>
               </View>
@@ -703,7 +716,7 @@ export default function FamilyScreen() {
 
             {soloAdmin ? <EmptyMembersCallout /> : null}
 
-            <Text style={styles.sectionTitle}>Members ({dash!.members.length})</Text>
+            <Text style={styles.sectionTitle}>{t('family.section.members', { n: dash!.members.length })}</Text>
 
             {dash!.isOwner ? (
               <TouchableOpacity
@@ -712,7 +725,7 @@ export default function FamilyScreen() {
                 onPress={() => router.push('/family/invite-member')}
               >
                 <Ionicons name="person-add-outline" size={20} color="#FFFFFF" />
-                <Text style={styles.inviteCtaText}>Invite member</Text>
+                <Text style={styles.inviteCtaText}>{t('family.section.inviteCta')}</Text>
               </TouchableOpacity>
             ) : null}
 
@@ -742,12 +755,16 @@ export default function FamilyScreen() {
 
             {dash!.pendingInvitations.length > 0 && dash!.isOwner ? (
               <>
-                <Text style={styles.sectionTitle}>Pending invitations</Text>
+                <Text style={styles.sectionTitle}>{t('family.section.pending')}</Text>
                 <View style={styles.membersList}>
                   {dash!.pendingInvitations.map((inv) => (
                     <View key={inv.id} style={styles.pendingRow}>
                       <Text style={styles.memberName}>{inv.display_name ?? inv.email ?? '-'}</Text>
-                      <Text style={styles.memberMeta}>Expires {new Date(inv.expires_at).toLocaleDateString()}</Text>
+                      <Text style={styles.memberMeta}>
+                        {t('family.section.expires', {
+                          date: new Date(inv.expires_at).toLocaleDateString(language),
+                        })}
+                      </Text>
                     </View>
                   ))}
                 </View>

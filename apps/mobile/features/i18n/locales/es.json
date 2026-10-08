@@ -414,5 +414,86 @@
       "savedWithoutPhotoBody": "No se pudo subir la foto de la etiqueta.",
       "saveFailed": "No se pudo guardar el vino"
     }
+  },
+  "family": {
+    "title": "Familia",
+    "invitation": {
+      "title": "¡Te invitaron a <b>{{family}}</b>!",
+      "fallbackFamily": "una familia",
+      "subtitle": "{{inviter}} te invitó a unirte a su familia.",
+      "decline": "Rechazar",
+      "accept": "Aceptar"
+    },
+    "empty": {
+      "title": "Aún no tienes familia",
+      "body": "Crea un grupo familiar para compartir tus momentos con vino con tus seres queridos",
+      "cta": "Crea tu familia"
+    },
+    "soloCallout": "Por ahora eres el único miembro. Invita a alguien a compartir este espacio.",
+    "member": {
+      "you": "Tú",
+      "moments_zero": "momentos",
+      "moments_one": "momento",
+      "moments_other": "momentos",
+      "countries_zero": "países",
+      "countries_one": "país",
+      "countries_other": "países",
+      "wines_zero": "vinos",
+      "wines_one": "vino",
+      "wines_other": "vinos",
+      "removeA11y": "Eliminar a {{name}} de la familia"
+    },
+    "edit": {
+      "nameRequiredTitle": "Nombre obligatorio",
+      "nameRequiredBody": "Escribe al menos 2 caracteres.",
+      "descriptionTooLongTitle": "Descripción",
+      "descriptionTooLongBody": "Máximo {{max}} caracteres.",
+      "saveFailed": "No se pudo guardar",
+      "photosPermissionTitle": "Fotos",
+      "photosPermissionBody": "Permite el acceso a las fotos para cambiar la imagen de portada.",
+      "uploadFailedTitle": "Error al subir",
+      "uploadFailedBody": "No se pudo actualizar la foto de portada",
+      "nameLabel": "Nombre de la familia",
+      "descriptionLabel": "Descripción (opcional)",
+      "descriptionPlaceholder": "Una frase corta sobre tu familia",
+      "charactersLeft_zero": "No quedan caracteres",
+      "charactersLeft_one": "Queda {{count}} carácter",
+      "charactersLeft_other": "Quedan {{count}} caracteres",
+      "editA11y": "Editar nombre y descripción de la familia"
+    },
+    "invites": {
+      "alreadyInFamilyTitle": "Ya estás en una familia",
+      "welcomeTitle": "Te damos la bienvenida",
+      "welcomeBody": "Ya formas parte de la familia.",
+      "acceptFailed": "No se pudo aceptar la invitación",
+      "declineTitle": "¿Rechazar la invitación?",
+      "declineBody": "Puedes pedir una nueva invitación más tarde.",
+      "declineFailed": "No se pudo rechazar la invitación"
+    },
+    "remove": {
+      "title": "¿Eliminar de la familia?",
+      "body": "{{name}} saldrá de tu familia.",
+      "fallbackName": "este miembro",
+      "confirm": "Eliminar",
+      "failed": "No se pudo eliminar al miembro"
+    },
+    "cover": {
+      "dismissA11y": "Cerrar vista previa de la foto",
+      "closeA11y": "Cerrar vista previa de la foto",
+      "viewA11y": "Ver foto de portada a pantalla completa",
+      "changeA11y": "Cambiar foto de portada de la familia"
+    },
+    "meta": {
+      "members_one": "{{count}} miembro",
+      "members_other": "{{count}} miembros",
+      "pendingInvites_one": "{{count}} invitación pendiente",
+      "pendingInvites_other": "{{count}} invitaciones pendientes"
+    },
+    "section": {
+      "members": "Miembros ({{n}})",
+      "inviteCta": "Invitar miembro",
+      "pending": "Invitaciones pendientes",
+      "expires": "Vence el {{date}}"
+    }
   }
 }

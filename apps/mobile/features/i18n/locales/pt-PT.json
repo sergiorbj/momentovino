@@ -414,5 +414,86 @@
       "savedWithoutPhotoBody": "Não foi possível carregar a fotografia do rótulo.",
       "saveFailed": "Não foi possível guardar o vinho"
     }
+  },
+  "family": {
+    "title": "Família",
+    "invitation": {
+      "title": "Recebeu um convite para <b>{{family}}</b>!",
+      "fallbackFamily": "uma família",
+      "subtitle": "{{inviter}} convidou-o para se juntar à família.",
+      "decline": "Recusar",
+      "accept": "Aceitar"
+    },
+    "empty": {
+      "title": "Ainda sem família",
+      "body": "Crie um grupo familiar para partilhar os seus momentos com vinho com quem gosta",
+      "cta": "Criar a sua família"
+    },
+    "soloCallout": "Por enquanto é o único membro. Convide alguém para partilhar este espaço.",
+    "member": {
+      "you": "Você",
+      "moments_zero": "momentos",
+      "moments_one": "momento",
+      "moments_other": "momentos",
+      "countries_zero": "países",
+      "countries_one": "país",
+      "countries_other": "países",
+      "wines_zero": "vinhos",
+      "wines_one": "vinho",
+      "wines_other": "vinhos",
+      "removeA11y": "Remover {{name}} da família"
+    },
+    "edit": {
+      "nameRequiredTitle": "Nome obrigatório",
+      "nameRequiredBody": "Introduza pelo menos 2 caracteres.",
+      "descriptionTooLongTitle": "Descrição",
+      "descriptionTooLongBody": "Máximo de {{max}} caracteres.",
+      "saveFailed": "Não foi possível guardar",
+      "photosPermissionTitle": "Fotografias",
+      "photosPermissionBody": "Permita o acesso às fotografias para mudar a imagem de capa.",
+      "uploadFailedTitle": "Falha no carregamento",
+      "uploadFailedBody": "Não foi possível atualizar a fotografia de capa",
+      "nameLabel": "Nome da família",
+      "descriptionLabel": "Descrição (opcional)",
+      "descriptionPlaceholder": "Uma frase curta sobre a sua família",
+      "charactersLeft_zero": "Nenhum carácter restante",
+      "charactersLeft_one": "{{count}} carácter restante",
+      "charactersLeft_other": "{{count}} caracteres restantes",
+      "editA11y": "Editar nome e descrição da família"
+    },
+    "invites": {
+      "alreadyInFamilyTitle": "Já está numa família",
+      "welcomeTitle": "Boas-vindas",
+      "welcomeBody": "Agora faz parte da família.",
+      "acceptFailed": "Não foi possível aceitar o convite",
+      "declineTitle": "Recusar convite?",
+      "declineBody": "Pode pedir um novo convite mais tarde.",
+      "declineFailed": "Não foi possível recusar o convite"
+    },
+    "remove": {
+      "title": "Remover da família?",
+      "body": "{{name}} vai sair da sua família.",
+      "fallbackName": "este membro",
+      "confirm": "Remover",
+      "failed": "Não foi possível remover o membro"
+    },
+    "cover": {
+      "dismissA11y": "Fechar pré-visualização da fotografia",
+      "closeA11y": "Fechar pré-visualização da fotografia",
+      "viewA11y": "Ver fotografia de capa em ecrã inteiro",
+      "changeA11y": "Mudar fotografia de capa da família"
+    },
+    "meta": {
+      "members_one": "{{count}} membro",
+      "members_other": "{{count}} membros",
+      "pendingInvites_one": "{{count}} convite pendente",
+      "pendingInvites_other": "{{count}} convites pendentes"
+    },
+    "section": {
+      "members": "Membros ({{n}})",
+      "inviteCta": "Convidar membro",
+      "pending": "Convites pendentes",
+      "expires": "Expira em {{date}}"
+    }
   }
 }

@@ -414,5 +414,86 @@
       "savedWithoutPhotoBody": "Could not upload the label image.",
       "saveFailed": "Could not save wine"
     }
+  },
+  "family": {
+    "title": "Family",
+    "invitation": {
+      "title": "You're invited to <b>{{family}}</b>!",
+      "fallbackFamily": "a family",
+      "subtitle": "{{inviter}} invited you to join their family.",
+      "decline": "Decline",
+      "accept": "Accept"
+    },
+    "empty": {
+      "title": "No Family Yet",
+      "body": "Create a family group to share your wine moments with your loved ones",
+      "cta": "Start your Family"
+    },
+    "soloCallout": "You are the only member so far. Invite someone to share this space.",
+    "member": {
+      "you": "You",
+      "moments_zero": "moments",
+      "moments_one": "moment",
+      "moments_other": "moments",
+      "countries_zero": "countries",
+      "countries_one": "country",
+      "countries_other": "countries",
+      "wines_zero": "wines",
+      "wines_one": "wine",
+      "wines_other": "wines",
+      "removeA11y": "Remove {{name}} from family"
+    },
+    "edit": {
+      "nameRequiredTitle": "Name required",
+      "nameRequiredBody": "Enter at least 2 characters.",
+      "descriptionTooLongTitle": "Description",
+      "descriptionTooLongBody": "Maximum {{max}} characters.",
+      "saveFailed": "Could not save",
+      "photosPermissionTitle": "Photos",
+      "photosPermissionBody": "Allow photo library access to change the cover image.",
+      "uploadFailedTitle": "Upload failed",
+      "uploadFailedBody": "Could not update cover photo",
+      "nameLabel": "Family name",
+      "descriptionLabel": "Description (optional)",
+      "descriptionPlaceholder": "Short line about your family",
+      "charactersLeft_zero": "No characters left",
+      "charactersLeft_one": "{{count}} character left",
+      "charactersLeft_other": "{{count}} characters left",
+      "editA11y": "Edit family name and description"
+    },
+    "invites": {
+      "alreadyInFamilyTitle": "Already in a family",
+      "welcomeTitle": "Welcome",
+      "welcomeBody": "You've joined the family.",
+      "acceptFailed": "Could not accept invitation",
+      "declineTitle": "Decline invitation?",
+      "declineBody": "You can ask the inviter to send a new one later.",
+      "declineFailed": "Could not decline invitation"
+    },
+    "remove": {
+      "title": "Remove from family?",
+      "body": "{{name}} will be removed from your family.",
+      "fallbackName": "this member",
+      "confirm": "Remove",
+      "failed": "Could not remove member"
+    },
+    "cover": {
+      "dismissA11y": "Dismiss photo preview",
+      "closeA11y": "Close photo preview",
+      "viewA11y": "View cover photo full screen",
+      "changeA11y": "Change family cover photo"
+    },
+    "meta": {
+      "members_one": "{{count}} member",
+      "members_other": "{{count}} members",
+      "pendingInvites_one": "{{count}} pending invite",
+      "pendingInvites_other": "{{count}} pending invites"
+    },
+    "section": {
+      "members": "Members ({{n}})",
+      "inviteCta": "Invite member",
+      "pending": "Pending invitations",
+      "expires": "Expires {{date}}"
+    }
   }
 }
