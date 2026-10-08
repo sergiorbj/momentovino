@@ -1,3 +1,4 @@
+import { toApiError } from '../../lib/api-error'
 import { getApiBaseUrl } from '../../lib/api-base'
 import { supabase } from '../../lib/supabase'
 
@@ -80,7 +81,7 @@ export async function getFamilyDashboard(): Promise<FamilyDashboard> {
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Failed to load family (${res.status})`)
+    throw toApiError(body, res.status, 'Failed to load family')
   }
   return res.json() as Promise<FamilyDashboard>
 }
@@ -107,7 +108,7 @@ export async function createFamily(input: CreateFamilyInput): Promise<{ family: 
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Could not create family (${res.status})`)
+    throw toApiError(body, res.status, 'Could not create family')
   }
   return res.json() as Promise<{ family: FamilyRow }>
 }
@@ -134,7 +135,7 @@ export async function updateFamily(input: UpdateFamilyInput): Promise<{ family: 
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Could not update family (${res.status})`)
+    throw toApiError(body, res.status, 'Could not update family')
   }
   return res.json() as Promise<{ family: FamilyRow }>
 }
@@ -147,7 +148,7 @@ export async function searchFamilyInviteTargets(query: string): Promise<{ matche
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Search failed (${res.status})`)
+    throw toApiError(body, res.status, 'Search failed')
   }
   return res.json() as Promise<{ matches: FamilyInviteUserMatch[] }>
 }
@@ -179,11 +180,11 @@ export async function inviteMemberByEmail(
           'This email already has a MomentoVino account. Ask them for their username and invite them through the username search.',
       }
     }
-    throw new Error(body.error ?? `Invite failed (${res.status})`)
+    throw toApiError(body, res.status, 'Invite failed')
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Invite failed (${res.status})`)
+    throw toApiError(body, res.status, 'Invite failed')
   }
   return res.json() as Promise<{ emailed: true; email: string }>
 }
@@ -241,11 +242,11 @@ export async function inviteFamilyMemberByUsername(userId: string): Promise<Invi
         message: body.error ?? 'This user is already a member of your family.',
       }
     }
-    throw new Error(body.error ?? `Invite failed (${res.status})`)
+    throw toApiError(body, res.status, 'Invite failed')
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Invite failed (${res.status})`)
+    throw toApiError(body, res.status, 'Invite failed')
   }
   return res.json() as Promise<{
     invited: true
@@ -266,7 +267,7 @@ export async function listMyInvitations(): Promise<{ invitations: IncomingInvita
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Failed to load invitations (${res.status})`)
+    throw toApiError(body, res.status, 'Failed to load invitations')
   }
   return res.json() as Promise<{ invitations: IncomingInvitation[] }>
 }
@@ -294,11 +295,11 @@ export async function acceptFamilyInvitation(invitationId: string): Promise<Acce
           body.error ?? "You're already in a family. Leave it first to accept a new invitation.",
       }
     }
-    throw new Error(body.error ?? `Could not accept invite (${res.status})`)
+    throw toApiError(body, res.status, 'Could not accept invite')
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Could not accept invite (${res.status})`)
+    throw toApiError(body, res.status, 'Could not accept invite')
   }
   const body = (await res.json()) as { ok: true; familyId?: string; alreadyMember?: boolean }
   return {
@@ -320,7 +321,7 @@ export async function declineFamilyInvitation(invitationId: string): Promise<{ o
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Could not decline invite (${res.status})`)
+    throw toApiError(body, res.status, 'Could not decline invite')
   }
   return { ok: true }
 }
@@ -336,9 +337,7 @@ export async function removeFamilyMember(userId: string): Promise<{ ok: true }> 
   )
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error(
-      (body as { error?: string }).error ?? `Could not remove member (${res.status})`,
-    )
+    throw toApiError(body, res.status, 'Could not remove member')
   }
   return { ok: true }
 }

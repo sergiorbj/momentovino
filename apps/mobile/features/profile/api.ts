@@ -1,3 +1,4 @@
+import { toApiError } from '../../lib/api-error'
 import { getApiBaseUrl } from '../../lib/api-base'
 import type { Database } from '../../lib/database.types'
 import { supabase } from '../../lib/supabase'
@@ -81,7 +82,7 @@ export async function getProfile(): Promise<ProfileDashboard> {
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Failed to load profile (${res.status})`)
+    throw toApiError(body, res.status, 'Failed to load profile')
   }
   return res.json() as Promise<ProfileDashboard>
 }
@@ -108,7 +109,7 @@ export async function updateProfile(input: UpdateProfileInput): Promise<{ profil
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Could not update profile (${res.status})`)
+    throw toApiError(body, res.status, 'Could not update profile')
   }
   return res.json() as Promise<{ profile: ProfileRow }>
 }
@@ -144,7 +145,7 @@ export async function deleteAccount(appleAuthorizationCode?: string): Promise<vo
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Could not delete account (${res.status})`)
+    throw toApiError(body, res.status, 'Could not delete account')
   }
 }
 

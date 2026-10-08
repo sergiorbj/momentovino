@@ -1,3 +1,4 @@
+import { toApiError } from '../../lib/api-error'
 import { getApiBaseUrl } from '../../lib/api-base'
 import { supabase } from '../../lib/supabase'
 import { i18n } from '../i18n/config'
@@ -27,7 +28,7 @@ export async function scanWineImage(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error(body.error ?? `Scan failed (${res.status})`)
+    throw toApiError(body, res.status, 'Scan failed')
   }
 
   return res.json()
@@ -71,7 +72,7 @@ export async function createWineViaApi(input: CreateWineInput): Promise<WineResp
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error(body.error ?? `Failed to create wine (${res.status})`)
+    throw toApiError(body, res.status, 'Failed to create wine')
   }
 
   return res.json()
