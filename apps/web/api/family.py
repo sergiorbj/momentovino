@@ -707,11 +707,11 @@ class handler(BaseHTTPRequestHandler):
                 return
             fam, _ = _resolve_family(url, key, uid)
             if not fam:
-                send_json(self, 403, {"error": "Create a family first"})
+                send_json(self, 403, {"error": "Create a family first", "code": "family_not_found"})
                 return
             fid = fam["id"]
             if not _is_admin(url, key, uid, fid):
-                send_json(self, 403, {"error": "Only family admins can search"})
+                send_json(self, 403, {"error": "Only family admins can search", "code": "not_family_admin"})
                 return
             members_raw = _list_members(url, key, fid)
             exclude: set[str] = {str(uid)}
@@ -796,7 +796,7 @@ class handler(BaseHTTPRequestHandler):
                 return
             inv_rows = r.json()
             if not isinstance(inv_rows, list) or not inv_rows:
-                send_json(self, 400, {"error": "Invalid or expired invitation"})
+                send_json(self, 400, {"error": "Invalid or expired invitation", "code": "invitation_invalid"})
                 return
             inv = inv_rows[0]
             exp = inv.get("expires_at")
@@ -810,7 +810,7 @@ class handler(BaseHTTPRequestHandler):
                             json={"status": "expired"},
                             timeout=30,
                         )
-                        send_json(self, 400, {"error": "Invitation expired"})
+                        send_json(self, 400, {"error": "Invitation expired", "code": "invitation_expired"})
                         return
                 except ValueError:
                     pass
@@ -818,12 +818,12 @@ class handler(BaseHTTPRequestHandler):
             invited_uid = inv.get("invited_user_id")
             if invited_uid:
                 if str(invited_uid) != str(uid):
-                    send_json(self, 403, {"error": "This invitation is for a different account"})
+                    send_json(self, 403, {"error": "This invitation is for a different account", "code": "invitation_other_account"})
                     return
             else:
                 inv_email = (inv.get("email") or "").strip().lower()
                 if not email or inv_email != email:
-                    send_json(self, 403, {"error": "Signed-in email must match the invitation"})
+                    send_json(self, 403, {"error": "Signed-in email must match the invitation", "code": "invitation_email_mismatch"})
                     return
 
             existing_fam = _user_current_family(url, key, uid)
@@ -876,14 +876,14 @@ class handler(BaseHTTPRequestHandler):
                 return
             rows = r.json()
             if not isinstance(rows, list) or not rows:
-                send_json(self, 404, {"error": "Invitation not found"})
+                send_json(self, 404, {"error": "Invitation not found", "code": "invitation_not_found"})
                 return
             inv = rows[0]
             if str(inv.get("invited_user_id") or "") != str(uid):
-                send_json(self, 403, {"error": "This invitation is for a different account"})
+                send_json(self, 403, {"error": "This invitation is for a different account", "code": "invitation_other_account"})
                 return
             if inv.get("status") != "pending":
-                send_json(self, 409, {"error": "Invitation is no longer pending"})
+                send_json(self, 409, {"error": "Invitation is no longer pending", "code": "invitation_not_pending"})
                 return
             upd = requests.patch(
                 f"{url}/rest/v1/family_invitations?id=eq.{inv_id}",
@@ -904,21 +904,21 @@ class handler(BaseHTTPRequestHandler):
                 send_json(self, 400, {"error": "user_id is required"})
                 return
             if target_uid == uid:
-                send_json(self, 400, {"error": "You can't invite yourself"})
+                send_json(self, 400, {"error": "You can't invite yourself", "code": "cannot_invite_self"})
                 return
 
             fam, _ = _resolve_family(url, key, uid)
             if not fam:
-                send_json(self, 404, {"error": "No family found. Create a family first"})
+                send_json(self, 404, {"error": "No family found. Create a family first", "code": "family_not_found"})
                 return
             fid = fam["id"]
             if not _is_admin(url, key, uid, fid):
-                send_json(self, 403, {"error": "Only family admins can invite members"})
+                send_json(self, 403, {"error": "Only family admins can invite members", "code": "not_family_admin"})
                 return
 
             target_user = _admin_user_by_id(url, key, target_uid)
             if not target_user:
-                send_json(self, 404, {"error": "User not found"})
+                send_json(self, 404, {"error": "User not found", "code": "user_not_found"})
                 return
 
             already_member = requests.get(
@@ -997,16 +997,16 @@ class handler(BaseHTTPRequestHandler):
                 return
             email_norm = str(raw_email).strip().lower()
             if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email_norm):
-                send_json(self, 400, {"error": "Invalid email"})
+                send_json(self, 400, {"error": "Invalid email", "code": "invalid_email"})
                 return
 
             fam, _ = _resolve_family(url, key, uid)
             if not fam:
-                send_json(self, 404, {"error": "No family found. Create a family first"})
+                send_json(self, 404, {"error": "No family found. Create a family first", "code": "family_not_found"})
                 return
             fid = fam["id"]
             if not _is_admin(url, key, uid, fid):
-                send_json(self, 403, {"error": "Only family admins can invite members"})
+                send_json(self, 403, {"error": "Only family admins can invite members", "code": "not_family_admin"})
                 return
 
             # Email invites are now an App Store nudge only — they don't add
@@ -1035,7 +1035,7 @@ class handler(BaseHTTPRequestHandler):
                 inviter_name,
             )
             if not ok:
-                send_json(self, 502, {"error": f"Email failed to send: {err_msg}"})
+                send_json(self, 502, {"error": f"Email failed to send: {err_msg}", "code": "email_send_failed"})
                 return
             send_json(self, 200, {"emailed": True, "email": email_norm})
             return
@@ -1044,11 +1044,11 @@ class handler(BaseHTTPRequestHandler):
             body = _read_json(self)
             name = (body.get("name") or "").strip()
             if len(name) < 2:
-                send_json(self, 400, {"error": "Family name is required (min 2 characters)"})
+                send_json(self, 400, {"error": "Family name is required (min 2 characters)", "code": "family_name_too_short"})
                 return
             desc, derr = _norm_description(body)
             if derr:
-                send_json(self, 400, {"error": derr})
+                send_json(self, 400, {"error": derr, "code": "family_description_too_long"})
                 return
             photo_url = body.get("photo_url")
             photo_out: Optional[str] = None
@@ -1056,7 +1056,7 @@ class handler(BaseHTTPRequestHandler):
                 ps = str(photo_url).strip()
                 photo_out = ps if ps else None
             if _user_current_family(url, key, uid):
-                send_json(self, 409, {"error": "You already belong to a family"})
+                send_json(self, 409, {"error": "You already belong to a family", "code": "already_in_family"})
                 return
             row: dict[str, Any] = {"name": name, "owner_id": uid}
             if desc is not None:
@@ -1102,13 +1102,13 @@ class handler(BaseHTTPRequestHandler):
         if "name" in body:
             name = (body.get("name") or "").strip()
             if len(name) < 2:
-                send_json(self, 400, {"error": "Family name must be at least 2 characters"})
+                send_json(self, 400, {"error": "Family name must be at least 2 characters", "code": "family_name_too_short"})
                 return
             updates["name"] = name
         if "description" in body:
             desc, derr = _norm_description(body)
             if derr:
-                send_json(self, 400, {"error": derr})
+                send_json(self, 400, {"error": derr, "code": "family_description_too_long"})
                 return
             updates["description"] = desc  # may be None to clear
         if "photo_url" in body:
@@ -1124,7 +1124,7 @@ class handler(BaseHTTPRequestHandler):
         url, key = supabase_config()
         fam = _owned_family(url, key, uid)
         if not fam:
-            send_json(self, 403, {"error": "Only the family owner can update the family"})
+            send_json(self, 403, {"error": "Only the family owner can update the family", "code": "not_family_owner"})
             return
         fid = fam["id"]
         r = requests.patch(
@@ -1162,14 +1162,14 @@ class handler(BaseHTTPRequestHandler):
         url, key = supabase_config()
         fam = _owned_family(url, key, uid)
         if not fam:
-            send_json(self, 403, {"error": "Only the family owner can remove members"})
+            send_json(self, 403, {"error": "Only the family owner can remove members", "code": "not_family_owner"})
             return
         fid = fam["id"]
         if target_uid == str(uid):
-            send_json(self, 400, {"error": "Use 'leave family' to remove yourself"})
+            send_json(self, 400, {"error": "Use 'leave family' to remove yourself", "code": "cannot_remove_self"})
             return
         if target_uid == str(fam.get("owner_id") or ""):
-            send_json(self, 400, {"error": "Cannot remove the family owner"})
+            send_json(self, 400, {"error": "Cannot remove the family owner", "code": "cannot_remove_owner"})
             return
         chk = requests.get(
             f"{url}/rest/v1/family_members",
@@ -1187,7 +1187,7 @@ class handler(BaseHTTPRequestHandler):
             return
         rows = chk.json() if isinstance(chk.json(), list) else []
         if not rows:
-            send_json(self, 404, {"error": "Member not in this family"})
+            send_json(self, 404, {"error": "Member not in this family", "code": "member_not_found"})
             return
         r = requests.delete(
             f"{url}/rest/v1/family_members",
