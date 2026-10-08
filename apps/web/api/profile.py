@@ -252,10 +252,10 @@ class handler(BaseHTTPRequestHandler):
         if "display_name" in body:
             name = (str(body.get("display_name") or "")).strip()
             if len(name) < DISPLAY_NAME_MIN:
-                send_json(self, 400, {"error": f"Display name must be at least {DISPLAY_NAME_MIN} characters"})
+                send_json(self, 400, {"error": f"Display name must be at least {DISPLAY_NAME_MIN} characters", "code": "display_name_too_short"})
                 return
             if len(name) > DISPLAY_NAME_MAX:
-                send_json(self, 400, {"error": f"Display name must be at most {DISPLAY_NAME_MAX} characters"})
+                send_json(self, 400, {"error": f"Display name must be at most {DISPLAY_NAME_MAX} characters", "code": "display_name_too_long"})
                 return
             updates["display_name"] = name
 
@@ -266,7 +266,7 @@ class handler(BaseHTTPRequestHandler):
             else:
                 bio = str(raw_bio).strip()
                 if len(bio) > BIO_MAX:
-                    send_json(self, 400, {"error": f"Bio must be at most {BIO_MAX} characters"})
+                    send_json(self, 400, {"error": f"Bio must be at most {BIO_MAX} characters", "code": "bio_too_long"})
                     return
                 updates["bio"] = bio
 
