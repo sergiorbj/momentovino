@@ -74,10 +74,8 @@ export default function ScanResultScreen() {
         } catch (photoErr) {
           console.error('Wine label upload failed:', photoErr)
           Alert.alert(
-            'Wine saved without photo',
-            photoErr instanceof Error
-              ? `${photoErr.message}\n\nCheck that migration 0004 (bucket wine-labels) is applied in Supabase.`
-              : 'Could not upload the label image.',
+            t('scanner.result.savedWithoutPhotoTitle'),
+            t('scanner.result.savedWithoutPhotoBody'),
           )
         }
       }
@@ -108,7 +106,7 @@ export default function ScanResultScreen() {
         router.replace('/(tabs)/wines')
       }
     } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Could not save wine')
+      Alert.alert(t('scanner.result.saveFailed'), t('moments.errors.unknown'))
     } finally {
       setSaving(false)
     }
@@ -121,7 +119,7 @@ export default function ScanResultScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color={WINE} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Wine Identified</Text>
+          <Text style={styles.headerTitle}>{t('onboarding.scanResult.title')}</Text>
         </View>
 
         <ScrollView contentContainerStyle={styles.scroll}>
@@ -146,9 +144,15 @@ export default function ScanResultScreen() {
           ) : null}
 
           <View style={styles.card}>
-            {params.producer ? <InfoRow label="Producer" value={params.producer} /> : null}
-            <InfoRow label="Region" value={params.region?.trim() ? params.region : 'Not set'} />
-            <InfoRow label="Country" value={params.country?.trim() ? params.country : 'Not set'} />
+            {params.producer ? <InfoRow label={t('onboarding.scanResult.labels.producer')} value={params.producer} /> : null}
+            <InfoRow
+              label={t('onboarding.scanResult.labels.region')}
+              value={params.region?.trim() ? params.region : t('onboarding.scanResult.notSet')}
+            />
+            <InfoRow
+              label={t('onboarding.scanResult.labels.country')}
+              value={params.country?.trim() ? params.country : t('onboarding.scanResult.notSet')}
+            />
             {params.type ? (
               <InfoRow
                 label={t('onboarding.scanResult.labels.type')}
@@ -171,7 +175,7 @@ export default function ScanResultScreen() {
               ) : (
                 <>
                   <Ionicons name="sparkles-outline" size={20} color="#FFFFFF" />
-                  <Text style={styles.btnPrimaryText}>Add wine to moment</Text>
+                  <Text style={styles.btnPrimaryText}>{t('scanner.result.addWineToMoment')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -188,7 +192,7 @@ export default function ScanResultScreen() {
                 ) : (
                   <>
                     <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
-                    <Text style={styles.btnPrimaryText}>Add to my wines</Text>
+                    <Text style={styles.btnPrimaryText}>{t('scanner.result.addToMyWines')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -200,7 +204,7 @@ export default function ScanResultScreen() {
                 activeOpacity={0.85}
               >
                 <Ionicons name="sparkles-outline" size={20} color={WINE} />
-                <Text style={styles.btnSecondaryText}>Add wine + create moment</Text>
+                <Text style={styles.btnSecondaryText}>{t('scanner.result.addAndCreateMoment')}</Text>
               </TouchableOpacity>
             </>
           )}

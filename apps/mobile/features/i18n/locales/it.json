@@ -389,6 +389,14 @@
   },
   "scanner": {
     "title": "Scansiona vino",
-    "subtitle": "Allinea l'etichetta nella cornice, poi scatta"
+    "subtitle": "Allinea l'etichetta nella cornice, poi scatta",
+    "result": {
+      "addWineToMoment": "Aggiungi vino al momento",
+      "addToMyWines": "Aggiungi ai miei vini",
+      "addAndCreateMoment": "Aggiungi vino + crea momento",
+      "savedWithoutPhotoTitle": "Vino salvato senza foto",
+      "savedWithoutPhotoBody": "Impossibile caricare la foto dell'etichetta.",
+      "saveFailed": "Impossibile salvare il vino"
+    }
   }
 }

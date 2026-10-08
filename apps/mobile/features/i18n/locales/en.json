@@ -389,6 +389,14 @@
   },
   "scanner": {
     "title": "Scan Wine",
-    "subtitle": "Align the label inside the frame, then capture"
+    "subtitle": "Align the label inside the frame, then capture",
+    "result": {
+      "addWineToMoment": "Add wine to moment",
+      "addToMyWines": "Add to my wines",
+      "addAndCreateMoment": "Add wine + create moment",
+      "savedWithoutPhotoTitle": "Wine saved without photo",
+      "savedWithoutPhotoBody": "Could not upload the label image.",
+      "saveFailed": "Could not save wine"
+    }
   }
 }

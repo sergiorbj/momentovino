@@ -389,6 +389,14 @@
   },
   "scanner": {
     "title": "Digitalizar vinho",
-    "subtitle": "Alinhe o rótulo dentro da moldura e capture"
+    "subtitle": "Alinhe o rótulo dentro da moldura e capture",
+    "result": {
+      "addWineToMoment": "Adicionar vinho ao momento",
+      "addToMyWines": "Adicionar aos meus vinhos",
+      "addAndCreateMoment": "Adicionar vinho + criar momento",
+      "savedWithoutPhotoTitle": "Vinho guardado sem fotografia",
+      "savedWithoutPhotoBody": "Não foi possível carregar a fotografia do rótulo.",
+      "saveFailed": "Não foi possível guardar o vinho"
+    }
   }
 }
