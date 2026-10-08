@@ -20,6 +20,7 @@ import * as FileSystem from 'expo-file-system/legacy'
 import Svg, { Defs, Mask, Rect } from 'react-native-svg'
 
 import { useTranslation } from '../../features/i18n/hooks'
+import { translateApiError } from '../../features/i18n/api-error'
 import { scanWineImage } from '../../features/scanner/api'
 import { prepareImageForWineScan } from '../../features/scanner/prepare-image-for-scan'
 import { setPendingLabelPhoto } from '../../features/scanner/pending-label-photo'
@@ -119,7 +120,7 @@ export default function ScannerScreen() {
     } catch (err) {
       Alert.alert(
         t('onboarding.scanner.errors.cameraTitle'),
-        err instanceof Error ? err.message : t('onboarding.scanner.errors.cameraFallback'),
+        translateApiError(err, t, 'onboarding.scanner.errors.cameraFallback'),
       )
     } finally {
       setCapturing(false)
@@ -167,7 +168,7 @@ export default function ScannerScreen() {
     } catch (err) {
       Alert.alert(
         t('onboarding.scanner.errors.scanFailedTitle'),
-        err instanceof Error ? err.message : t('onboarding.scanner.errors.scanFailedFallback'),
+        translateApiError(err, t, 'errors.server.scan_failed'),
       )
     } finally {
       setScanning(false)

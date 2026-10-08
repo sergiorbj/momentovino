@@ -24,6 +24,7 @@ import { prepareImageForWineScan } from '../../features/scanner/prepare-image-fo
 import { isScanError } from '../../features/scanner/types'
 import { setCapturedWine } from '../../features/onboarding/onboarding-capture'
 import { useTranslation } from '../../features/i18n/hooks'
+import { translateApiError } from '../../features/i18n/api-error'
 import { requireOnline } from '../../lib/connection/require-online'
 
 const WINE = '#722F37'
@@ -109,7 +110,7 @@ export default function OnboardingScannerScreen() {
     } catch (err) {
       Alert.alert(
         t('onboarding.scanner.errors.cameraTitle'),
-        err instanceof Error ? err.message : t('onboarding.scanner.errors.cameraFallback'),
+        translateApiError(err, t, 'onboarding.scanner.errors.cameraFallback'),
       )
     } finally {
       setCapturing(false)
@@ -149,7 +150,7 @@ export default function OnboardingScannerScreen() {
     } catch (err) {
       Alert.alert(
         t('onboarding.scanner.errors.scanFailedTitle'),
-        err instanceof Error ? err.message : t('onboarding.scanner.errors.scanFailedFallback'),
+        translateApiError(err, t, 'errors.server.scan_failed'),
       )
     } finally {
       setScanning(false)
