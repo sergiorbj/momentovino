@@ -66,7 +66,7 @@ class handler(BaseHTTPRequestHandler):
         load_env()
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
-            send_json(self, 500, {"error": "Missing GEMINI_API_KEY"})
+            send_json(self, 500, {"error": "Missing GEMINI_API_KEY", "code": "scan_failed"})
             return
 
         gemini_url = (
@@ -95,7 +95,7 @@ class handler(BaseHTTPRequestHandler):
                 timeout=120,
             )
         except requests.RequestException as e:
-            send_json(self, 500, {"error": str(e)})
+            send_json(self, 500, {"error": str(e), "code": "scan_failed"})
             return
 
         if r.status_code != 200:
@@ -106,7 +106,7 @@ class handler(BaseHTTPRequestHandler):
             send_json(
                 self,
                 500,
-                {"error": "Gemini request failed", "status": r.status_code, "detail": detail},
+                {"error": "Gemini request failed", "code": "scan_failed", "status": r.status_code, "detail": detail},
             )
             return
 
@@ -120,11 +120,11 @@ class handler(BaseHTTPRequestHandler):
             )
             parsed = json.loads(text)
         except (json.JSONDecodeError, IndexError, KeyError, TypeError) as e:
-            send_json(self, 500, {"error": f"Failed to parse model response: {e!s}"})
+            send_json(self, 500, {"error": f"Failed to parse model response: {e!s}", "code": "scan_failed"})
             return
 
         if not isinstance(parsed, dict):
-            send_json(self, 500, {"error": "Invalid scan response shape"})
+            send_json(self, 500, {"error": "Invalid scan response shape", "code": "scan_failed"})
             return
 
         if "error" in parsed and "name" not in parsed:
@@ -146,7 +146,7 @@ class handler(BaseHTTPRequestHandler):
                 send_json(
                     self,
                     502,
-                    {"error": f'Invalid scan response: field "{key}" must be a non-empty string'},
+                    {"error": f'Invalid scan response: field "{key}" must be a non-empty string', "code": "scan_failed"},
                 )
                 return
         t = parsed["type"].strip().upper()
@@ -154,7 +154,7 @@ class handler(BaseHTTPRequestHandler):
             send_json(
                 self,
                 502,
-                {"error": f'Invalid scan response: type must be one of {", ".join(sorted(allowed_types))}'},
+                {"error": f'Invalid scan response: type must be one of {", ".join(sorted(allowed_types))}', "code": "scan_failed"},
             )
             return
 
