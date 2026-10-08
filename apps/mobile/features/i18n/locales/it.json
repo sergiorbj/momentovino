@@ -290,8 +290,7 @@
         "cameraFallback": "Impossibile scattare la foto",
         "couldNotIdentifyTitle": "Impossibile identificare",
         "couldNotIdentifyBody": "Non siamo riusciti a riconoscere un vino in questa foto. Prova con una foto più ravvicinata e ben illuminata dell'etichetta.",
-        "scanFailedTitle": "Scansione fallita",
-        "scanFailedFallback": "Errore sconosciuto"
+        "scanFailedTitle": "Scansione fallita"
       }
     },
     "scanResult": {
