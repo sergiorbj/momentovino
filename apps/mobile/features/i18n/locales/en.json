@@ -618,5 +618,40 @@
     "ctaYearly": "Renew · {{price}}/year",
     "ctaMonthly": "Renew · {{price}}/month",
     "reassureMonthly": "Billed monthly. Cancel renewal anytime in Settings."
+  },
+  "errors": {
+    "server": {
+      "session_expired": "Your session expired. Please sign in again.",
+      "family_not_found": "You don't have a family yet. Create one first.",
+      "not_family_admin": "Only the family admin can do this.",
+      "not_family_owner": "Only the family owner can do this.",
+      "invitation_invalid": "This invitation is invalid or has expired.",
+      "invitation_expired": "This invitation has expired.",
+      "invitation_other_account": "This invitation is for a different account.",
+      "invitation_email_mismatch": "Sign in with the email this invitation was sent to.",
+      "invitation_not_found": "This invitation no longer exists.",
+      "invitation_not_pending": "This invitation was already answered.",
+      "already_in_family": "You're already in a family. Leave it first to join another one.",
+      "cannot_invite_self": "You can't invite yourself.",
+      "user_not_found": "We couldn't find that user.",
+      "already_member": "This person is already in your family.",
+      "target_already_in_family": "This person already belongs to another family.",
+      "already_invited": "You've already invited this person. Waiting for their response.",
+      "invalid_email": "Enter a valid email address.",
+      "email_already_registered": "This email already has a MomentoVino account. Ask them for their username and invite them by username.",
+      "email_send_failed": "We couldn't send the email. Please try again.",
+      "family_name_too_short": "The family name needs at least 2 characters.",
+      "family_description_too_long": "The description is too long.",
+      "cannot_remove_self": "To leave the family, use the leave option instead.",
+      "cannot_remove_owner": "The family owner can't be removed.",
+      "member_not_found": "This person is no longer in the family.",
+      "wine_name_required": "The wine needs a name with at least 2 characters.",
+      "wines_not_found": "Some of these wines no longer exist.",
+      "display_name_too_short": "Your name is too short.",
+      "display_name_too_long": "Your name is too long.",
+      "bio_too_long": "Your bio is too long.",
+      "scan_failed": "We couldn't read this label right now. Please try again.",
+      "not_identified": "We couldn't recognize a wine in this photo. Try a closer, well-lit shot of the label."
+    }
   }
 }

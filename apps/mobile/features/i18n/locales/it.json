@@ -618,5 +618,40 @@
     "ctaYearly": "Rinnova · {{price}}/anno",
     "ctaMonthly": "Rinnova · {{price}}/mese",
     "reassureMonthly": "Addebito mensile. Disdici il rinnovo quando vuoi in Impostazioni."
+  },
+  "errors": {
+    "server": {
+      "session_expired": "La sessione è scaduta. Accedi di nuovo.",
+      "family_not_found": "Non hai ancora una famiglia. Creane una prima.",
+      "not_family_admin": "Solo l'amministratore della famiglia può farlo.",
+      "not_family_owner": "Solo il proprietario della famiglia può farlo.",
+      "invitation_invalid": "Questo invito non è valido o è scaduto.",
+      "invitation_expired": "Questo invito è scaduto.",
+      "invitation_other_account": "Questo invito è per un altro account.",
+      "invitation_email_mismatch": "Accedi con l'email a cui è stato inviato l'invito.",
+      "invitation_not_found": "Questo invito non esiste più.",
+      "invitation_not_pending": "Hai già risposto a questo invito.",
+      "already_in_family": "Sei già in una famiglia. Lasciala prima di entrare in un'altra.",
+      "cannot_invite_self": "Non puoi invitare il tuo stesso account.",
+      "user_not_found": "Non abbiamo trovato questo utente.",
+      "already_member": "Questa persona fa già parte della tua famiglia.",
+      "target_already_in_family": "Questa persona fa già parte di un'altra famiglia.",
+      "already_invited": "Hai già invitato questa persona. In attesa di risposta.",
+      "invalid_email": "Inserisci un indirizzo email valido.",
+      "email_already_registered": "Questa email ha già un account MomentoVino. Chiedi il nome utente e invitala da lì.",
+      "email_send_failed": "Non siamo riusciti a inviare l'email. Riprova.",
+      "family_name_too_short": "Il nome della famiglia deve avere almeno 2 caratteri.",
+      "family_description_too_long": "La descrizione è troppo lunga.",
+      "cannot_remove_self": "Per lasciare la famiglia, usa l'opzione per uscire.",
+      "cannot_remove_owner": "Il proprietario della famiglia non può essere rimosso.",
+      "member_not_found": "Questa persona non fa più parte della famiglia.",
+      "wine_name_required": "Il vino deve avere un nome di almeno 2 caratteri.",
+      "wines_not_found": "Alcuni di questi vini non esistono più.",
+      "display_name_too_short": "Il tuo nome è troppo corto.",
+      "display_name_too_long": "Il tuo nome è troppo lungo.",
+      "bio_too_long": "La tua bio è troppo lunga.",
+      "scan_failed": "Non siamo riusciti a leggere questa etichetta. Riprova.",
+      "not_identified": "Non siamo riusciti a riconoscere un vino in questa foto. Prova con una foto più ravvicinata e ben illuminata dell'etichetta."
+    }
   }
 }

@@ -618,5 +618,40 @@
     "ctaYearly": "Renovar · {{price}}/año",
     "ctaMonthly": "Renovar · {{price}}/mes",
     "reassureMonthly": "Facturación mensual. Cancela la renovación cuando quieras en Ajustes."
+  },
+  "errors": {
+    "server": {
+      "session_expired": "Tu sesión expiró. Vuelve a iniciar sesión.",
+      "family_not_found": "Aún no tienes una familia. Crea una primero.",
+      "not_family_admin": "Solo el administrador de la familia puede hacer esto.",
+      "not_family_owner": "Solo el dueño de la familia puede hacer esto.",
+      "invitation_invalid": "Esta invitación no es válida o ha vencido.",
+      "invitation_expired": "Esta invitación ha vencido.",
+      "invitation_other_account": "Esta invitación es para otra cuenta.",
+      "invitation_email_mismatch": "Inicia sesión con el email al que se envió la invitación.",
+      "invitation_not_found": "Esta invitación ya no existe.",
+      "invitation_not_pending": "Esta invitación ya fue respondida.",
+      "already_in_family": "Ya estás en una familia. Sal de ella antes de unirte a otra.",
+      "cannot_invite_self": "No puedes enviarte una invitación.",
+      "user_not_found": "No encontramos a ese usuario.",
+      "already_member": "Esta persona ya está en tu familia.",
+      "target_already_in_family": "Esta persona ya pertenece a otra familia.",
+      "already_invited": "Ya invitaste a esta persona. Esperando su respuesta.",
+      "invalid_email": "Introduce un email válido.",
+      "email_already_registered": "Este email ya tiene una cuenta de MomentoVino. Pídele su nombre de usuario e invítalo por ahí.",
+      "email_send_failed": "No pudimos enviar el email. Inténtalo de nuevo.",
+      "family_name_too_short": "El nombre de la familia necesita al menos 2 caracteres.",
+      "family_description_too_long": "La descripción es demasiado larga.",
+      "cannot_remove_self": "Para salir de la familia, usa la opción de salir.",
+      "cannot_remove_owner": "No se puede eliminar al dueño de la familia.",
+      "member_not_found": "Esta persona ya no está en la familia.",
+      "wine_name_required": "El vino necesita un nombre de al menos 2 caracteres.",
+      "wines_not_found": "Algunos de estos vinos ya no existen.",
+      "display_name_too_short": "Tu nombre es demasiado corto.",
+      "display_name_too_long": "Tu nombre es demasiado largo.",
+      "bio_too_long": "Tu biografía es demasiado larga.",
+      "scan_failed": "No pudimos leer esta etiqueta ahora. Inténtalo de nuevo.",
+      "not_identified": "No pudimos reconocer un vino en esta foto. Prueba con una foto más cercana y bien iluminada de la etiqueta."
+    }
   }
 }
