@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Image, StyleSheet, View } from 'react-native'
 
+import { useTranslation } from '../features/i18n/hooks'
+
 const DEFAULT_ACCENT = '#722F37'
 
 type Props = {
@@ -10,6 +12,7 @@ type Props = {
 }
 
 export function WineRowAvatar({ labelPhotoUrl, size = 36, accent = DEFAULT_ACCENT }: Props) {
+  const { t } = useTranslation()
   const [loadFailed, setLoadFailed] = useState(false)
   const uri = typeof labelPhotoUrl === 'string' ? labelPhotoUrl.trim() : ''
 
@@ -38,7 +41,7 @@ export function WineRowAvatar({ labelPhotoUrl, size = 36, accent = DEFAULT_ACCEN
         source={{ uri }}
         style={StyleSheet.absoluteFillObject}
         resizeMode="cover"
-        accessibilityLabel="Wine label photo"
+        accessibilityLabel={t('wines.labelPhotoA11y')}
         onError={() => setLoadFailed(true)}
       />
     </View>

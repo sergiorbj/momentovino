@@ -400,7 +400,8 @@
       "a11yConfirmRemove": "Confirm remove wines",
       "resolveFailed": "Could not resolve which wine to delete.",
       "removeFailed": "Could not remove wine."
-    }
+    },
+    "labelPhotoA11y": "Wine label photo"
   },
   "scanner": {
     "title": "Scan Wine",

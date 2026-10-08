@@ -400,7 +400,8 @@
       "a11yConfirmRemove": "Conferma rimozione dei vini",
       "resolveFailed": "Impossibile capire quale vino rimuovere.",
       "removeFailed": "Impossibile rimuovere il vino."
-    }
+    },
+    "labelPhotoA11y": "Foto dell'etichetta del vino"
   },
   "scanner": {
     "title": "Scansiona vino",

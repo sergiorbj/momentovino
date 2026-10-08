@@ -400,7 +400,8 @@
       "a11yConfirmRemove": "Confirmar eliminación de vinos",
       "resolveFailed": "No se pudo identificar qué vino eliminar.",
       "removeFailed": "No se pudo eliminar el vino."
-    }
+    },
+    "labelPhotoA11y": "Foto de la etiqueta del vino"
   },
   "scanner": {
     "title": "Escanear vino",
