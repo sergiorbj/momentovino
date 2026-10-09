@@ -50,7 +50,7 @@ The shim creates a Python venv in `apps/web/venv/` on first run (see `scripts/ru
 ### Monorepo layout
 
 - `apps/web` — Next.js 16 App Router **plus** Python Vercel Functions in `apps/web/api/`. Deployed as a **single Vercel project**: frontend at `/` and Python handlers at `/api/*`. `vercel.json` sets build/install to run from the repo root.
-- `apps/mobile` — React Native 0.83 + Expo SDK 55 (Expo Router). Independent deploy via EAS Build → App Store / Play Store.
+- `apps/mobile` — React Native 0.81 + Expo SDK 54 (Expo Router). iOS only today. Independent deploy via EAS Build → App Store.
 - `packages/types` — shared TS types (`wine.ts`, `moment.ts`, `event.ts`, `user.ts`).
 - `packages/utils` — shared pure utilities.
 - `packages/design-tokens` — single source of truth for colors/spacing/radii. Exposes `web.css` (CSS vars) and `mobile.ts` (TS constants). Sourced from `tokens.json`.
@@ -62,8 +62,8 @@ The shim creates a Python venv in `apps/web/venv/` on first run (see `scripts/ru
 
 The mobile client talks to **two** backends:
 
-1. **Supabase directly** (via `apps/mobile/lib/supabase.ts`) for CRUD on `wines`, `moments`, `moment_photos`, `families`, `profiles`, and for storage uploads (`moment-photos`, `wine-labels`, `family-covers` buckets). Auth state is persisted in `AsyncStorage`; `lib/session.ts` has `ensureAnonymousSession()` for guest bootstrapping.
-2. **Next.js/Python API** (via `apps/mobile/lib/api-base.ts` → `getApiBaseUrl()`) for AI-backed operations only. Currently `POST /api/scan-wine` calls Gemini Vision (`apps/web/api/scan-wine.py`) and returns structured wine data. The base URL resolver in `api-base.ts` rewrites `localhost` → the Metro LAN host in `__DEV__` so physical devices/Expo Go can reach your dev machine.
+1. **Supabase directly** (via `apps/mobile/lib/supabase.ts`) for CRUD on `moments`, `moment_wines`, `moment_photos`, wine searches/clones, profile settings and username RPCs, the `user_entitlement` view, and for storage uploads (`moment-photos`, `wine-labels`, `family-covers`, `avatars` buckets). Auth state is persisted in `AsyncStorage`; `lib/session.ts` has `ensureAnonymousSession()` for guest bootstrapping.
+2. **Next.js/Python API** (via `apps/mobile/lib/api-base.ts` → `getApiBaseUrl()`) for anything that needs server secrets or the service role: `scan-wine.py` (Gemini Vision, per-language prompts), `wines.py` (create with dedupe, delete), `family.py` (all family reads/writes and invite email), `profile.py` (read/update, account deletion) and `claim-anon-entitlement.py`. Errors return a stable `code` that the app maps to `errors.server.<code>` via `translateApiError`. The base URL resolver in `api-base.ts` rewrites `localhost` → the Metro LAN host in `__DEV__` so physical devices/Expo Go can reach your dev machine.
 
 When building a new mobile feature: Supabase RLS + the generated `lib/database.types.ts` is the default. Only introduce a Python endpoint when server-side secrets (like `GEMINI_API_KEY`) or non-trivial processing are required.
 
@@ -98,9 +98,13 @@ All server state on mobile flows through **TanStack Query** (`@tanstack/react-qu
 ### Mobile navigation shape
 
 - `app/_layout.tsx` is the root stack. It gates render on three async states: fonts loaded, Supabase session established, onboarding flag read. Only after all three resolve does it hide the splash and show the stack.
-- Top-level stack children: `(tabs)`, `onboarding`, `login`, `moments`, `scanner`, `family`, `profile`.
+- Top-level stack children: `(tabs)`, `onboarding`, `login`, `forgot-password`, `reset-password`, `paywall`, `no-connection`, `moments`, `scanner`, `family`, `profile`. `app/index.tsx` redirects users without Pro to `/paywall`.
 - Tabs: `moments`, `wines`, `scanner`, `family`, `profile` (`app/(tabs)/_layout.tsx`).
 - **Wines can only be added via the scanner flow.** The wines tab has no create form; its CTA routes to `/(tabs)/scanner`. The scanner produces a wine via `features/scanner/api.ts::createWineViaApi` (which POSTs to the Python `/api/wines` handler), then optionally jumps to `/moments/new` to log a moment for it.
+
+### i18n on mobile
+
+All user-facing strings go through i18next (`features/i18n/`): `useTranslation()` / `t()` in components, `i18n.t` in non-component code, `<Trans components={{ b: ... }}>` for inline emphasis. Locales: `en`, `pt-BR`, `pt-PT`, `es`, `it` in `features/i18n/locales/*.json`; add every key to all five and run `pnpm --filter mobile i18n:check`. Plurals use `_one` / `_other`, plus `_zero` where 0 must differ (pt-BR treats 0 as "one"). iOS permission strings live in `apps/mobile/locales/native/{lang}.json` (wired via `app.config.ts` `locales`). The chosen language is mirrored to `profiles.language` and to auth user metadata (Supabase email templates read `.Data.language`). No em dashes in user-facing copy.
 
 ### Design tokens on mobile
 
@@ -116,7 +120,7 @@ NativeWind / Tailwind is **not** used on mobile (removed). Use `StyleSheet.creat
 
 ### Onboarding
 
-`app/onboarding/` is a separate stack with a fixed screen order (`index → goal → pain → intro-create → scanner-onb → scan-result-onb → new-moment-onb → atlas → paywall → save-account → complete-profile`). The completion flag is stored via `features/onboarding/state.ts` and checked by the root layout. The user's first wine + moment are captured in `features/onboarding/onboarding-capture.ts` (module-state) during the scanner / new-moment screens, then persisted under the freshly authenticated user inside `finalize-account.ts` after auth — Apple Sign-In swaps `user_id`, so DB writes have to wait until after auth (see [apps/mobile/lib/auth/apple.ts](apps/mobile/lib/auth/apple.ts)).
+`app/onboarding/` is a separate stack with a fixed screen order (`index → goal → pain → intro-create → new-moment-onb ⇄ (scanner-onb → scan-result-onb) → atlas → paywall → save-account → complete-profile`; see [docs/mobile/onboarding/mobile-onboarding.md](docs/mobile/onboarding/mobile-onboarding.md)). The completion flag is stored via `features/onboarding/state.ts` and checked by the root layout. The user's first wine + moment are captured in `features/onboarding/onboarding-capture.ts` (module-state) during the scanner / new-moment screens, then persisted under the freshly authenticated user inside `finalize-account.ts` after auth — Apple Sign-In swaps `user_id`, so DB writes have to wait until after auth (see [apps/mobile/lib/auth/apple.ts](apps/mobile/lib/auth/apple.ts)).
 
 ### Transactional emails
 
@@ -135,7 +139,7 @@ Magic link, invite, change-email, and reauthentication templates are **not** mai
 
 HTML files read from disk by the Python API and POSTed directly to the Resend API. Used when the trigger is business logic (not Supabase Auth). Currently:
 
-- `family-invite.html` — sent by [apps/web/api/family.py](apps/web/api/family.py) `_send_resend_invite()` when someone is invited to a family by email and doesn't have an account yet.
+- `family-invite.{en,pt-BR,pt-PT,es,it}.html` — sent by [apps/web/api/family.py](apps/web/api/family.py) `_send_resend_app_store_email()` when someone without an account is invited by email (an App Store nudge; nothing is stored). Language is `?lang=` → inviter's profile language → `en`; subjects live in `_INVITE_SUBJECTS`.
 
 The Python helper `_render_template(filename, replacements)` reads from [apps/web/api/templates/](apps/web/api/templates/) and substitutes `{{TOKEN}}` placeholders via `str.replace` (not `.format`, because templates contain CSS curly braces). Always `html.escape(value, quote=True)` user-supplied values before substitution.
 
@@ -161,4 +165,4 @@ Layout rules: single-column 560px max-width, table-based markup (Outlook), CTA a
 - Imports from workspace packages use the `@momentovino/*` prefix (see `pnpm-workspace.yaml`).
 - Mobile path alias `@/*` maps to the `apps/mobile/` root (see its `tsconfig.json`).
 - Early-return validation over nested conditionals; only use try/catch when the outer scope isn't already handling errors (`docs/general-development-guidelines.md`).
-- Per-domain documentation lives in `docs/mobile/<domain>/` and `docs/<feature>/` — check there before redesigning a flow.
+- Per-domain documentation lives in `docs/mobile/<domain>/` (moments, scanner, family, profile, onboarding) — check there before redesigning a flow. Product, audience and brand context for copy and creatives: [docs/business-project-context.md](docs/business-project-context.md).
