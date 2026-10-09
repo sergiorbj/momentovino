@@ -16,7 +16,7 @@ from _api_common import auth_bearer_user_id, send_json, supabase_config
 DISPLAY_NAME_MIN = 2
 DISPLAY_NAME_MAX = 50
 BIO_MAX = 160
-ALLOWED_LANGUAGES = {"en", "pt-BR"}
+ALLOWED_LANGUAGES = {"en", "pt-BR", "pt-PT", "es", "it"}
 
 
 def _norm_path(handler: BaseHTTPRequestHandler) -> str:
