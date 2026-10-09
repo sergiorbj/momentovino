@@ -1,39 +1,40 @@
 # MomentoVino
 
-Wine tracking and event management platform built with Turborepo.
+MomentoVino keeps every wine moment (the bottle, the people, the place, the photos) on a 3D world map you can go back to, and shares it with family and friends. For the product and brand story, see [docs/business-project-context.md](./docs/business-project-context.md).
 
 ## Project Structure
 
-This is a monorepo containing:
+Turborepo + pnpm monorepo:
 
-- **Web** (`apps/web`): Next.js 16.1 + React 19.2 + Python API
-- **Mobile** (`apps/mobile`): React Native 0.83 + Expo SDK 54
+- **Web** (`apps/web`): Next.js 16 + React 19 + Python Vercel Functions (`apps/web/api/`)
+- **Mobile** (`apps/mobile`): React Native 0.81 + Expo SDK 54 (Expo Router), iOS
 - **Shared Packages** (`packages/`):
   - `types`: Shared TypeScript types
   - `utils`: Shared utility functions
+  - `design-tokens`: Color/spacing tokens (`tokens.json`, `web.css`, `mobile.ts`)
   - `typescript-config`: Shared TypeScript configurations
   - `eslint-config`: Shared ESLint configurations
+- **Supabase** (`supabase/`): SQL migrations, the `revenuecat-webhook` edge function, auth email templates
 
 ## Tech Stack
 
 ### Web
-- Next.js 16.1 with App Router
-- React 19.2
-- Tailwind CSS
-- shadcn/ui (to be added)
-- Python 3.12 Serverless Functions (Vercel)
+- Next.js 16 with App Router, Tailwind CSS, shadcn/ui
+- Python 3.12 Serverless Functions on Vercel: wine scanning (Gemini), wines, family, profile, entitlement claim
+- Resend for app-side transactional email
 
 ### Mobile
-- React Native 0.83
-- Expo SDK 54
-- NativeWind (Tailwind for React Native)
-- React Native Reusables (to be added)
+- React Native 0.81, Expo SDK 54, Expo Router
+- TanStack Query for all server state
+- i18next with 5 locales (`en`, `pt-BR`, `pt-PT`, `es`, `it`)
+- RevenueCat (`react-native-purchases`) for subscriptions
+- Three.js on expo-gl for the globe
+- `StyleSheet.create` (no NativeWind)
 
 ### Infrastructure
-- Turborepo for monorepo management
-- pnpm for package management
-- PostgreSQL (Supabase) for database
-- Vercel for deployment (web + API)
+- Supabase: Postgres + RLS, Auth (anonymous, Apple, Google, email), Storage, edge functions
+- Vercel for web + API
+- EAS Build / Submit for the App Store
 
 ## Getting Started
 
@@ -41,101 +42,89 @@ This is a monorepo containing:
 
 - Node.js >= 20.0.0
 - pnpm >= 8.0.0
-- Python 3.12 (for API functions)
+- Python 3.12 (for the API functions)
+- Xcode (for native iOS builds)
 
 ### Installation
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Install mobile dependencies (note: requires additional setup)
-cd apps/mobile && pnpm install
 ```
 
 ### Development
 
 ```bash
-# Run all apps
-pnpm dev
-
-# Run web only
-pnpm dev:web
-
-# Run mobile only
-pnpm dev:mobile
+pnpm dev                   # web + mobile
+pnpm dev:web               # Next.js only (Python /api/* returns 404)
+pnpm dev:web:with-flask    # Next.js + Flask shim serving the Python /api/* locally
+pnpm dev:mobile            # Expo dev server
 ```
 
-**Note on Python API Functions**: The Python serverless functions in `/apps/web/api` will only work when:
-- Deployed to Vercel (production or preview)
-- Running locally with `vercel dev` (not `pnpm dev` or `next dev`)
+**Python API locally:** `apps/web/api/*.py` are Vercel Python functions and don't run under `next dev`. Use `pnpm dev:web:with-flask` (Flask shim on :5328, proxied by `next.config.ts` in development; creates `apps/web/venv/` on first run) or `vercel dev` inside `apps/web`.
 
-When using `pnpm dev` or `next dev`, the Python API endpoints will return 404. For full local testing including Python functions, install the [Vercel CLI](https://vercel.com/docs/cli) and use `vercel dev` in the `/apps/web` directory.
-
-### Building
+### Building, Linting & Formatting
 
 ```bash
-# Build all apps
-pnpm build
-
-# Build web only
-turbo run build --filter=web
-```
-
-### Linting & Formatting
-
-```bash
-# Lint all
-pnpm lint
-
-# Format all
-pnpm format
-
-# Type check all
-pnpm type-check
+pnpm build                 # build all
+pnpm lint                  # lint all
+pnpm type-check            # tsc --noEmit in every workspace
+pnpm format                # prettier --write
 ```
 
 ## Project Commands
 
-### Root Commands
-- `pnpm dev` - Run all apps in development mode
-- `pnpm build` - Build all apps
-- `pnpm lint` - Lint all packages
-- `pnpm type-check` - Type check all packages
-- `pnpm format` - Format code with Prettier
-- `pnpm dev:web` - Run web app only
-- `pnpm dev:mobile` - Run mobile app only
+### Root
+- `pnpm dev`, `pnpm dev:web`, `pnpm dev:web:with-flask`, `pnpm dev:mobile`
+- `pnpm build`, `pnpm lint`, `pnpm type-check`, `pnpm format`
+- `pnpm mobile:start` - `expo start`
+- `pnpm mobile:prebuild` - regenerate the native iOS project (`expo prebuild --platform ios --clean`)
+- `pnpm mobile:ios` - native iOS build and run (`expo run:ios`)
+- `pnpm mobile:xcode` - open the Xcode workspace
+- `pnpm ios` / `pnpm android` - shortcuts to the mobile scripts
 
 ### Web App (`apps/web`)
-- `pnpm dev` - Start Next.js dev server
-- `pnpm build` - Build for production
-- `pnpm start` - Start production server
-- `pnpm lint` - Lint code
-- `pnpm type-check` - Check types
+- `pnpm dev` - Next.js dev server (`dev:lan` binds 0.0.0.0)
+- `pnpm dev:flask` - Flask shim only
+- `pnpm dev:with-flask` - Next.js + Flask shim
+- `pnpm build` / `pnpm start` / `pnpm lint` / `pnpm type-check`
 
 ### Mobile App (`apps/mobile`)
-- `pnpm dev` / `pnpm start` - Start Expo dev server
-- `pnpm android` - Run on Android
-- `pnpm ios` - Run on iOS
-- `pnpm web` - Run on web
-- `pnpm build:android` - Build Android app (requires EAS)
-- `pnpm build:ios` - Build iOS app (requires EAS)
+- `pnpm dev` / `pnpm start` - Expo dev server
+- `pnpm ios` / `pnpm android` - native build and run (`expo run:*`)
+- `pnpm build:ios` / `pnpm build:android` - EAS builds
+- `pnpm i18n:check` - verify every locale has the same keys
+- `pnpm type-check`
 
 ## Environment Variables
 
+See `apps/web/.env.example` and `apps/mobile/.env.example` for the full list.
+
 ### Web (`apps/web/.env.local`)
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+GEMINI_API_KEY=                 # scan-wine.py
+RESEND_API_KEY=                 # family invite email
+RESEND_FROM_EMAIL=
+RESEND_SKIP_SEND=false
+APPLE_TEAM_ID=                  # optional: Apple token revocation on account deletion
+APPLE_KEY_ID=
+APPLE_PRIVATE_KEY=
+APPLE_CLIENT_ID=com.momentovino.app
 ```
 
 ### Mobile (`apps/mobile/.env`)
 ```env
-EXPO_PUBLIC_SUPABASE_URL=your-supabase-url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_ANON_KEY=
 EXPO_PUBLIC_API_URL=http://localhost:3000/api
+EXPO_PUBLIC_REVENUECAT_IOS_KEY=
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=
+EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME=
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=
+EXPO_APPLE_ID=                  # eas submit only, not bundled
 ```
 
 ## Deployment
@@ -153,36 +142,23 @@ The web app and Python API are deployed together on Vercel:
 3. Add environment variables in Vercel Dashboard
 4. Deploy!
 
-### Mobile (App Stores)
+### Mobile (App Store)
 
-The mobile app is built and published independently:
+The mobile app is built and published independently with EAS:
 
 ```bash
 cd apps/mobile
-
-# Build for iOS
 eas build --platform ios
-
-# Build for Android
-eas build --platform android
-
-# Submit to stores
-eas submit
+eas submit --platform ios
 ```
 
 ## Documentation
 
-- [Monorepo Structure](./docs/monorepo-structure.md) - Detailed architecture and setup guide
+- [CLAUDE.md](./CLAUDE.md) - Architecture, conventions and data-layer rules
+- [Business & product context](./docs/business-project-context.md) - What the app delivers, audience, brand voice, visual identity
 - [Development Guidelines](./docs/general-development-guidelines.md) - Coding standards
-
-## Next Steps
-
-1. Setup shadcn/ui in web app
-2. Setup React Native Reusables in mobile app
-3. Configure Supabase and create database schema
-4. Implement authentication
-5. Create Python API endpoints (CRUD operations)
-6. Build initial mobile screens
+- Per-domain mobile docs in [docs/mobile/](./docs/mobile/): moments, scanner, family, profile, onboarding
+- Supabase auth email templates: [supabase/templates/auth/README.md](./supabase/templates/auth/README.md)
 
 ## License
 
