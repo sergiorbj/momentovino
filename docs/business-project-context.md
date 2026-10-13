@@ -58,8 +58,8 @@ Wine apps like Vivino, Delectable and CellarTracker are **databases**: ratings, 
 
 - iOS app (iPhone and iPad). Android is not live.
 - Subscription, **MomentoVino Pro**:
-  - **Monthly: $2.99/month with a 3-day free trial** (the default plan)
-  - **Annual: $24.99/year** (about $2.08/month, about 30% off)
+  - **Monthly: $1.99/month with a 3-day free trial** (the default plan)
+  - **Annual: $14.99/year** (about $1.25/month, about 37% off in the US; the discount varies by region, e.g. R$ 9,90 vs R$ 59,90 in Brazil is about 50% off)
   - Cancel anytime in Settings.
 - Prices are shown in each user's local currency by the App Store.
 
@@ -119,4 +119,4 @@ Wine apps like Vivino, Delectable and CellarTracker are **databases**: ratings, 
 
 ## Copy-paste brief for prompts
 
-> MomentoVino is an iOS app that keeps your wine moments (the bottle, the people, the place, the photos) on a 3D world map you can go back to, and lets you share them with family and friends. You save a moment, scan the bottle's label with AI, and the moment becomes a pin on your personal globe; family members add theirs into a shared private space. It is for wine lovers, not experts: emotional and personal, not a ratings database. The tone is warm, intimate and unhurried. Brand colors are wine red #722F37, terracotta #C2703E, cream #F5EBE0 and ink #3F2A2E; the type pairs DM Serif Display with DM Sans. Creatives use a deep burgundy gradient, a two-line serif headline (cream, then peach italic), a phone tilted slightly right, and warm golden-hour photos of people toasting outdoors. Pricing: 3-day free trial, then $2.99/month or $24.99/year. Say "moments" and "world/map/atlas"; never say "journal", and don't use em dashes.
+> MomentoVino is an iOS app that keeps your wine moments (the bottle, the people, the place, the photos) on a 3D world map you can go back to, and lets you share them with family and friends. You save a moment, scan the bottle's label with AI, and the moment becomes a pin on your personal globe; family members add theirs into a shared private space. It is for wine lovers, not experts: emotional and personal, not a ratings database. The tone is warm, intimate and unhurried. Brand colors are wine red #722F37, terracotta #C2703E, cream #F5EBE0 and ink #3F2A2E; the type pairs DM Serif Display with DM Sans. Creatives use a deep burgundy gradient, a two-line serif headline (cream, then peach italic), a phone tilted slightly right, and warm golden-hour photos of people toasting outdoors. Pricing: 3-day free trial, then $1.99/month or $14.99/year. Say "moments" and "world/map/atlas"; never say "journal", and don't use em dashes.
