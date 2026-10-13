@@ -63,10 +63,10 @@ export default function PaywallScreen() {
 
   const monthlyPkg: PurchasesPackage | null = offering?.monthly ?? null
   const annualPkg: PurchasesPackage | null = offering?.annual ?? null
-  const monthlyPriceString = monthlyPkg?.product.priceString ?? '$2.99'
-  const annualPriceString = annualPkg?.product.priceString ?? '$24.99'
-  const annualMonthlyEquivalent = getMonthlyEquivalent(annualPkg) ?? '$2.08'
-  const annualDiscountPercent = getYearlyDiscountPercent(monthlyPkg, annualPkg) ?? 30
+  const monthlyPriceString = monthlyPkg?.product.priceString ?? '…'
+  const annualPriceString = annualPkg?.product.priceString ?? '…'
+  const annualMonthlyEquivalent = getMonthlyEquivalent(annualPkg) ?? '…'
+  const annualDiscountPercent = getYearlyDiscountPercent(monthlyPkg, annualPkg)
 
   const subscribe = async () => {
     const pkg = selectedPlan === 'yearly' ? annualPkg : monthlyPkg
@@ -218,11 +218,13 @@ export default function PaywallScreen() {
                 selectedPlan === 'yearly' && styles.planCardSelected,
               ]}
             >
-              <View style={styles.planBadge}>
-                <Text style={styles.planBadgeText}>
-                  {t('onboarding.paywall.badge', { percent: annualDiscountPercent })}
-                </Text>
-              </View>
+              {annualDiscountPercent !== null && (
+                <View style={styles.planBadge}>
+                  <Text style={styles.planBadgeText}>
+                    {t('onboarding.paywall.badge', { percent: annualDiscountPercent })}
+                  </Text>
+                </View>
+              )}
               <View style={styles.planRow}>
                 <View style={styles.planLeft}>
                   <Text style={styles.planTitle}>{t('onboarding.paywall.annual')}</Text>
